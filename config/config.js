@@ -1,21 +1,6 @@
 module.exports = {
-  /**
-   * Name of the integration which is displayed in the Polarity integrations user interface
-   *
-   * @type String
-   * @required
-   */
-  name: 'VirusTotal',
-  /**
-   * The acronym that appears in the notification window when information from this integration
-   * is displayed.  Note that the acronym is included as part of each "tag" in the summary information
-   * for the integration.  As a result, it is best to keep it to 4 or less characters.  The casing used
-   * here will be carried forward into the notification window.
-   *
-   * @type String
-   * @required
-   */
-  acronym: 'VT',
+  name: 'Google Threat Intel',
+  acronym: 'GTI',
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
    *

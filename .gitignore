@@ -20,6 +20,7 @@ dependency-reduced-pom.xml
 *.xlsx
 
 # Ignore local log files
+/logs
 *.log
 
 # Ignore Generated HTML README Files
@@ -31,6 +32,7 @@ test-runner.js
 
 #Ignore VSCode
 *.history
-.histoy
+.history
 *.vscode
 .vscode
+asdf.js

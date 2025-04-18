@@ -1,7 +1,6 @@
 {
-  "polarityIntegrationUuid": "0c0202d0-ccc7-11ed-bd45-6147db7ef4b1",
-  "name": "VirusTotal",
-  "acronym": "VT",
+  "name": "Google Threat Intel",
+  "acronym": "GTI",
   "description": "VirusTotal Integration for File and IP Address Reports via the v3.0 REST API",
   "defaultColor": "light-pink",
   "entityTypes": ["url", "domain", "IPv4", "MD5", "SHA1", "SHA256"],

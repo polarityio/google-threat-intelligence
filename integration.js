@@ -504,6 +504,176 @@ function _lookupUrl(entity, options, done) {
   });
 }
 
+const searchGtiThreats = (entity, options, done) => {
+  if (doLookupLogging) debugLookupStats.threatLookups++;
+
+  let requestOptions = {
+    uri: 'https://www.virustotal.com/api/v3/collections',
+    qs: {
+      filter: `"${entity.replace(/\./g, '\\.')}" AND collection_type:collection`,
+      limit: 10
+    },
+    headers: {
+      'x-apikey': options.apiKey
+    },
+    json: true
+  };
+
+  Logger.debug({ requestOptions }, 'Request Options for URL Lookup');
+
+  requestWithDefaults(requestOptions, function (err, response, body) {
+    _handleRequestError(err, response, body, options, function (err, result) {
+      if (err) {
+        Logger.error(err, 'Error Searching GTI Threats');
+        return done(err);
+      }
+
+      const formattedThreats = flow(
+        get('data'),
+        map('attributes'),
+        map((threat) => ({
+          ...threat,
+          confidenceGroupedData: groupByConfidence(threat),
+          flatAggregations: flattenWithPaths(threat.aggregations)
+        }))
+      )(result);
+
+      let lookupResults = _processLookupItem(
+        'threat',
+        formattedThreats,
+        entity
+      );
+
+      done(null, lookupResults);
+    });
+  });
+};
+
+const {
+  flow,
+  isPlainObject,
+  isArray,
+  some,
+  values,
+  toPairs,
+  map,
+  flatMap,
+  entries,
+  curry,
+  compact,
+  uniqBy,
+  startCase,
+  replace,
+  isString,
+  sortBy,
+  includes,
+  groupBy,
+  keys,
+  reduce,
+  concat,
+  uniq
+} = require('lodash/fp');
+const fs = require('fs');
+
+
+const groupByConfidence = (threat) => {
+  const groupedMotivations = groupBy('confidence', threat.motivations);
+  const groupedTargetedRegions = groupBy('confidence', threat.targeted_regions_hierarchy);
+  const groupedTags = groupBy('confidence', threat.tags_details);
+  const groupedTargetedIndustries = groupBy(
+    'confidence',
+    threat.targeted_industries_tree
+  );
+  const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
+
+  const uniqueConfidences = flow(
+    concat(groupedMotivations),
+    concat(groupedTargetedRegions),
+    concat(groupedTags),
+    concat(groupedTargetedIndustries),
+    concat(groupedSourceRegions),
+    toPairs,
+    flatMap(([_, value]) => keys(value)),
+    uniq
+  )([]);
+
+  const threatsGroupedByConfidence = reduce(
+    (agg, confidence) => {
+      const getUniqueValuesInGroup = flow(get(confidence), map('value'), uniq, compact);
+
+      const formatRegion = flow(
+        get(confidence),
+        map((region) => `${region.country}, ${region.sub_region}`),
+        uniq,
+        compact
+      );
+      return {
+        ...agg,
+        confidenceGroupedData: {
+          ...agg.confidenceGroupedData,
+          [confidence]: {
+            motivations: getUniqueValuesInGroup(groupedMotivations),
+            tags: getUniqueValuesInGroup(groupedTags),
+            sourceRegions: formatRegion(groupedSourceRegions),
+            targets: {
+              regions: formatRegion(groupedTargetedRegions),
+              industries: flow(
+                get(confidence),
+                map(({ industryGroup, industry }) =>
+                  size(industryGroup) > size(industry) ? industryGroup : industry
+                ),
+                uniq,
+                compact
+              )(groupedTargetedIndustries)
+            }
+          }
+        }
+      };
+    },
+    {},
+    uniqueConfidences
+  );
+  
+  return threatsGroupedByConfidence;
+};
+
+const flattenWithPaths = (obj) => {
+  const traverse = curry((path, val) =>
+    isPlainObject(val)
+      ? isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val))
+        ? [{ ...val, path: path.join('.') }]
+        : flow(
+          toPairs,
+          flatMap(([key, value]) => traverse([...path, key], value))
+        )(val)
+      : isArray(val)
+        ? isArray(val) && !some((v) => isPlainObject(v) || isArray(v), val)
+          ? [{ values: val, path: path.join('.') }]
+          : flow(
+            entries,
+            flatMap(([_, value]) => traverse([...path], value))
+          )(val)
+        : [{ value: val, path: path.join('.') }]
+  );
+
+  return flow(
+    traverse([]),
+    compact,
+    uniqBy('value'),
+    map((obj) => ({
+      ...obj,
+      readablePath: flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase)(obj.path),
+      matchesSubstring: hasSubstringInValue(obj, '91.208.206.118')
+    })),
+    sortBy((obj) => -(obj.prevalence || 0)),
+    sortBy((obj) => (obj.matchesSubstring ? 0 : 1)),
+    map('value')
+  )(obj);
+};
+
+const hasSubstringInValue = ({ value: val }, substring) =>
+  includes(substring.toLowerCase(), (isString(val) ? val : String(val)).toLowerCase());
+
 const _processLookupItem = (
   type,
   result,
@@ -570,16 +740,15 @@ const _processLookupItem = (
         !scanResult.result && scanResult.category === 'type-unsupported'
           ? 'type-unsupported'
           : ['clean', 'suspicious', 'malware', 'malicious', 'unrated'].includes(
-              scanResult.result
-            )
-          ? fp.capitalize(scanResult.result)
-          : scanResult.result
+            scanResult.result
+          )
+            ? fp.capitalize(scanResult.result)
+            : scanResult.result
     }))
   )(attributes);
 
-  const coreLink = `https://www.virustotal.com/gui/${fp.replace('_', '-', data.type)}/${
-    data.id
-  }`;
+  const coreLink = `https://www.virustotal.com/gui/${fp.replace('_', '-', data.type)}/${data.id
+    }`;
 
   const detailsTab = getDetailFields(DETAILS_FORMATS[type], attributes);
 
@@ -972,14 +1141,14 @@ async function getRelations(entity, options) {
                     ),
                     detections: referenceFile.attributes
                       ? `${fp.getOr(
-                          0,
-                          'attributes.last_analysis_stats.malicious',
-                          referenceFile
-                        )} / ${fp.getOr(
-                          0,
-                          'attributes.last_analysis_stats.undetected',
-                          referenceFile
-                        )}`
+                        0,
+                        'attributes.last_analysis_stats.malicious',
+                        referenceFile
+                      )} / ${fp.getOr(
+                        0,
+                        'attributes.last_analysis_stats.undetected',
+                        referenceFile
+                      )}`
                       : '-',
                     scannedDate: fp.flow(
                       fp.getOr('-', 'attributes.last_analysis_date'),
