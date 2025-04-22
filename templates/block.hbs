@@ -149,15 +149,17 @@
         </a>
       </li>
     {{/if}}
-    <li class="nav-item">
-      <a
-        class="nav-link {{if (eq activeTab "threatLandscape") "active"}}"
-        href="#"
-        {{action "changeTab" "threatLandscape"}}
-      >
-        Threat Landscape
-      </a>
-    </li>
+    {{#if formattedThreats.length}}
+      <li class="nav-item">
+        <a
+          class="nav-link {{if (eq activeTab "threatLandscape") "active"}}"
+          href="#"
+          {{action "changeTab" "threatLandscape"}}
+        >
+          Threat Landscape
+        </a>
+      </li>
+    {{/if}}
   </ul>
   <div id="{{concat "virustotal-container-" uniqueIdPrefix}}" class="export-node">
     {{#if (eq activeTab "detection")}}
@@ -823,9 +825,307 @@
     {{! start of threat landscape}}
     {{#if (eq activeTab "threatLandscape")}}
       <div>
-        {{#each threat, }}
-           
-        {{/each}}
+        {{#if formattedThreats.length}}
+          {{#each formattedThreats as |formattedThreat|}}
+            <div class="p-title threat-tab-header"> Threat Intelligence
+            </div>
+
+            <div class="p-block">
+              {{#if formattedThreat.motivations}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Motivations
+                  </span>
+                  <span class="p-col p-col-9">
+                    {{#each formattedThreat.motivations as |motivation|}}
+                      <span
+                        class="item-container tag tag-{{
+                          toLowerCase motivation.confidence
+                        }}"
+                      >
+                        {{motivation.value}}
+                      </span>
+                    {{/each}}
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.targeted_regions_hierarchy}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Targeted Regions
+                  </span>
+                  <span class="p-col p-col-9">
+                    {{#each formattedThreat.targeted_regions_hierarchy as |region|}}
+                      <span
+                        class="item-container tag tag-{{toLowerCase region.confidence}}"
+                      >
+                        {{region.country}}{{#if region.sub_region}}
+                          , {{region.sub_region}}
+                        {{/if}}
+                      </span>
+                    {{/each}}
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.targeted_industries_tree}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Targeted Industries
+                  </span>
+                  <span class="p-col p-col-9">
+                    {{#each formattedThreat.targeted_industries_tree as |industry|}}
+                      <span
+                        class="item-container tag tag-{{toLowerCase industry.confidence}}"
+                      >
+                        {{industry.industry}}
+                      </span>
+                    {{/each}}
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.source_regions_hierarchy}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Source Regions
+                  </span>
+                  <span class="p-col p-col-9">
+                    {{#each formattedThreat.source_regions_hierarchy as |region|}}
+                      <span
+                        class="item-container tag tag-{{toLowerCase region.confidence}}"
+                      >
+                        {{region.country}}{{#if region.sub_region}}
+                          , {{region.sub_region}}
+                        {{/if}}
+                      </span>
+                    {{/each}}
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.tags_details}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Tags
+                  </span>
+                  <span class="p-col p-col-9">
+                    {{#each formattedThreat.tags_details as |tag|}}
+                      <span class="item-container tag tag-{{toLowerCase tag.confidence}}">
+                        {{tag.value}}
+                      </span>
+                    {{/each}}
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.flatAggregations}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Associated IOCs
+                  </span>
+                  <span class="p-col p-col-9">
+                    <div class="p-value">
+                      {{#each formattedThreat.flatAggregations as |agg|}}
+                        {{#if
+                          (and
+                            agg.value
+                            (or
+                              (includes agg.path "ip_addresses")
+                              (includes agg.path "domains")
+                              (includes agg.path "urls")
+                            )
+                          )
+                        }}
+                          <div class="ioc-item">
+                            <span class="ioc-path">
+                              {{agg.readablePath}}
+                            </span>
+                            :
+                            <span class="ioc-value">
+                              {{agg.value}}
+                            </span>
+                            {{#if agg.prevalence}}
+                              <span class="ioc-prevalence">
+                                (Prevalence: {{round (multiply agg.prevalence 100)}}%)
+                              </span>
+                            {{/if}}
+                          </div>
+                        {{/if}}
+                      {{/each}}
+                    </div>
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.counters}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Stats
+                  </span>
+                  <span class="p-col p-col-9">
+                    <div class="counters-container">
+                      {{#each-in formattedThreat.counters as |key value|}}
+                        <div class="counter-item">
+                          <span class="counter-label">
+                            {{key}}
+                          </span>
+                          :
+                          <span class="counter-value">
+                            {{value}}
+                          </span>
+                        </div>
+                      {{/each-in}}
+                    </div>
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.autogenerate_tags}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Auto Tags
+                  </span>
+                  <span class="p-col p-col-9">
+                    {{#each formattedThreat.autogenerate_tags as |tag|}}
+                      <span class="item-container tag tag-auto">
+                        {{tag}}
+                      </span>
+                    {{/each}}
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.description}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Description
+                  </span>
+                  <span class="p-col p-col-9">
+                    <div class="description-container">
+                      {{formattedThreat.description}}
+                    </div>
+                  </span>
+                </div>
+              {{/if}}
+
+              {{#if formattedThreat.confidenceGroupedData}}
+                <div class="p-row mb-1">
+                  <span class="p-col p-col-3 p-title">
+                    Confidence Data
+                  </span>
+                  <span class="p-col p-col-9">
+                    <div class="confidence-container">
+                      {{#each-in
+                        formattedThreat.confidenceGroupedData as |confidence data|
+                      }}
+                        <div class="confidence-group mb-2">
+                          <div class="confidence-label">
+                            {{capitalize confidence}}
+                          </div>
+
+                          {{#if data.motivations}}
+                            <div class="sub-group">
+                              <span class="sub-label">
+                                Motivations:
+                              </span>
+                              {{#each data.motivations as |motivation|}}
+                                <span
+                                  class="item-container tag tag-{{
+                                    toLowerCase confidence
+                                  }}"
+                                >
+                                  {{motivation}}
+                                </span>
+                              {{/each}}
+                            </div>
+                          {{/if}}
+
+                          {{#if data.tags}}
+                            <div class="sub-group">
+                              <span class="sub-label">
+                                Tags:
+                              </span>
+                              {{#each data.tags as |tag|}}
+                                <span
+                                  class="item-container tag tag-{{
+                                    toLowerCase confidence
+                                  }}"
+                                >
+                                  {{tag}}
+                                </span>
+                              {{/each}}
+                            </div>
+                          {{/if}}
+
+                          {{#if data.sourceRegions}}
+                            <div class="sub-group">
+                              <span class="sub-label">
+                                Source Regions:
+                              </span>
+                              {{#each data.sourceRegions as |region|}}
+                                <span
+                                  class="item-container tag tag-{{
+                                    toLowerCase confidence
+                                  }}"
+                                >
+                                  {{region}}
+                                </span>
+                              {{/each}}
+                            </div>
+                          {{/if}}
+
+                          {{#if data.targets}}
+                            <div class="sub-group">
+                              {{#if data.targets.industries}}
+                                <div>
+                                  <span class="sub-label">
+                                    Targeted Industries:
+                                  </span>
+                                  {{#each data.targets.industries as |industry|}}
+                                    <span
+                                      class="item-container tag tag-{{
+                                        toLowerCase confidence
+                                      }}"
+                                    >
+                                      {{industry}}
+                                    </span>
+                                  {{/each}}
+                                </div>
+                              {{/if}}
+
+                              {{#if data.targets.regions}}
+                                <div>
+                                  <span class="sub-label">
+                                    Targeted Regions:
+                                  </span>
+                                  {{#each data.targets.regions as |region|}}
+                                    <span
+                                      class="item-container tag tag-{{
+                                        toLowerCase confidence
+                                      }}"
+                                    >
+                                      {{region}}
+                                    </span>
+                                  {{/each}}
+                                </div>
+                              {{/if}}
+                            </div>
+                          {{/if}}
+                        </div>
+                      {{/each-in}}
+                    </div>
+                  </span>
+                </div>
+              {{/if}}
+            </div>
+          {{/each}}
+        {{else}}
+          <div class="p-title">
+            No threat data available
+          </div>
+        {{/if}}
       </div>
     {{/if}}
     {{! end of threat landscape}}

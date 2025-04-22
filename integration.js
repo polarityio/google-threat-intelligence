@@ -3,14 +3,55 @@
 const request = require('postman-request');
 const _ = require('lodash');
 const fp = require('lodash/fp');
+const {
+  flow,
+  get,
+  compact,
+  isString,
+  isPlainObject,
+  some,
+  values,
+  groupBy,
+  toPairs,
+  flatMap,
+  concat,
+  uniq,
+  reduce,
+  entries,
+  replace,
+  startCase,
+  includes,
+  size,
+  uniqBy,
+  sortBy,
+  keys,
+  isArray,
+  curry
+} = fp;
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
 const async = require('async');
 const PendingLookupCache = require('./lib/pending-lookup-cache');
 const fs = require('fs');
 
-let Logger;
-let pendingLookupCache;
+let Logger = {
+  trace: (args, msg) => {
+    console.info(msg, args);
+  },
+  info: (args, msg) => {
+    console.info(msg, args);
+  },
+  error: (args, msg) => {
+    console.info(msg, args);
+  },
+  debug: (args, msg) => {
+    console.info(msg, args);
+  },
+  warn: (args, msg) => {
+    console.info(msg, args);
+  }
+};
+let pendingLookupCache = new PendingLookupCache(Logger);
 let domainUrlBlocklistRegex = null;
 let ipBlocklistRegex = null;
 let compiledThresholdRules = [];
@@ -21,7 +62,7 @@ let lookupIpSet;
 let lookupDomainSet;
 let lookupUrlSet;
 
-let requestWithDefaults;
+let requestWithDefaults = request.defaults({ json: true });
 
 const debugLookupStats = {
   hourCount: 0,
@@ -150,6 +191,7 @@ function doLookup(entities, options, cb) {
     hashGroups.push(hashGroup);
   }
 
+  console.log('asdf');
   async.parallel(
     {
       ipLookups: function (callback) {
@@ -158,7 +200,13 @@ function doLookup(entities, options, cb) {
             ipv4Entities,
             function (ipEntity, concatDone) {
               Logger.debug({ ip: ipEntity.value }, 'Looking up IP');
-              _lookupEntityType('ip', ipEntity, options, concatDone);
+              console.log('fdsa');
+              _lookupEntityType(
+                'ip',
+                ipEntity,
+                options,
+                _searchAndAddGtiThreatsToResult(options, concatDone)
+              );
             },
             function (err, results) {
               if (err) return callback(err);
@@ -176,7 +224,12 @@ function doLookup(entities, options, cb) {
             domainEntities,
             function (domainEntity, concatDone) {
               Logger.debug({ domain: domainEntity.value }, 'Looking up Domain');
-              _lookupEntityType('domain', domainEntity, options, concatDone);
+              _lookupEntityType(
+                'domain',
+                domainEntity,
+                options,
+                _searchAndAddGtiThreatsToResult(options, concatDone)
+              );
             },
             function (err, results) {
               if (err) {
@@ -197,7 +250,11 @@ function doLookup(entities, options, cb) {
             urlEntities,
             function (urlEntity, concatDone) {
               Logger.debug({ url: urlEntity.value }, 'Looking up URL');
-              _lookupUrl(urlEntity, options, concatDone);
+              _lookupUrl(
+                urlEntity,
+                options,
+                _searchAndAddGtiThreatsToResult(options, concatDone)
+              );
             },
             function (err, results) {
               if (err) return callback(err);
@@ -457,7 +514,7 @@ function _lookupHash(hashesArray, entityLookup, options, done) {
             options.showNoInfoTag
           );
 
-          return next(null, formattedResult);
+          _searchAndAddGtiThreatsToResult(options, next)(null, formattedResult);
         });
       });
     },
@@ -504,22 +561,25 @@ function _lookupUrl(entity, options, done) {
   });
 }
 
-const searchGtiThreats = (entity, options, done) => {
-  if (doLookupLogging) debugLookupStats.threatLookups++;
+const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) => {
+  if (err) {
+    Logger.error(err, 'Error Previous to Searching GTI Threats');
+    return done(err);
+  }
 
-  let requestOptions = {
-    uri: 'https://www.virustotal.com/api/v3/collections',
-    qs: {
-      filter: `"${entity.replace(/\./g, '\\.')}" AND collection_type:collection`,
-      limit: 10
-    },
-    headers: {
-      'x-apikey': options.apiKey
-    },
+  const entity = lookupResult.entity;
+  Logger.trace({ entity }, 'Searching GTI');
+
+  const { route, queryParams } = getGtiThreatsRequestOptionsByType(entity);
+
+  const requestOptions = {
+    url: `https://www.virustotal.com/api/v3/${route}`,
+    ...(queryParams && { qs: queryParams }),
+    headers: { 'x-apikey': options.apiKey },
     json: true
   };
 
-  Logger.debug({ requestOptions }, 'Request Options for URL Lookup');
+  Logger.trace({ requestOptions }, 'Request Options');
 
   requestWithDefaults(requestOptions, function (err, response, body) {
     _handleRequestError(err, response, body, options, function (err, result) {
@@ -527,6 +587,8 @@ const searchGtiThreats = (entity, options, done) => {
         Logger.error(err, 'Error Searching GTI Threats');
         return done(err);
       }
+
+      Logger.trace({ result }, 'Result of GTI Lookup');
 
       const formattedThreats = flow(
         get('data'),
@@ -538,43 +600,72 @@ const searchGtiThreats = (entity, options, done) => {
         }))
       )(result);
 
-      let lookupResults = _processLookupItem(
-        'threat',
-        formattedThreats,
-        entity
-      );
+      let lookupResults = {
+        ...lookupResult,
+        entity,
+        data: {
+          summary: lookupResult.data.summary,
+          details: {
+            ...lookupResult.data.details,
+            formattedThreats
+          }
+        }
+      };
 
       done(null, lookupResults);
     });
   });
 };
 
-const {
-  flow,
-  isPlainObject,
-  isArray,
-  some,
-  values,
-  toPairs,
-  map,
-  flatMap,
-  entries,
-  curry,
-  compact,
-  uniqBy,
-  startCase,
-  replace,
-  isString,
-  sortBy,
-  includes,
-  groupBy,
-  keys,
-  reduce,
-  concat,
-  uniq
-} = require('lodash/fp');
-const fs = require('fs');
-
+const getGtiThreatsRequestOptionsByType = (entity) =>
+  ({
+    IPv4: {
+      route: `ip_addresses/${entity.value}/associations`,
+      queryParams: {
+        limit: 10
+      }
+    },
+    domain: {
+      route: `domains/${entity.value}/associations`,
+      queryParams: {
+        limit: 10
+      }
+    },
+    MD5: {
+      route: `files/${entity.value}/associations`,
+      queryParams: {
+        limit: 10
+      }
+    },
+    SHA1: {
+      route: `files/${entity.value}/associations`,
+      queryParams: {
+        limit: 10
+      }
+    },
+    SHA256: {
+      route: `files/${entity.value}/associations`,
+      queryParams: {
+        limit: 10
+      }
+    },
+    cve: {
+      route: `collections`,
+      queryParams: {
+        filter: `"${entity.value}" AND collection_type:vulnerability`,
+        limit: 10
+      }
+    },
+    string: {
+      route: `collections`,
+      queryParams: {
+        filter: `"${entity.value}" AND collection_type:threat-actor`,
+        limit: 10
+      }
+    }
+  }[
+    entity.type === 'hash' ? find((type) => type !== 'hash', entity.types) : entity.type
+  ]);
 
 const groupByConfidence = (threat) => {
   const groupedMotivations = groupBy('confidence', threat.motivations);
@@ -633,7 +724,7 @@ const groupByConfidence = (threat) => {
     {},
     uniqueConfidences
   );
-  
+
   return threatsGroupedByConfidence;
 };
 
@@ -643,17 +734,17 @@ const flattenWithPaths = (obj) => {
       ? isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val))
         ? [{ ...val, path: path.join('.') }]
         : flow(
-          toPairs,
-          flatMap(([key, value]) => traverse([...path, key], value))
-        )(val)
+            toPairs,
+            flatMap(([key, value]) => traverse([...path, key], value))
+          )(val)
       : isArray(val)
-        ? isArray(val) && !some((v) => isPlainObject(v) || isArray(v), val)
-          ? [{ values: val, path: path.join('.') }]
-          : flow(
+      ? isArray(val) && !some((v) => isPlainObject(v) || isArray(v), val)
+        ? [{ values: val, path: path.join('.') }]
+        : flow(
             entries,
             flatMap(([_, value]) => traverse([...path], value))
           )(val)
-        : [{ value: val, path: path.join('.') }]
+      : [{ value: val, path: path.join('.') }]
   );
 
   return flow(
@@ -740,15 +831,16 @@ const _processLookupItem = (
         !scanResult.result && scanResult.category === 'type-unsupported'
           ? 'type-unsupported'
           : ['clean', 'suspicious', 'malware', 'malicious', 'unrated'].includes(
-            scanResult.result
-          )
-            ? fp.capitalize(scanResult.result)
-            : scanResult.result
+              scanResult.result
+            )
+          ? fp.capitalize(scanResult.result)
+          : scanResult.result
     }))
   )(attributes);
 
-  const coreLink = `https://www.virustotal.com/gui/${fp.replace('_', '-', data.type)}/${data.id
-    }`;
+  const coreLink = `https://www.virustotal.com/gui/${fp.replace('_', '-', data.type)}/${
+    data.id
+  }`;
 
   const detailsTab = getDetailFields(DETAILS_FORMATS[type], attributes);
 
@@ -1141,14 +1233,14 @@ async function getRelations(entity, options) {
                     ),
                     detections: referenceFile.attributes
                       ? `${fp.getOr(
-                        0,
-                        'attributes.last_analysis_stats.malicious',
-                        referenceFile
-                      )} / ${fp.getOr(
-                        0,
-                        'attributes.last_analysis_stats.undetected',
-                        referenceFile
-                      )}`
+                          0,
+                          'attributes.last_analysis_stats.malicious',
+                          referenceFile
+                        )} / ${fp.getOr(
+                          0,
+                          'attributes.last_analysis_stats.undetected',
+                          referenceFile
+                        )}`
                       : '-',
                     scannedDate: fp.flow(
                       fp.getOr('-', 'attributes.last_analysis_date'),

@@ -10,7 +10,7 @@ module.exports = {
   description:
     'VirusTotal Integration for File and IP Address Reports via the v3.0 REST API',
   defaultColor: 'light-pink',
-  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256'],
+  entityTypes: ['url', 'domain', 'IPv4', 'cve', 'MD5', 'SHA1', 'SHA256', 'string'],
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
    * the below files can be used in your custom template.
