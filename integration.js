@@ -26,7 +26,8 @@ const {
   sortBy,
   keys,
   isArray,
-  curry
+  curry,
+  find
 } = fp;
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
@@ -596,7 +597,7 @@ const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) =
         map((threat) => ({
           ...threat,
           confidenceGroupedData: groupByConfidence(threat),
-          flatAggregations: flattenWithPaths(threat.aggregations)
+          flatAggregations: flattenWithPaths(entity, threat.aggregations)
         }))
       )(result);
 
@@ -728,7 +729,7 @@ const groupByConfidence = (threat) => {
   return threatsGroupedByConfidence;
 };
 
-const flattenWithPaths = (obj) => {
+const flattenWithPaths = (entity, obj) => {
   const traverse = curry((path, val) =>
     isPlainObject(val)
       ? isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val))
@@ -754,7 +755,7 @@ const flattenWithPaths = (obj) => {
     map((obj) => ({
       ...obj,
       readablePath: flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase)(obj.path),
-      matchesSubstring: hasSubstringInValue(obj, '91.208.206.118')
+      matchesSubstring: hasSubstringInValue(obj, entity.value)
     })),
     sortBy((obj) => -(obj.prevalence || 0)),
     sortBy((obj) => (obj.matchesSubstring ? 0 : 1)),
