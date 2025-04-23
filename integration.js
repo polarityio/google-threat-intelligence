@@ -27,7 +27,8 @@ const {
   keys,
   isArray,
   curry,
-  find
+  find,
+  assign
 } = fp;
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
@@ -588,6 +589,7 @@ const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) =
         Logger.error(err, 'Error Searching GTI Threats');
         return done(err);
       }
+      if (!get('data.length', result)) return done(null, lookupResult);
 
       Logger.trace({ result }, 'Result of GTI Lookup');
 
@@ -601,11 +603,19 @@ const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) =
         }))
       )(result);
 
-      let lookupResults = {
+      let lookupResultsWithThreats = {
         ...lookupResult,
         entity,
         data: {
-          summary: lookupResult.data.summary,
+          summary: lookupResult.data.summary.concat(
+            `${
+              entity.type === 'cve'
+                ? 'Vulns'
+                : entity.type === 'string'
+                ? 'Threat Actors'
+                : 'Threats'
+            }: ${formattedThreats.length}`
+          ),
           details: {
             ...lookupResult.data.details,
             formattedThreats
@@ -613,60 +623,62 @@ const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) =
         }
       };
 
-      done(null, lookupResults);
+      done(null, lookupResultsWithThreats);
     });
   });
 };
 
+const GTI_LOOKUP_LIMIT = 5;
 const getGtiThreatsRequestOptionsByType = (entity) =>
   ({
     IPv4: {
       route: `ip_addresses/${entity.value}/associations`,
       queryParams: {
-        limit: 10
+        limit: GTI_LOOKUP_LIMIT
       }
     },
     domain: {
       route: `domains/${entity.value}/associations`,
       queryParams: {
-        limit: 10
+        limit: GTI_LOOKUP_LIMIT
       }
     },
     MD5: {
       route: `files/${entity.value}/associations`,
       queryParams: {
-        limit: 10
+        limit: GTI_LOOKUP_LIMIT
       }
     },
     SHA1: {
       route: `files/${entity.value}/associations`,
       queryParams: {
-        limit: 10
+        limit: GTI_LOOKUP_LIMIT
       }
     },
     SHA256: {
       route: `files/${entity.value}/associations`,
       queryParams: {
-        limit: 10
+        limit: GTI_LOOKUP_LIMIT
       }
     },
     cve: {
       route: `collections`,
       queryParams: {
-        filter: `"${entity.value}" AND collection_type:vulnerability`,
-        limit: 10
+        filter: `name:"${entity.value}" AND collection_type:vulnerability`,
+        limit: GTI_LOOKUP_LIMIT
       }
     },
     string: {
       route: `collections`,
       queryParams: {
-        filter: `"${entity.value}" AND collection_type:threat-actor`,
-        limit: 10
+        filter: `name:"${entity.value}" AND collection_type:threat-actor`,
+        limit: GTI_LOOKUP_LIMIT
       }
     }
-  }[
-    entity.type === 'hash' ? find((type) => type !== 'hash', entity.types) : entity.type
-  ]);
+  }[getEntityType(entity)]);
+
+const getEntityType = (entity) =>
+  entity.type === 'hash' ? find((type) => type !== 'hash', entity.types) : entity.type;
 
 const groupByConfidence = (threat) => {
   const groupedMotivations = groupBy('confidence', threat.motivations);
@@ -679,15 +691,16 @@ const groupByConfidence = (threat) => {
   const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
 
   const uniqueConfidences = flow(
-    concat(groupedMotivations),
-    concat(groupedTargetedRegions),
-    concat(groupedTags),
-    concat(groupedTargetedIndustries),
-    concat(groupedSourceRegions),
-    toPairs,
-    flatMap(([_, value]) => keys(value)),
+    assign(groupedMotivations),
+    assign(groupedTargetedRegions),
+    assign(groupedTags),
+    assign(groupedTargetedIndustries),
+    assign(groupedSourceRegions),
+    keys,
     uniq
-  )([]);
+  )({});
+
+  if (!size(uniqueConfidences)) return;
 
   const threatsGroupedByConfidence = reduce(
     (agg, confidence) => {
@@ -699,26 +712,42 @@ const groupByConfidence = (threat) => {
         uniq,
         compact
       );
+
+      const motivations = size(groupedMotivations) && {
+        motivations: getUniqueValuesInGroup(groupedMotivations)
+      };
+      const tags = size(groupedTags) && { tags: getUniqueValuesInGroup(groupedTags) };
+      const sourceRegions = size(groupedSourceRegions) && {
+        sourceRegions: formatRegion(groupedSourceRegions)
+      };
+
+      const targetRegions = size(groupedTargetedRegions) && {
+        regions: formatRegion(groupedTargetedRegions)
+      };
+
+      const targetIndustries = size(groupedTargetedIndustries) && {
+        industries: flow(
+          get(confidence),
+          map(({ industryGroup, industry }) =>
+            size(industryGroup) > size(industry) ? industryGroup : industry
+          ),
+          uniq,
+          compact
+        )(groupedTargetedIndustries)
+      };
+
       return {
         ...agg,
-        confidenceGroupedData: {
-          ...agg.confidenceGroupedData,
-          [confidence]: {
-            motivations: getUniqueValuesInGroup(groupedMotivations),
-            tags: getUniqueValuesInGroup(groupedTags),
-            sourceRegions: formatRegion(groupedSourceRegions),
+        [confidence]: {
+          ...motivations,
+          ...tags,
+          ...sourceRegions,
+          ...((!!targetRegions || !!targetIndustries) && {
             targets: {
-              regions: formatRegion(groupedTargetedRegions),
-              industries: flow(
-                get(confidence),
-                map(({ industryGroup, industry }) =>
-                  size(industryGroup) > size(industry) ? industryGroup : industry
-                ),
-                uniq,
-                compact
-              )(groupedTargetedIndustries)
+              ...targetRegions,
+              ...targetIndustries
             }
-          }
+          })
         }
       };
     },
@@ -730,41 +759,69 @@ const groupByConfidence = (threat) => {
 };
 
 const flattenWithPaths = (entity, obj) => {
-  const traverse = curry((path, val) =>
-    isPlainObject(val)
-      ? isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val))
-        ? [{ ...val, path: path.join('.') }]
-        : flow(
-            toPairs,
-            flatMap(([key, value]) => traverse([...path, key], value))
-          )(val)
-      : isArray(val)
-      ? isArray(val) && !some((v) => isPlainObject(v) || isArray(v), val)
-        ? [{ values: val, path: path.join('.') }]
-        : flow(
-            entries,
-            flatMap(([_, value]) => traverse([...path], value))
-          )(val)
-      : [{ value: val, path: path.join('.') }]
+  const traverse = curry((path, val) => {
+    const isPlainObjectWithNoNested =
+      isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val));
+
+    if (isPlainObjectWithNoNested) return [{ ...val, path: path.join('.') }];
+
+    const isArrayWithNoNested =
+      isArray(val) && !some((v) => isPlainObject(v) || isArray(v), val);
+
+    if (isArrayWithNoNested) return [{ values: val, path: path.join('.') }];
+
+    const isPlainObjectWithNested =
+      isPlainObject(val) && some((v) => isPlainObject(v) || isArray(v), values(val));
+
+    if (isPlainObjectWithNested) {
+      return flow(
+        toPairs,
+        flatMap(([key, value]) => traverse([...path, key], value))
+      )(val);
+    }
+    const isArrayWithNested =
+      isArray(val) && some((v) => isPlainObject(v) || isArray(v), val);
+
+    if (isArrayWithNested) {
+      return flow(
+        entries,
+        flatMap(([_, value]) => traverse([...path], value))
+      )(val);
+    }
+
+    const valueNotObjectOrArrayResult = [{ value: val, path: path.join('.') }];
+
+    return valueNotObjectOrArrayResult;
+  });
+
+  const flattenedListOfObjects = traverse([], obj);
+
+  const sortedListOfValues = sortByEntityPresenceAndPrevalence(
+    entity,
+    flattenedListOfObjects
   );
 
-  return flow(
-    traverse([]),
+  return sortedListOfValues;
+};
+
+const sortByEntityPresenceAndPrevalence = (entity, arrayOfObjects) =>
+  flow(
     compact,
     uniqBy('value'),
     map((obj) => ({
       ...obj,
-      readablePath: flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase)(obj.path),
+      readablePath: makeHumanReadable(obj.path),
       matchesSubstring: hasSubstringInValue(obj, entity.value)
     })),
     sortBy((obj) => -(obj.prevalence || 0)),
     sortBy((obj) => (obj.matchesSubstring ? 0 : 1)),
-    map('value')
-  )(obj);
-};
+    groupBy('readablePath')
+  )(arrayOfObjects);
 
 const hasSubstringInValue = ({ value: val }, substring) =>
   includes(substring.toLowerCase(), (isString(val) ? val : String(val)).toLowerCase());
+
+const makeHumanReadable = flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase);
 
 const _processLookupItem = (
   type,

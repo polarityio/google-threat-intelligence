@@ -827,99 +827,8 @@
       <div>
         {{#if formattedThreats.length}}
           {{#each formattedThreats as |formattedThreat|}}
-            <div class="p-title threat-tab-header"> Threat Intelligence
-            </div>
-
-            <div class="p-block">
-              {{#if formattedThreat.motivations}}
-                <div class="p-row mb-1">
-                  <span class="p-col p-col-3 p-title">
-                    Motivations
-                  </span>
-                  <span class="p-col p-col-9">
-                    {{#each formattedThreat.motivations as |motivation|}}
-                      <span
-                        class="item-container tag tag-{{
-                          toLowerCase motivation.confidence
-                        }}"
-                      >
-                        {{motivation.value}}
-                      </span>
-                    {{/each}}
-                  </span>
-                </div>
-              {{/if}}
-
-              {{#if formattedThreat.targeted_regions_hierarchy}}
-                <div class="p-row mb-1">
-                  <span class="p-col p-col-3 p-title">
-                    Targeted Regions
-                  </span>
-                  <span class="p-col p-col-9">
-                    {{#each formattedThreat.targeted_regions_hierarchy as |region|}}
-                      <span
-                        class="item-container tag tag-{{toLowerCase region.confidence}}"
-                      >
-                        {{region.country}}{{#if region.sub_region}}
-                          , {{region.sub_region}}
-                        {{/if}}
-                      </span>
-                    {{/each}}
-                  </span>
-                </div>
-              {{/if}}
-
-              {{#if formattedThreat.targeted_industries_tree}}
-                <div class="p-row mb-1">
-                  <span class="p-col p-col-3 p-title">
-                    Targeted Industries
-                  </span>
-                  <span class="p-col p-col-9">
-                    {{#each formattedThreat.targeted_industries_tree as |industry|}}
-                      <span
-                        class="item-container tag tag-{{toLowerCase industry.confidence}}"
-                      >
-                        {{industry.industry}}
-                      </span>
-                    {{/each}}
-                  </span>
-                </div>
-              {{/if}}
-
-              {{#if formattedThreat.source_regions_hierarchy}}
-                <div class="p-row mb-1">
-                  <span class="p-col p-col-3 p-title">
-                    Source Regions
-                  </span>
-                  <span class="p-col p-col-9">
-                    {{#each formattedThreat.source_regions_hierarchy as |region|}}
-                      <span
-                        class="item-container tag tag-{{toLowerCase region.confidence}}"
-                      >
-                        {{region.country}}{{#if region.sub_region}}
-                          , {{region.sub_region}}
-                        {{/if}}
-                      </span>
-                    {{/each}}
-                  </span>
-                </div>
-              {{/if}}
-
-              {{#if formattedThreat.tags_details}}
-                <div class="p-row mb-1">
-                  <span class="p-col p-col-3 p-title">
-                    Tags
-                  </span>
-                  <span class="p-col p-col-9">
-                    {{#each formattedThreat.tags_details as |tag|}}
-                      <span class="item-container tag tag-{{toLowerCase tag.confidence}}">
-                        {{tag.value}}
-                      </span>
-                    {{/each}}
-                  </span>
-                </div>
-              {{/if}}
-
+            <div class="p-title threat-tab-header">{{formattedThreat.name}}</div>
+            <div>
               {{#if formattedThreat.flatAggregations}}
                 <div class="p-row mb-1">
                   <span class="p-col p-col-3 p-title">
@@ -927,33 +836,22 @@
                   </span>
                   <span class="p-col p-col-9">
                     <div class="p-value">
-                      {{#each formattedThreat.flatAggregations as |agg|}}
-                        {{#if
-                          (and
-                            agg.value
-                            (or
-                              (includes agg.path "ip_addresses")
-                              (includes agg.path "domains")
-                              (includes agg.path "urls")
-                            )
-                          )
-                        }}
-                          <div class="ioc-item">
-                            <span class="ioc-path">
-                              {{agg.readablePath}}
+                      {{#each-in formattedThreat.flatAggregations as |readablePath ioc|}}
+                        <div class="ioc-item">
+                          <span class="ioc-path">
+                            {{readablePath}}
+                          </span>
+                          :
+                          <span class="ioc-value">
+                            {{ioc.value}}
+                          </span>
+                          {{#if ioc.prevalence}}
+                            <span class="ioc-prevalence">
+                              (Prevalence: {{round (multiply ioc.prevalence 100)}}%)
                             </span>
-                            :
-                            <span class="ioc-value">
-                              {{agg.value}}
-                            </span>
-                            {{#if agg.prevalence}}
-                              <span class="ioc-prevalence">
-                                (Prevalence: {{round (multiply agg.prevalence 100)}}%)
-                              </span>
-                            {{/if}}
-                          </div>
-                        {{/if}}
-                      {{/each}}
+                          {{/if}}
+                        </div>
+                      {{/each-in}}
                     </div>
                   </span>
                 </div>
@@ -969,7 +867,7 @@
                       {{#each-in formattedThreat.counters as |key value|}}
                         <div class="counter-item">
                           <span class="counter-label">
-                            {{key}}
+                            {{titleize (humanize (dasherize key))}}
                           </span>
                           :
                           <span class="counter-value">
@@ -1032,9 +930,7 @@
                               </span>
                               {{#each data.motivations as |motivation|}}
                                 <span
-                                  class="item-container tag tag-{{
-                                    toLowerCase confidence
-                                  }}"
+                                  class="item-container tag tag-{{confidence}}"
                                 >
                                   {{motivation}}
                                 </span>
@@ -1049,9 +945,7 @@
                               </span>
                               {{#each data.tags as |tag|}}
                                 <span
-                                  class="item-container tag tag-{{
-                                    toLowerCase confidence
-                                  }}"
+                                  class="item-container tag tag-{{confidence}}"
                                 >
                                   {{tag}}
                                 </span>
@@ -1066,9 +960,7 @@
                               </span>
                               {{#each data.sourceRegions as |region|}}
                                 <span
-                                  class="item-container tag tag-{{
-                                    toLowerCase confidence
-                                  }}"
+                                  class="item-container tag tag-{{confidence}}"
                                 >
                                   {{region}}
                                 </span>
@@ -1085,9 +977,7 @@
                                   </span>
                                   {{#each data.targets.industries as |industry|}}
                                     <span
-                                      class="item-container tag tag-{{
-                                        toLowerCase confidence
-                                      }}"
+                                      class="item-container tag tag-{{confidence}}"
                                     >
                                       {{industry}}
                                     </span>
@@ -1102,9 +992,7 @@
                                   </span>
                                   {{#each data.targets.regions as |region|}}
                                     <span
-                                      class="item-container tag tag-{{
-                                        toLowerCase confidence
-                                      }}"
+                                      class="item-container tag tag-{{confidence}}"
                                     >
                                       {{region}}
                                     </span>
