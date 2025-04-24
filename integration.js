@@ -14,7 +14,6 @@ const {
   groupBy,
   toPairs,
   flatMap,
-  concat,
   uniq,
   reduce,
   entries,
@@ -35,6 +34,9 @@ const config = require('./config/config');
 const async = require('async');
 const PendingLookupCache = require('./lib/pending-lookup-cache');
 const fs = require('fs');
+let schedule = require('node-schedule');
+
+const { knownThreatActors } = require('./lib/constants');
 
 let Logger = {
   trace: (args, msg) => {
@@ -63,6 +65,8 @@ let lookupHashSet;
 let lookupIpSet;
 let lookupDomainSet;
 let lookupUrlSet;
+let lookupCveSet;
+let job;
 
 let requestWithDefaults = request.defaults({ json: true });
 
@@ -79,6 +83,7 @@ const debugLookupStats = {
   hashLookups: 0
 };
 
+const threatActorNames = knownThreatActors;
 const throttleCache = new Map();
 const IGNORED_IPS = new Set(['127.0.0.1', '255.255.255.255', '0.0.0.0']);
 
@@ -95,6 +100,8 @@ const TYPES_BY_SHOW_NO_DETECTIONS = {
   hash: 'showHashesWithNoDetections',
   url: 'showUrlsWithNoDetections'
 };
+
+const GTI_LOOKUP_LIMIT = 5;
 
 /**
  *
@@ -136,9 +143,12 @@ function doLookup(entities, options, cb) {
   let ipv4Entities = new Array();
   let domainEntities = new Array();
   let urlEntities = new Array();
+  let cveEntities = new Array();
   let entityLookup = {};
   let hashGroups = [];
   let hashGroup = [];
+  let nonCveOrThreatActorEntities = [];
+  let threatActorsEntities = [];
 
   Logger.trace(entities);
   const MAX_HASHES_PER_GROUP = options.maxHashesPerGroup;
@@ -149,6 +159,14 @@ function doLookup(entities, options, cb) {
 
     if (_isEntityBlocked(entity, options)) {
       return;
+    }
+
+    if (entity.type === 'custom') {
+      if (threatActorNames.includes(entity.value)) {
+        threatActorsEntities.push(entity);
+      }
+    } else if (entity.type !== 'cve') {
+      nonCveOrThreatActorEntities.push(entity);
     }
 
     if (entity.isMD5 || entity.isSHA1 || entity.isSHA256) {
@@ -185,6 +203,12 @@ function doLookup(entities, options, cb) {
       pendingLookupCache.addRunningLookup(entity.value);
 
       urlEntities.push(entity);
+    } else if (entity.types.includes('cve')) {
+      if (doLookupLogging) lookupCveSet.add(entity.value);
+
+      pendingLookupCache.addRunningLookup(entity.value);
+
+      cveEntities.push(entity);
     }
   });
 
@@ -193,7 +217,6 @@ function doLookup(entities, options, cb) {
     hashGroups.push(hashGroup);
   }
 
-  console.log('asdf');
   async.parallel(
     {
       ipLookups: function (callback) {
@@ -202,13 +225,7 @@ function doLookup(entities, options, cb) {
             ipv4Entities,
             function (ipEntity, concatDone) {
               Logger.debug({ ip: ipEntity.value }, 'Looking up IP');
-              console.log('fdsa');
-              _lookupEntityType(
-                'ip',
-                ipEntity,
-                options,
-                _searchAndAddGtiThreatsToResult(options, concatDone)
-              );
+              _lookupEntityType('ip', ipEntity, options, concatDone);
             },
             function (err, results) {
               if (err) return callback(err);
@@ -226,12 +243,7 @@ function doLookup(entities, options, cb) {
             domainEntities,
             function (domainEntity, concatDone) {
               Logger.debug({ domain: domainEntity.value }, 'Looking up Domain');
-              _lookupEntityType(
-                'domain',
-                domainEntity,
-                options,
-                _searchAndAddGtiThreatsToResult(options, concatDone)
-              );
+              _lookupEntityType('domain', domainEntity, options, concatDone);
             },
             function (err, results) {
               if (err) {
@@ -252,11 +264,7 @@ function doLookup(entities, options, cb) {
             urlEntities,
             function (urlEntity, concatDone) {
               Logger.debug({ url: urlEntity.value }, 'Looking up URL');
-              _lookupUrl(
-                urlEntity,
-                options,
-                _searchAndAddGtiThreatsToResult(options, concatDone)
-              );
+              _lookupUrl(urlEntity, options, concatDone);
             },
             function (err, results) {
               if (err) return callback(err);
@@ -295,6 +303,81 @@ function doLookup(entities, options, cb) {
         } else {
           callback(null, []);
         }
+      },
+      cveLookups: function (callback) {
+        if (cveEntities.length > 0) {
+          async.concat(
+            cveEntities,
+            function (entity, concatDone) {
+              Logger.debug({ cve: entity.value }, 'Looking up CVE');
+              _lookupVulnerabilities(entity, options, concatDone);
+            },
+            function (err, results) {
+              if (err) return callback(err);
+
+              callback(null, results);
+            }
+          );
+        } else {
+          callback(null, []);
+        }
+      },
+      threatActorLookups: function (callback) {
+        if (threatActorsEntities.length > 0) {
+          async.concat(
+            threatActorsEntities,
+            function (entity, concatDone) {
+              Logger.debug(
+                { threatActor: entity.value },
+                'Looking up Threat Actors by Name'
+              );
+              _lookupThreatActors(entity, options, concatDone);
+            },
+            function (err, results) {
+              if (err) return callback(err);
+
+              callback(null, results);
+            }
+          );
+        } else {
+          callback(null, []);
+        }
+      },
+      threatLookups: function (callback) {
+        if (nonCveOrThreatActorEntities.length > 0) {
+          async.concat(
+            nonCveOrThreatActorEntities,
+            function (entity, concatDone) {
+              Logger.debug({ entity: entity.value }, 'Looking up Threats');
+              _lookupThreats(entity, options, concatDone);
+            },
+            function (err, results) {
+              if (err) return callback(err);
+
+              callback(null, results);
+            }
+          );
+        } else {
+          callback(null, []);
+        }
+      },
+      reportLookups: function (callback) {
+        if (nonCveOrThreatActorEntities.length > 0) {
+          async.concat(
+            nonCveOrThreatActorEntities,
+            function (entity, concatDone) {
+              Logger.debug({ entity: entity.value }, 'Looking up Threats');
+              _lookupReports(entity, options, concatDone);
+            },
+            function (err, results) {
+              if (err) return callback(err);
+
+              callback(null, results);
+            }
+          );
+        } else {
+          callback(null, []);
+        }
       }
     },
     function (err, lookupResults) {
@@ -305,24 +388,86 @@ function doLookup(entities, options, cb) {
 
       let combinedResults = new Array();
 
-      ['hashLookups', 'ipLookups', 'domainLookups', 'urlLookups'].forEach((key) =>
+      [
+        'hashLookups',
+        'ipLookups',
+        'domainLookups',
+        'urlLookups',
+        'cveLookups',
+        'threatActorLookups'
+      ].forEach((key) =>
         lookupResults[key].forEach(function (lookupResult) {
           if (lookupResult && lookupResult.data && lookupResult.data.details) {
             lookupResult.data.details.compiledBaselineInvestigationRules =
               compiledThresholdRules;
           }
+          
+          lookupResult = addThreatsAndReportsToLookupResult(lookupResult, lookupResults);
+
           pendingLookupCache.removeRunningLookup(fp.get('entity.value', lookupResult));
           pendingLookupCache.executePendingLookups(lookupResult);
+
           combinedResults.push(lookupResult);
         })
       );
 
+      const finalLookupResults = map(
+        (lookupResult) => addThreatsAndReportsToLookupResult(lookupResult, lookupResults),
+        combinedResults
+      );
       pendingLookupCache.logStats();
 
-      cb(null, combinedResults);
+      cb(null, finalLookupResults);
     }
   );
 }
+
+const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
+  // Threats
+  const { threats, threatsCount, threatsCursor } = flow(
+    get('threatLookups'),
+    find(({ entity }) => entity.value === lookupResult.entity.value)
+  )(lookupResults);
+
+  if (threatsCount) {
+    if (lookupResult.data === null) {
+      lookupResult.data = {
+        summary: [],
+        details: {}
+      };
+    }
+    lookupResult.data.summary = lookupResult.data.summary.concat(
+      `Threats: ${threatsCount}`
+    );
+    lookupResult.data.details.threats = threats;
+    lookupResult.data.details.threatsCount = threatsCount;
+    lookupResult.data.details.threatsCursor = threatsCursor;
+  }
+
+  // Reports
+  const { reports, reportsCount, reportsCursor } = flow(
+    get('reportLookups'),
+    find(({ entity }) => entity.value === lookupResult.entity.value),
+    get('reports')
+  )(lookupResults);
+
+  if (reportsCount) {
+    if (lookupResult.data === null) {
+      lookupResult.data = {
+        summary: [],
+        details: {}
+      };
+    }
+    lookupResult.data.summary = lookupResult.data.summary.concat(
+      `Reports: ${reportsCount}`
+    );
+    lookupResult.data.details.reports = reports;
+    lookupResult.data.details.reportsCount = reportsCount;
+    lookupResult.data.details.reportsCursor = reportsCursor;
+  }
+
+  return lookupResult;
+};
 
 function _isEntityBlocked(entity, options) {
   const blocklist = options.blocklist;
@@ -516,7 +661,7 @@ function _lookupHash(hashesArray, entityLookup, options, done) {
             options.showNoInfoTag
           );
 
-          _searchAndAddGtiThreatsToResult(options, next)(null, formattedResult);
+          done(null, formattedResult);
         });
       });
     },
@@ -563,16 +708,91 @@ function _lookupUrl(entity, options, done) {
   });
 }
 
-const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) => {
-  if (err) {
-    Logger.error(err, 'Error Previous to Searching GTI Threats');
-    return done(err);
-  }
+// Start Google Threat Intelligence
+const _lookupVulnerabilities = (entity, options, done) => {
+  Logger.trace({ entity }, 'Searching Vulnerabilities');
 
-  const entity = lookupResult.entity;
-  Logger.trace({ entity }, 'Searching GTI');
+  const requestOptions = {
+    url: `https://www.virustotal.com/api/v3/collections`,
+    qs: {
+      filter: `name:"${entity.value}" AND collection_type:vulnerability`,
+      limit: GTI_LOOKUP_LIMIT
+    },
+    headers: { 'x-apikey': options.apiKey },
+    json: true
+  };
 
-  const { route, queryParams } = getGtiThreatsRequestOptionsByType(entity);
+  Logger.trace({ requestOptions }, 'Request Options');
+
+  requestWithDefaults(requestOptions, function (err, response, body) {
+    _handleRequestError(err, response, body, options, function (err, result) {
+      if (err) {
+        Logger.error(err, 'Error Searching Vulnerabilities');
+        return done(err);
+      }
+      if (!get('data.length', result)) return done(null, { entity, data: null });
+
+      Logger.trace({ result }, 'Result of Vulnerabilities Lookup');
+
+      const vulnerabilitiesLookupResult = {
+        entity,
+        data: {
+          summary: [`Vulns: ${result.data.length}`],
+          details: {
+            vulnerabilities: flow(get('data'), map('attributes'))(result)
+          }
+        }
+      };
+
+      done(null, vulnerabilitiesLookupResult);
+    });
+  });
+};
+
+const _lookupThreatActors = (entity, options, done) => {
+  Logger.trace({ entity }, 'Searching Threat Actors');
+
+  const requestOptions = {
+    url: `https://www.virustotal.com/api/v3/collections`,
+    qs: {
+      filter: `name:"${entity.value}" AND collection_type:threat-actor`,
+      limit: GTI_LOOKUP_LIMIT
+    },
+    headers: { 'x-apikey': options.apiKey },
+    json: true
+  };
+
+  Logger.trace({ requestOptions }, 'Request Options');
+
+  requestWithDefaults(requestOptions, function (err, response, body) {
+    _handleRequestError(err, response, body, options, function (err, result) {
+      if (err) {
+        Logger.error(err, 'Error Searching Threat Actors');
+        return done(err);
+      }
+      if (!get('data.length', result)) return done(null, { entity, data: null });
+
+      Logger.trace({ result }, 'Result of Threat Actors Lookup');
+
+      const threatActorsLookupResult = {
+        entity,
+        data: {
+          summary: [`Threat Actors: ${result.data.length}`],
+          details: {
+            threatActors: flow(get('data'), map('attributes'))(result)
+          }
+        }
+      };
+
+      done(null, threatActorsLookupResult);
+    });
+  });
+};
+
+const _lookupThreats = (entity, options, done) => {
+  Logger.trace({ entity }, 'Searching Threats');
+
+  const { route, queryParams } = getGtiRequestOptionsByType(entity, 'associations');
 
   const requestOptions = {
     url: `https://www.virustotal.com/api/v3/${route}`,
@@ -586,12 +806,13 @@ const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) =
   requestWithDefaults(requestOptions, function (err, response, body) {
     _handleRequestError(err, response, body, options, function (err, result) {
       if (err) {
-        Logger.error(err, 'Error Searching GTI Threats');
+        Logger.error(err, 'Error Searching Threats');
         return done(err);
       }
-      if (!get('data.length', result)) return done(null, lookupResult);
+      if (!get('data.length', result))
+        return done(null, { entity, threats: [], threatsCount: 0, threatsCursor: '' });
 
-      Logger.trace({ result }, 'Result of GTI Lookup');
+      Logger.trace({ result }, 'Result of Threats Lookup');
 
       const formattedThreats = flow(
         get('data'),
@@ -603,82 +824,79 @@ const _searchAndAddGtiThreatsToResult = (options, done) => (err, lookupResult) =
         }))
       )(result);
 
-      let lookupResultsWithThreats = {
-        ...lookupResult,
+      done(null, {
         entity,
-        data: {
-          summary: lookupResult.data.summary.concat(
-            `${
-              entity.type === 'cve'
-                ? 'Vulns'
-                : entity.type === 'string'
-                ? 'Threat Actors'
-                : 'Threats'
-            }: ${formattedThreats.length}`
-          ),
-          details: {
-            ...lookupResult.data.details,
-            formattedThreats
-          }
-        }
-      };
-
-      done(null, lookupResultsWithThreats);
+        threats: formattedThreats,
+        threatsCount: get('meta.count', result),
+        threatsCursor: get('meta.cursor', result)
+      });
     });
   });
 };
 
-const GTI_LOOKUP_LIMIT = 5;
-const getGtiThreatsRequestOptionsByType = (entity) =>
+const _lookupReports = (entity, options, done) => {
+  Logger.trace({ entity }, 'Searching Reports');
+
+  const { route, queryParams } = getGtiRequestOptionsByType(entity, 'reports');
+
+  const requestOptions = {
+    url: `https://www.virustotal.com/api/v3/${route}`,
+    ...(queryParams && { qs: queryParams }),
+    headers: { 'x-apikey': options.apiKey },
+    json: true
+  };
+
+  Logger.trace({ requestOptions }, 'Request Options');
+
+  requestWithDefaults(requestOptions, function (err, response, body) {
+    _handleRequestError(err, response, body, options, function (err, result) {
+      if (err) {
+        Logger.error(err, 'Error Searching Reports');
+        return done(err);
+      }
+      if (!get('data.length', result))
+        return done(null, { entity, reports: [], reportsCount: 0, reportsCursor: '' });
+
+      Logger.trace({ result }, 'Result of Reports Lookup');
+
+      const reports = flow(get('data'), map('attributes'))(result);
+      done(null, {
+        entity,
+        reports,
+        reportsCount: get('meta.count', result),
+        reportsCursor: get('meta.cursor', result)
+      });
+    });
+  });
+};
+
+const getGtiRequestOptionsByType = (entity, relationship) =>
   ({
     IPv4: {
-      route: `ip_addresses/${entity.value}/associations`,
+      route: `ip_addresses/${entity.value}/${relationship}`,
       queryParams: {
         limit: GTI_LOOKUP_LIMIT
       }
     },
     domain: {
-      route: `domains/${entity.value}/associations`,
+      route: `domains/${entity.value}/${relationship}`,
       queryParams: {
         limit: GTI_LOOKUP_LIMIT
       }
     },
-    MD5: {
-      route: `files/${entity.value}/associations`,
+    url: {
+      route: `urls/${entity.value}/${relationship}`,
       queryParams: {
         limit: GTI_LOOKUP_LIMIT
       }
     },
-    SHA1: {
-      route: `files/${entity.value}/associations`,
+    hash: {
+      route: `files/${entity.value}/${relationship}`,
       queryParams: {
-        limit: GTI_LOOKUP_LIMIT
-      }
-    },
-    SHA256: {
-      route: `files/${entity.value}/associations`,
-      queryParams: {
-        limit: GTI_LOOKUP_LIMIT
-      }
-    },
-    cve: {
-      route: `collections`,
-      queryParams: {
-        filter: `name:"${entity.value}" AND collection_type:vulnerability`,
-        limit: GTI_LOOKUP_LIMIT
-      }
-    },
-    string: {
-      route: `collections`,
-      queryParams: {
-        filter: `name:"${entity.value}" AND collection_type:threat-actor`,
         limit: GTI_LOOKUP_LIMIT
       }
     }
-  }[getEntityType(entity)]);
-
-const getEntityType = (entity) =>
-  entity.type === 'hash' ? find((type) => type !== 'hash', entity.types) : entity.type;
+  }[entity.isHash ? 'hash' : entity.type]);
 
 const groupByConfidence = (threat) => {
   const groupedMotivations = groupBy('confidence', threat.motivations);
@@ -822,6 +1040,7 @@ const hasSubstringInValue = ({ value: val }, substring) =>
   includes(substring.toLowerCase(), (isString(val) ? val : String(val)).toLowerCase());
 
 const makeHumanReadable = flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase);
+// End Google Threat Intelligence
 
 const _processLookupItem = (
   type,
@@ -1359,6 +1578,7 @@ function startup(logger) {
     lookupIpSet = new Set();
     lookupDomainSet = new Set();
     lookupUrlSet = new Set();
+    lookupCveSet = new Set();
     // Print log every hour
     setInterval(_logLookupStats, 60 * 60 * 1000);
   } else {
@@ -1405,6 +1625,7 @@ function _logLookupStats() {
   debugLookupStats.ipCount = lookupIpSet.size;
   debugLookupStats.domainCount = lookupDomainSet.size;
   debugLookupStats.urlCount = lookupUrlSet.size;
+  debugLookupStats.cveCount = lookupCveSet.size;
   debugLookupStats.hashCount = lookupHashSet.size;
 
   Logger.info(debugLookupStats, 'Unique Entity Stats');
@@ -1414,6 +1635,7 @@ function _logLookupStats() {
     lookupIpSet.clear();
     lookupDomainSet.clear();
     lookupUrlSet.clear();
+    lookupCveSet.clear();
     debugLookupStats.hourCount = 0;
     debugLookupStats.hashCount = 0;
     debugLookupStats.ipCount = 0;
@@ -1421,6 +1643,7 @@ function _logLookupStats() {
     debugLookupStats.domainCount = 0;
     debugLookupStats.domainLookups = 0;
     debugLookupStats.urlCount = 0;
+    debugLookupStats.cveCount = 0;
     debugLookupStats.urlLookups = 0;
     debugLookupStats.hashLookups = 0;
     debugLookupStats.dayCount++;
@@ -1477,7 +1700,7 @@ async function onMessage(payload, options, cb) {
   }
 }
 
-function validateOptions(userOptions, cb) {
+async function validateOptions(userOptions, cb) {
   let errors = [];
   if (
     typeof userOptions.apiKey.value !== 'string' ||
@@ -1508,8 +1731,70 @@ function validateOptions(userOptions, cb) {
     });
   }
 
+  if (!errors.length) {
+    try {
+      if (job) job.cancel();
+
+      job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
+    } catch (_) {}
+  }
+
   cb(null, errors);
 }
+
+const getAndCacheAllThreatActorNames =
+  (options, cursor, agg = []) =>
+  async () => {
+    const searchResult = get(
+      'body',
+      await asyncRequestWithDefaults(
+        {
+          uri: 'https://www.virustotal.com/api/v3/collections',
+          qs: {
+            filter: `collection_type:threat-actor`,
+            limit: 40,
+            ...(cursor && { cursor })
+          }
+        },
+        options
+      )
+    );
+
+    const threatActorNames = flow(get('data'), map('attributes.name'))(searchResult);
+
+    const nextCursor = get('meta.cursor', searchResult);
+    const nextAgg = agg.concat(threatActorNames);
+
+    if (nextCursor) {
+      return getAndCacheAllThreatActorNames(options, nextCursor, nextAgg);
+    }
+
+    threatActorNames = flow(
+      uniq,
+      sortBy((name) => name.toLowerCase())
+    )(nextAgg);
+  };
+
+const asyncRequestWithDefaults = (requestOptions, options) =>
+  new Promise((resolve, reject) =>
+    requestWithDefaults(
+      {
+        ...requestOptions,
+        headers: {
+          ...requestOptions.headers,
+          'x-apikey': get('apiKey.value', options) || options.apiKey
+        },
+        json: true
+      },
+      (err, response) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(response);
+        }
+      }
+    )
+  );
 
 module.exports = {
   doLookup,
