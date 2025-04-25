@@ -6,6 +6,7 @@ polarity.export = PolarityComponent.extend({
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }),
   maxResolutionsToShow: 20,
+  associationTab: '',
   expandedAssociations: Ember.computed.alias('block._state.expandedAssociations'),
   iconNamesByAssociationType: {
     report: 'file-alt',
@@ -170,6 +171,8 @@ polarity.export = PolarityComponent.extend({
       this.set('block._state.showNames', true);
     }
 
+    this.set('associationTab', this.get('threats').length > 0 ? 'threat-actor' : 'report');
+
     let array = new Uint32Array(5);
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));
 
@@ -250,6 +253,9 @@ polarity.export = PolarityComponent.extend({
       });
   },
   actions: {
+    switchAssociationsTab: function (associationType) {
+      this.set('associationTab', associationType);
+    },
     toggleExpandableAssociations: function (associationType, index) {
       this.set(
         `block._state.expandedAssociations.${associationType}${index}`,

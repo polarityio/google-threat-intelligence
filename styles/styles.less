@@ -309,6 +309,9 @@ td.positives {
     .associations-tab {
       .association {
         .summary {
+          display: flex;
+          flex-direction: column;
+          color: @normal-text;
           background: linear-gradient(
               to right,
               transparent 0.2rem,
@@ -321,31 +324,74 @@ td.positives {
               @google-green 50% 75%,
               @google-blue 75%
             );
+
           .title-section {
-            .title .icon {
-              .association-icon {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+
+            .title {
+              .icon {
+                margin-right: 10px;
+                .association-icon {
+                  font-size: 40px;
+                  color: @dimmed-text;
+                }
+              }
+              .name-info {
+                display: flex;
+                flex-direction: column;
+
+                .name-updated {
+                  display: flex;
+                  flex-direction: row;
+
+                  .name {
+                    font-size: 14px;
+                    font-weight: 700;
+                  }
+                  .updated {
+                    color: @muted-text;
+                    font-weight: 200;
+                  }
+                }
+                .alt-names {
+                  color: @dimmed-text;
+                  font-weight: 200;
+                }
               }
             }
-            .name-info {
-              .name-updated {
-                .name {
-                }
-                .updated {
-                }
-              }
-              .alt-names {
-              }
+
+            .last-activity {
+              color: @muted-text;
+              font-weight: 200;
             }
-          }
-          .last-activity {
           }
           .description {
+            color: @normal-text;
+            font-weight: 400;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
           }
           .related-info {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            flex-wrap: wrap;
+
             .info {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              margin-right: 10px;
+
               .title {
+                color: @dimmed-text;
+                font-weight: 500;
               }
               .count {
+                color: @normal-text
               }
             }
           }

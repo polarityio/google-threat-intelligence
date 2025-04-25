@@ -402,8 +402,6 @@ function doLookup(entities, options, cb) {
               compiledThresholdRules;
           }
 
-          lookupResult = addThreatsAndReportsToLookupResult(lookupResult, lookupResults);
-
           pendingLookupCache.removeRunningLookup(fp.get('entity.value', lookupResult));
           pendingLookupCache.executePendingLookups(lookupResult);
 
@@ -816,7 +814,11 @@ const _lookupThreats = (entity, options, done) => {
 
       const formattedThreats = flow(
         get('data'),
-        map('attributes'),
+        map((threat) => ({
+          ...threat.attributes,
+          id: threat.id,
+          relationships: threat.relationships
+        })),
         map((threat) => ({
           ...threat,
           motivationNames: map('value', threat.motivations),
@@ -830,6 +832,9 @@ const _lookupThreats = (entity, options, done) => {
             threat.targeted_regions_hierarchy
           ),
           //todo add htmlDescription
+          //todo add readableLastUpdated calc 9H 6Month etc
+          readableLastUpdated: '11 hours',
+
           confidenceGroupedData: groupByConfidence(threat),
           flatAggregations: flattenWithPaths(entity, threat.aggregations)
         }))
