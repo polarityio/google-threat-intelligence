@@ -1,10 +1,21 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
-  formattedThreats: Ember.computed.alias('details.formattedThreats'),
+  threats: Ember.computed.alias('details.threats'),
+  reports: Ember.computed.alias('details.reports'),
   timezone: Ember.computed('Intl', function () {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }),
   maxResolutionsToShow: 20,
+  expandedAssociations: Ember.computed.alias('block._state.expandedAssociations'),
+  iconNamesByAssociationType: {
+    report: 'file-alt',
+    campaign: 'bullseye',
+    collection: 'layer-group',
+    'malware-family': 'bug',
+    'software-toolkit': 'tools',
+    vulnerability: 'lock',
+    'threat-actor': 'theater-masks'
+  },
   maxUrlsToShow: 20,
   showScanResults: false,
   showFilesReferring: false,
@@ -152,6 +163,7 @@ polarity.export = PolarityComponent.extend({
     );
     if (!this.get('block._state')) {
       this.set('block._state', {});
+      this.set('block._state.expandedAssociations', {});
     }
 
     if (this.get('details.names.length') <= 10) {
@@ -238,6 +250,12 @@ polarity.export = PolarityComponent.extend({
       });
   },
   actions: {
+    toggleExpandableAssociations: function (associationType, index) {
+      this.set(
+        `block._state.expandedAssociations.${associationType}${index}`,
+        !this.get(`block._state.expandedAssociations.${associationType}${index}`)
+      );
+    },
     copyData: function () {
       const savedSettings = {
         showScanResults: this.get('showScanResults'),

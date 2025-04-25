@@ -1,8 +1,19 @@
 @border-color: #dee2e6;
-@danger-color: #FF4559;
+@danger-color: #ff4559;
 @success-color: #5cb85c;
-@warning-color: #FF8F00;
+@warning-color: #ff8f00;
 
+@dark-background: #121212;
+@medium-background: #242d41;
+@light-background: #303e5c;
+@normal-text: #fff;
+@selected-text: #86aaf9;
+@dimmed-text: #c3d2e8;
+@muted-text: #8997b4;
+@google-red: #953231;
+@google-yellow: #9f7925;
+@google-green: #2c6d42;
+@google-blue: #3259a2;
 
 // Summary tag styles
 
@@ -87,20 +98,24 @@ span.summary-threshold-message {
 
   .stripe-bg-danger {
     color: white;
-    background: repeating-linear-gradient(45deg,
-    @danger-color,
-    @danger-color 5px,
-    lighten(@danger-color, 5%) 5px,
-    lighten(@danger-color, 5%) 10px) !important;
+    background: repeating-linear-gradient(
+      45deg,
+      @danger-color,
+      @danger-color 5px,
+      lighten(@danger-color, 5%) 5px,
+      lighten(@danger-color, 5%) 10px
+    ) !important;
   }
 
   .stripe-bg-warning {
     color: white;
-    background: repeating-linear-gradient(45deg,
-    @warning-color,
-    @warning-color 5px,
-    lighten(@warning-color, 5%) 5px,
-    lighten(@warning-color, 5%) 10px) !important;
+    background: repeating-linear-gradient(
+      45deg,
+      @warning-color,
+      @warning-color 5px,
+      lighten(@warning-color, 5%) 5px,
+      lighten(@warning-color, 5%) 10px
+    ) !important;
   }
 }
 
@@ -130,8 +145,6 @@ button.naked {
   :active {
     color: darken(#7bc942, 20%);
   }
-
-
 }
 
 b.muted {
@@ -273,185 +286,73 @@ td.positives {
       width: 100%;
     }
   }
-
 }
 
-.name-list {
-  margin-top: 15px;
-}
-
-.threat-tab-header {
-  margin-bottom: 10px;
-  font-weight: 600;
-  font-size: 16px;
-  border-bottom: 1px solid #e0e0e0;
-  padding-bottom: 8px;
-}
-
-.item-container {
-  display: inline-block;
-  padding: 3px 8px;
-  margin: 2px 4px 2px 0;
-  border-radius: 4px;
-  font-size: 12px;
-  
-  &.tag {
-    &.tag-crowdsourced {
-      background-color: rgba(25, 118, 210, 0.12);
-      color: #1976d2;
-      border: 1px solid rgba(25, 118, 210, 0.24);
-    }
-    
-    &.tag-unconfirmed {
-      background-color: rgba(245, 124, 0, 0.12);
-      color: #f57c00;
-      border: 1px solid rgba(245, 124, 0, 0.24);
-    }
-    
-    &.tag-auto {
-      background-color: rgba(121, 134, 203, 0.12);
-      color: #7986cb;
-      border: 1px solid rgba(121, 134, 203, 0.24);
-    }
-    
-    &.tag-confirmed {
-      background-color: rgba(56, 142, 60, 0.12);
-      color: #388e3c;
-      border: 1px solid rgba(56, 142, 60, 0.24);
-    }
-  }
-}
-
-// Row and column styling
-.p-row {
-  display: flex;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-  
-  &.mb-1 {
+.associations {
+  .association-tab-buttons {
+    display: flex;
     margin-bottom: 10px;
-  }
-  
-  &.mb-2 {
-    margin-bottom: 20px;
-  }
-}
 
-.p-col {
-  padding: 0 10px;
-  
-  &.p-col-3 {
-    flex: 0 0 25%;
-    max-width: 25%;
-  }
-  
-  &.p-col-9 {
-    flex: 0 0 75%;
-    max-width: 75%;
-  }
-}
-
-// Title and label styling
-.p-title {
-  font-weight: 500;
-  color: #37474f;
-}
-
-.p-key {
-  font-weight: 600;
-  color: #263238;
-}
-
-.p-value {
-  color: #455a64;
-  line-height: 1.5;
-}
-
-// IOC items styling
-.ioc-item {
-  margin-bottom: 6px;
-  padding: 4px 0;
-  
-  .ioc-path {
-    color: #546e7a;
-    font-size: 12px;
-  }
-  
-  .ioc-value {
-    font-family: monospace;
-    background-color: rgba(0, 0, 0, 0.04);
-    padding: 2px 4px;
-    border-radius: 3px;
-  }
-  
-  .ioc-prevalence {
-    font-size: 11px;
-    color: #78909c;
-    margin-left: 4px;
-  }
-}
-
-// Counters and stats styling
-.counters-container {
-  display: flex;
-  flex-wrap: wrap;
-  
-  .counter-item {
-    background-color: rgba(0, 0, 0, 0.03);
-    padding: 3px 8px;
-    margin: 0 6px 6px 0;
-    border-radius: 3px;
-    
-    .counter-label {
-      color: #546e7a;
-      font-size: 12px;
-    }
-    
-    .counter-value {
+    .gti-button {
+      color: @dimmed-text;
+      background-color: @dark-background;
       font-weight: 500;
-      color: #37474f;
-    }
-  }
-}
+      border-radius: 5px;
+      margin-right: 7px;
 
-.description-container {
-  background-color: rgba(0, 0, 0, 0.02);
-  padding: 10px;
-  border-radius: 4px;
-  border-left: 3px solid #cfd8dc;
-  line-height: 1.5;
-}
-
-.confidence-container {
-  .confidence-group {
-    padding: 8px;
-    border-radius: 4px;
-    background-color: rgba(0, 0, 0, 0.02);
-    margin-bottom: 10px;
-    
-    .confidence-label {
-      font-weight: 500;
-      margin-bottom: 8px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
-    
-    .sub-group {
-      margin-bottom: 8px;
-      
-      .sub-label {
-        color: #546e7a;
-        font-size: 12px;
-        margin-right: 5px;
+      &.active {
+        box-shadow: inset 0 -2px 0 var(@selected-text);
       }
     }
   }
-}
-
-.p-block:empty + .p-title {
-  background-color: rgba(0, 0, 0, 0.03);
-  padding: 10px;
-  border-radius: 4px;
-  color: #78909c;
-  text-align: center;
+  .associations-tabs {
+    .associations-tab {
+      .association {
+        .summary {
+          background: linear-gradient(
+              to right,
+              transparent 0.2rem,
+              var(@medium-background) 0.2rem
+            ),
+            linear-gradient(
+              to bottom,
+              @google-red 25%,
+              @google-yellow 25% 50%,
+              @google-green 50% 75%,
+              @google-blue 75%
+            );
+          .title-section {
+            .title .icon {
+              .association-icon {
+              }
+            }
+            .name-info {
+              .name-updated {
+                .name {
+                }
+                .updated {
+                }
+              }
+              .alt-names {
+              }
+            }
+          }
+          .last-activity {
+          }
+          .description {
+          }
+          .related-info {
+            .info {
+              .title {
+              }
+              .count {
+              }
+            }
+          }
+        }
+        .details {
+        }
+      }
+    }
+  }
 }

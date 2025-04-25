@@ -401,7 +401,7 @@ function doLookup(entities, options, cb) {
             lookupResult.data.details.compiledBaselineInvestigationRules =
               compiledThresholdRules;
           }
-          
+
           lookupResult = addThreatsAndReportsToLookupResult(lookupResult, lookupResults);
 
           pendingLookupCache.removeRunningLookup(fp.get('entity.value', lookupResult));
@@ -819,6 +819,17 @@ const _lookupThreats = (entity, options, done) => {
         map('attributes'),
         map((threat) => ({
           ...threat,
+          motivationNames: map('value', threat.motivations),
+          targetedIndustryNames: map(
+            ({ industryGroup, industry }) =>
+              size(industryGroup) > size(industry) ? industryGroup : industry,
+            threat.targeted_industries_tree
+          ),
+          targetedRegionNames: map(
+            (region) => `${region.country}, ${region.sub_region}`,
+            threat.targeted_regions_hierarchy
+          ),
+          //todo add htmlDescription
           confidenceGroupedData: groupByConfidence(threat),
           flatAggregations: flattenWithPaths(entity, threat.aggregations)
         }))
@@ -870,31 +881,28 @@ const _lookupReports = (entity, options, done) => {
   });
 };
 
+const queryParams = {
+  limit: GTI_LOOKUP_LIMIT,
+  relationships: 'subscription_preferences,owner,malware_families,threat_actors'
+};
+
 const getGtiRequestOptionsByType = (entity, relationship) =>
   ({
     IPv4: {
       route: `ip_addresses/${entity.value}/${relationship}`,
-      queryParams: {
-        limit: GTI_LOOKUP_LIMIT
-      }
+      queryParams
     },
     domain: {
       route: `domains/${entity.value}/${relationship}`,
-      queryParams: {
-        limit: GTI_LOOKUP_LIMIT
-      }
+      queryParams
     },
     url: {
       route: `urls/${entity.value}/${relationship}`,
-      queryParams: {
-        limit: GTI_LOOKUP_LIMIT
-      }
+      queryParams
     },
     hash: {
       route: `files/${entity.value}/${relationship}`,
-      queryParams: {
-        limit: GTI_LOOKUP_LIMIT
-      }
+      queryParams
     }
   }[entity.isHash ? 'hash' : entity.type]);
 
@@ -1752,6 +1760,7 @@ const getAndCacheAllThreatActorNames =
           uri: 'https://www.virustotal.com/api/v3/collections',
           qs: {
             filter: `collection_type:threat-actor`,
+            attributes: 'name',
             limit: 40,
             ...(cursor && { cursor })
           }
