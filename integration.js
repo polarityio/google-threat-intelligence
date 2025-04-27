@@ -27,7 +27,9 @@ const {
   isArray,
   curry,
   find,
-  assign
+  assign,
+  mapValues,
+  forEach
 } = fp;
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
@@ -291,11 +293,11 @@ function doLookup(entities, options, cb) {
 
               //results is an array of hashGroup results (i.e., an array of arrays)
               let unrolledResults = [];
-              results.forEach(function (hashGroup) {
-                hashGroup.forEach(function (hashResult) {
+              forEach((hashGroup) => {
+                forEach((hashResult) => {
                   unrolledResults.push(hashResult);
-                });
-              });
+                }, hashGroup);
+              }, results);
 
               callback(null, unrolledResults);
             }
@@ -409,10 +411,13 @@ function doLookup(entities, options, cb) {
         })
       );
 
-      const finalLookupResults = map(
-        (lookupResult) => addThreatsAndReportsToLookupResult(lookupResult, lookupResults),
-        combinedResults
-      );
+      const finalLookupResults = flow(
+        mapValues((lookupResult) =>
+          addThreatsAndReportsToLookupResult(lookupResult, lookupResults)
+        ),
+        values
+      )(combinedResults);
+
       pendingLookupCache.logStats();
 
       cb(null, finalLookupResults);
@@ -424,7 +429,13 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
   // Threats
   const { threats, threatsCount, threatsCursor } = flow(
     get('threatLookups'),
-    find(({ entity }) => entity.value === lookupResult.entity.value)
+    find(({ entity }) => entity.value === lookupResult.entity.value),
+    (threatData) => ({
+      ...threatData,
+      threats: get('threats', threatData),
+      threatsCount: get('threatsCount', threatData),
+      threatsCursor: get('threatsCursor', threatData)
+    })
   )(lookupResults);
 
   if (threatsCount) {
@@ -446,7 +457,12 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
   const { reports, reportsCount, reportsCursor } = flow(
     get('reportLookups'),
     find(({ entity }) => entity.value === lookupResult.entity.value),
-    get('reports')
+    (reportData) => ({
+      ...reportData,
+      reports: get('reports', reportData),
+      reportsCount: get('reportsCount', reportData),
+      reportsCursor: get('reportsCursor', reportData)
+    })
   )(lookupResults);
 
   if (reportsCount) {
@@ -659,14 +675,14 @@ function _lookupHash(hashesArray, entityLookup, options, done) {
             options.showNoInfoTag
           );
 
-          done(null, formattedResult);
+          next(null, formattedResult);
         });
       });
     },
     (err, results) => {
       if (err) return done(err);
 
-      done(null, fp.compact(results));
+      done(null, compact(results));
     }
   );
 }
@@ -714,6 +730,7 @@ const _lookupVulnerabilities = (entity, options, done) => {
     url: `https://www.virustotal.com/api/v3/collections`,
     qs: {
       filter: `name:"${entity.value}" AND collection_type:vulnerability`,
+      relationships: 'subscription_preferences,owner,malware_families,threat_actors',
       limit: GTI_LOOKUP_LIMIT
     },
     headers: { 'x-apikey': options.apiKey },
@@ -754,6 +771,7 @@ const _lookupThreatActors = (entity, options, done) => {
     url: `https://www.virustotal.com/api/v3/collections`,
     qs: {
       filter: `name:"${entity.value}" AND collection_type:threat-actor`,
+      relationships: 'subscription_preferences,owner,malware_families,threat_actors',
       limit: GTI_LOOKUP_LIMIT
     },
     headers: { 'x-apikey': options.apiKey },
@@ -817,10 +835,7 @@ const _lookupThreats = (entity, options, done) => {
         map((threat) => ({
           ...threat.attributes,
           id: threat.id,
-          relationships: threat.relationships
-        })),
-        map((threat) => ({
-          ...threat,
+          relationships: threat.relationships,
           motivationNames: map('value', threat.motivations),
           targetedIndustryNames: map(
             ({ industryGroup, industry }) =>
