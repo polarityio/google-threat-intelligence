@@ -171,7 +171,7 @@ polarity.export = PolarityComponent.extend({
       this.set('block._state.showNames', true);
     }
 
-    this.set('associationTab', this.get('threats').length > 0 ? 'threat-actor' : 'report');
+    this.set('associationTab', this.get('threats').length > 0 ? 'threats' : 'reports');
 
     let array = new Uint32Array(5);
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));

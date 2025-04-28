@@ -291,32 +291,43 @@ td.positives {
 .associations {
   .association-tab-buttons {
     display: flex;
-    margin-bottom: 10px;
+    justify-content: center;
+    margin-bottom: 8px;
+    margin-top: 5px;
 
     .gti-button {
-      color: @dimmed-text;
-      background-color: @dark-background;
+      color: @normal-text;
+      background-color: @medium-background;
       font-weight: 500;
-      border-radius: 5px;
-      margin-right: 7px;
+      border-radius: 12px;
+      margin-right: 10px;
+      padding: 0px 11px !important;
+      border: 0px;
+      margin-top: 8px;
 
       &.active {
-        box-shadow: inset 0 -2px 0 var(@selected-text);
+        border-bottom: 3px solid @selected-text;
+        padding-top: 3px !important;
       }
     }
   }
   .associations-tabs {
+    display: flex;
+    flex-direction: column;
     .associations-tab {
       .association {
+        margin-bottom: 9px;
+
         .summary {
           display: flex;
           flex-direction: column;
           color: @normal-text;
-          background: linear-gradient(
-              to right,
-              transparent 0.2rem,
-              var(@medium-background) 0.2rem
-            ),
+          padding-left: 17px;
+          padding-top: 12px;
+          padding-right: 16px;
+          border-radius: 8px;
+
+          background: linear-gradient(to right, transparent 5px, @medium-background 5px),
             linear-gradient(
               to bottom,
               @google-red 25%,
@@ -330,11 +341,22 @@ td.positives {
             flex-direction: row;
             justify-content: space-between;
 
-            .title {
-              .icon {
-                margin-right: 10px;
+            .title-content {
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+              padding: 1px !important;
+
+              .threat-type-icon {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 14px;
+                margin-left: 5px;
+                margin-top: -14px;
+
                 .association-icon {
-                  font-size: 40px;
+                  font-size: 30px;
                   color: @dimmed-text;
                 }
               }
@@ -345,34 +367,62 @@ td.positives {
                 .name-updated {
                   display: flex;
                   flex-direction: row;
+                  justify-content: flex-start;
 
                   .name {
+                    display: flex;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
                     font-size: 14px;
                     font-weight: 700;
+                    margin-right: 10px;
+                    max-width: 220px;
                   }
                   .updated {
+                    display: flex;
                     color: @muted-text;
                     font-weight: 200;
+                    margin-right: 10px;
                   }
                 }
                 .alt-names {
+                  display: flex;
                   color: @dimmed-text;
                   font-weight: 200;
+                  margin-top: 4px;
+                }
+                .link {
+                  margin-top: 0px;
+                  margin-bottom: 3px;
                 }
               }
             }
 
             .last-activity {
+              display: flex;
               color: @muted-text;
               font-weight: 200;
+            }
+            .open-details-icon {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              width: 100%;
+
+              .open-details {
+                font-size: 30px;
+                color: @dimmed-text;
+              }
             }
           }
           .description {
             color: @normal-text;
-            font-weight: 400;
+            font-weight: 200;
+            margin-top: 2px;
             text-overflow: ellipsis;
             overflow: hidden;
             white-space: nowrap;
+            margin-bottom: 13px;
           }
           .related-info {
             display: flex;
@@ -384,19 +434,39 @@ td.positives {
               display: flex;
               flex-direction: column;
               align-items: center;
-              margin-right: 10px;
+              margin-right: 15px;
 
               .title {
                 color: @dimmed-text;
-                font-weight: 500;
+                font-weight: 400;
+                font-size: 14px;
+                margin-bottom: 6px;
               }
               .count {
-                color: @normal-text
+                color: @normal-text;
               }
             }
           }
         }
         .details {
+        }
+      }
+    }
+  }
+}
+
+@media (max-width: 450px) {
+  .associations {
+    .associations-tabs {
+      .associations-tab {
+        .association {
+          .summary {
+            .title-section {
+              .last-activity {
+                display: none;
+              }
+            }
+          }
         }
       }
     }
