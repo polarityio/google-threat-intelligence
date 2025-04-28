@@ -10,10 +10,10 @@
 @selected-text: #86aaf9;
 @dimmed-text: #c3d2e8;
 @muted-text: #8997b4;
-@google-red: #953231;
-@google-yellow: #9f7925;
-@google-green: #2c6d42;
-@google-blue: #3259a2;
+@google-red: #c84342;
+@google-yellow: #ce9c30;
+@google-green: #3b9b5c;
+@google-blue: #3a69c3;
 
 // Summary tag styles
 
@@ -289,25 +289,52 @@ td.positives {
 }
 
 .associations {
-  .association-tab-buttons {
+  .control-results {
     display: flex;
-    justify-content: center;
-    margin-bottom: 8px;
-    margin-top: 5px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+    margin-top: 10px;
 
-    .gti-button {
-      color: @normal-text;
-      background-color: @medium-background;
-      font-weight: 500;
-      border-radius: 12px;
-      margin-right: 10px;
-      padding: 0px 11px !important;
-      border: 0px;
-      margin-top: 8px;
+    .tab-buttons {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
 
-      &.active {
-        border-bottom: 3px solid @selected-text;
-        padding-top: 3px !important;
+      .gti-button {
+        color: @dimmed-text;
+        background-color: @medium-background;
+        font-weight: 500;
+        border-radius: 12px;
+        margin-right: 10px;
+        padding: 0px 11px !important;
+        border: 0px;
+
+        &.active {
+          border: 2.5px solid #86aaf9;
+          padding-top: 3px !important;
+          color: @normal-text;
+        }
+      }
+    }
+    .right {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+
+      .association-link {
+        a {
+          color: #23b6ff;
+          background-color: @medium-background;
+          padding-left: 10px;
+          padding-right: 10px;
+          padding-top: 7px;
+          padding-bottom: 9px;
+          border-radius: 5px;
+        }
+        .narrow {
+          display: none;
+        }
       }
     }
   }
@@ -318,7 +345,7 @@ td.positives {
       .association {
         margin-bottom: 9px;
 
-        .summary {
+        .association-summary {
           display: flex;
           flex-direction: column;
           color: @normal-text;
@@ -394,6 +421,9 @@ td.positives {
                 .link {
                   margin-top: 0px;
                   margin-bottom: 3px;
+                  .narrow {
+                    display: none;
+                  }
                 }
               }
             }
@@ -402,17 +432,6 @@ td.positives {
               display: flex;
               color: @muted-text;
               font-weight: 200;
-            }
-            .open-details-icon {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              width: 100%;
-
-              .open-details {
-                font-size: 30px;
-                color: @dimmed-text;
-              }
             }
           }
           .description {
@@ -427,8 +446,9 @@ td.positives {
           .related-info {
             display: flex;
             flex-direction: row;
-            justify-content: space-between;
+            justify-content: flex-start;
             flex-wrap: wrap;
+            margin-bottom: 11px;
 
             .info {
               display: flex;
@@ -447,6 +467,21 @@ td.positives {
               }
             }
           }
+
+          .open-details-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            margin-top: 3px;
+            margin-bottom: 10px;
+            cursor: pointer;
+
+            .open-details {
+              font-size: 16px;
+              color: @dimmed-text;
+            }
+          }
         }
         .details {
         }
@@ -455,15 +490,39 @@ td.positives {
   }
 }
 
-@media (max-width: 450px) {
+@media (max-width: 500px) {
   .associations {
+    .control-results {
+      .right {
+        .association-link {
+          .narrow {
+            display: block;
+          }
+          .full {
+            display: none;
+          }
+        }
+      }
+    }
     .associations-tabs {
       .associations-tab {
         .association {
-          .summary {
+          .association-summary {
             .title-section {
               .last-activity {
                 display: none;
+              }
+              .title-content {
+                .name-info {
+                  .link {
+                    .narrow {
+                      display: block;
+                    }
+                    .full {
+                      display: none;
+                    }
+                  }
+                }
               }
             }
           }

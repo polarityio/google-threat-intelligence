@@ -1,7 +1,10 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
   threats: Ember.computed.alias('details.threats'),
+  threatsCount: Ember.computed.alias('details.threatsCount'),
   reports: Ember.computed.alias('details.reports'),
+  reportsCount: Ember.computed.alias('details.reportsCount'),
+  associationLink: Ember.computed.alias('details.associationLink'),
   timezone: Ember.computed('Intl', function () {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }),

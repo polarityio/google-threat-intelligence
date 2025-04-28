@@ -31,6 +31,11 @@ const {
   mapValues,
   forEach
 } = fp;
+const { DateTime } = require('luxon');
+
+const showdown = require('showdown');
+const convertMarkdownToHtml = (text) => (new showdown.Converter()).makeHtml(text);
+
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
 const async = require('async');
@@ -480,6 +485,10 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
     lookupResult.data.details.reportsCursor = reportsCursor;
   }
 
+  lookupResult.data.details.associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
+    lookupResult.entity
+  )}`;
+
   return lookupResult;
 };
 
@@ -836,22 +845,24 @@ const _lookupThreats = (entity, options, done) => {
           ...threat.attributes,
           id: threat.id,
           relationships: threat.relationships,
-          motivationNames: map('value', threat.motivations),
+          motivationNames: map('value', threat.attributes.motivations),
           targetedIndustryNames: map(
             ({ industryGroup, industry }) =>
               size(industryGroup) > size(industry) ? industryGroup : industry,
-            threat.targeted_industries_tree
+            threat.attributes.targeted_industries_tree
           ),
           targetedRegionNames: map(
             (region) => `${region.country}, ${region.sub_region}`,
-            threat.targeted_regions_hierarchy
+            threat.attributes.targeted_regions_hierarchy
           ),
-          //todo add htmlDescription
-          //todo add readableLastUpdated calc 9H 6Month etc
-          readableLastUpdated: '11 hours',
+          last_modification_date: threat.attributes.last_modification_date
+            ? threat.attributes.last_modification_date * 1000
+            : threat.attributes.last_modification_date,
+          htmlDescription: convertMarkdownToHtml(threat.attributes.description),
+          readableLastUpdated: buildReadableTime(threat.attributes.last_modification_date),
 
-          confidenceGroupedData: groupByConfidence(threat),
-          flatAggregations: flattenWithPaths(entity, threat.aggregations)
+          confidenceGroupedData: groupByConfidence(threat.attributes),
+          flatAggregations: flattenWithPaths(entity, threat.attributes.aggregations)
         }))
       )(result);
 
@@ -864,6 +875,40 @@ const _lookupThreats = (entity, options, done) => {
     });
   });
 };
+
+const buildReadableTime = (milliseconds) => {
+
+  if (typeof milliseconds !== 'number' || isNaN(milliseconds)) return;
+
+  const timeDifference = DateTime.now().toMillis() - milliseconds;
+
+  let remainingMilliseconds = timeDifference;
+
+  const seconds = Math.floor((remainingMilliseconds / 1000) % 60);
+
+  const minutes = Math.floor((remainingMilliseconds / 60000) % 60);
+  
+  const hours = Math.floor(remainingMilliseconds / 3600000);
+
+  const days = Math.floor(remainingMilliseconds / 86400000);
+
+  const weeks = Math.floor(remainingMilliseconds / 604800000);
+
+  const months = Math.floor(remainingMilliseconds / 2592000000);
+
+  const years = Math.floor(remainingMilliseconds / 31536000000);
+
+  return years > 0?
+    `${years} Years`: months > 0?
+    `${months} Months`: weeks > 0?
+    `${weeks} Weeks`: days > 0?
+    `${days} Days`: hours > 0?
+    `${hours} Hours`: minutes > 0?
+    `${minutes} Minutes`: seconds > 0?
+    `${seconds} Seconds`: milliseconds > 0?
+    `${milliseconds}ms`:
+    '0ms'; 
+}
 
 const _lookupReports = (entity, options, done) => {
   Logger.trace({ entity }, 'Searching Reports');
@@ -890,7 +935,20 @@ const _lookupReports = (entity, options, done) => {
 
       Logger.trace({ result }, 'Result of Reports Lookup');
 
-      const reports = flow(get('data'), map('attributes'))(result);
+      const reports = flow(
+        get('data'),
+        map((report) => ({
+          ...report.attributes,
+          id: report.id,
+          relationships: report.relationships,
+          readableLastUpdated: buildReadableTime(report.attributes.last_modification_date),
+          htmlDescription: convertMarkdownToHtml(report.attributes.description),
+          last_modification_date: report.last_modification_date
+            ? report.last_modification_date * 1000
+            : report.last_modification_date
+        }))
+      )(result);
+
       done(null, {
         entity,
         reports,
@@ -924,6 +982,14 @@ const getGtiRequestOptionsByType = (entity, relationship) =>
       route: `files/${entity.value}/${relationship}`,
       queryParams
     }
+  }[entity.isHash ? 'hash' : entity.type]);
+
+const getUiUrlByEntityType = (entity) =>
+  ({
+    IPv4: `ip-address/${entity.value}/associations`,
+    domain: `domain/${entity.value}/associations`,
+    url: `url/${entity.value}/associations`,
+    hash: `file/${entity.value}/associations`
   }[entity.isHash ? 'hash' : entity.type]);
 
 const groupByConfidence = (threat) => {
