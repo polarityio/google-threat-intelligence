@@ -1038,98 +1038,104 @@
                     <div class="description">
                       {{threat.description}}
                     </div>
-                    <div class="related-info">
-                      {{#if threat.malware_roles.length}}
-                        <div class="info">
-                          <div class="title">
-                            Role
+                    <div class="bottom">
+                      <div class="related-info">
+                        {{#if threat.malware_roles.length}}
+                          <div class="info">
+                            <div class="title">
+                              Role
+                            </div>
+                            <div class="count" title="{{join "\n" threat.malware_roles}}">
+                              {{threat.malware_roles.length}}
+                            </div>
                           </div>
-                          <div class="count" title="{{join "\n" threat.malware_roles}}">
-                            {{threat.malware_roles.length}}
+                        {{/if}}
+                        {{#if threat.targetedIndustryNames.length}}
+                          <div class="info">
+                            <div class="title">
+                              Targeted Industries
+                            </div>
+                            <div
+                              class="count"
+                              title="{{join "\n" threat.targetedIndustryNames}}"
+                            >
+                              {{threat.targetedIndustryNames.length}}
+                            </div>
                           </div>
-                        </div>
-                      {{/if}}
-                      {{#if threat.targetedIndustryNames.length}}
-                        <div class="info">
-                          <div class="title">
-                            Targeted Industries
+                        {{/if}}
+                        {{#if threat.relationships.threat_actors.data.length}}
+                          <div class="info">
+                            <div class="title">
+                              Associated Actors
+                            </div>
+                            <div class="count">
+                              {{threat.relationships.threat_actors.data.length}}
+                            </div>
                           </div>
-                          <div
-                            class="count"
-                            title="{{join "\n" threat.targetedIndustryNames}}"
-                          >
-                            {{threat.targetedIndustryNames.length}}
+                        {{/if}}
+                        {{#if threat.targetedRegionNames.length}}
+                          <div class="info">
+                            <div class="title">
+                              Targeted Regions
+                            </div>
+                            <div
+                              class="count"
+                              title="{{join "\n" threat.targetedRegionNames}}"
+                            >
+                              {{threat.targetedRegionNames.length}}
+                            </div>
                           </div>
-                        </div>
-                      {{/if}}
-                      {{#if threat.relationships.threat_actors.data.length}}
-                        <div class="info">
-                          <div class="title">
-                            Associated Actors
+                        {{/if}}
+                        {{#if threat.motivationNames.length}}
+                          <div class="info">
+                            <div class="title">
+                              Motivations
+                            </div>
+                            <div
+                              class="count"
+                              title="{{join "\n" threat.motivationNames}}"
+                            >
+                              {{threat.motivationNames.length}}
+                            </div>
                           </div>
-                          <div class="count">
-                            {{threat.relationships.threat_actors.data.length}}
+                        {{/if}}
+                        {{#if threat.relationships.malware_families.data.length}}
+                          <div class="info">
+                            <div class="title">
+                              Associated Malware
+                            </div>
+                            <div class="count">
+                              {{threat.relationships.malware_families.data.length}}
+                            </div>
                           </div>
-                        </div>
-                      {{/if}}
-                      {{#if threat.targetedRegionNames.length}}
-                        <div class="info">
-                          <div class="title">
-                            Targeted Regions
+                        {{/if}}
+                        {{#if threat.counters.iocs.length}}
+                          <div class="info">
+                            <div class="title">
+                              IoCs
+                            </div>
+                            <div class="count">
+                              {{threat.counters.iocs.length}}
+                            </div>
                           </div>
-                          <div
-                            class="count"
-                            title="{{join "\n" threat.targetedRegionNames}}"
-                          >
-                            {{threat.targetedRegionNames.length}}
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if threat.motivationNames.length}}
-                        <div class="info">
-                          <div class="title">
-                            Motivations
-                          </div>
-                          <div class="count" title="{{join "\n" threat.motivationNames}}">
-                            {{threat.motivationNames.length}}
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if threat.relationships.malware_families.data.length}}
-                        <div class="info">
-                          <div class="title">
-                            Associated Malware
-                          </div>
-                          <div class="count">
-                            {{threat.relationships.malware_families.data.length}}
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if threat.counters.iocs.length}}
-                        <div class="info">
-                          <div class="title">
-                            IoCs
-                          </div>
-                          <div class="count">
-                            {{threat.counters.iocs.length}}
-                          </div>
-                        </div>
-                      {{/if}}
+                        {{/if}}
+                      </div>
+                      <div
+                        class="open-details-icon"
+                        {{action "toggleExpandableAssociations" "threats" threatIndex}}
+                      >
+                        {{fa-icon
+                          size="lg"
+                          icon=(if (get expandedAssociations (concat "threats" threatIndex)) "chevron-up" "chevron-down")
+                          fixedWidth=true
+                          class="open-details"
+                        }}
+                      </div>
                     </div>
-                    {{!-- <div
-                      class="open-details-icon"
-                      {{action "toggleExpandableAssociations" "threats" threatIndex}}
-                    >
-                      {{fa-icon
-                        size="lg"
-                        icon="chevron-down"
-                        fixedWidth=true
-                        class="open-details"
-                      }}
-                    </div> --}}
                   </div>
                   {{#if (get expandedAssociations (concat "threats" threatIndex))}}
                     <div class="details">
+                      asdf
                     </div>
                   {{/if}}
                 </div>
@@ -1263,98 +1269,105 @@
                     <div class="description">
                       {{{report.executive_summary}}}
                     </div>
-                    <div class="related-info">
-                      {{#if report.malware_roles.length}}
-                        <div class="info">
-                          <div class="title">
-                            Role
+                    <div class="bottom">
+                      <div class="related-info">
+                        {{#if report.malware_roles.length}}
+                          <div class="info">
+                            <div class="title">
+                              Role
+                            </div>
+                            <div class="count" title="{{join "\n" report.malware_roles}}">
+                              {{report.malware_roles.length}}
+                            </div>
                           </div>
-                          <div class="count" title="{{join "\n" report.malware_roles}}">
-                            {{report.malware_roles.length}}
+                        {{/if}}
+                        {{#if report.targetedIndustryNames.length}}
+                          <div class="info">
+                            <div class="title">
+                              Targeted Industries
+                            </div>
+                            <div
+                              class="count"
+                              title="{{join "\n" report.targetedIndustryNames}}"
+                            >
+                              {{report.targetedIndustryNames.length}}
+                            </div>
                           </div>
-                        </div>
-                      {{/if}}
-                      {{#if report.targetedIndustryNames.length}}
-                        <div class="info">
-                          <div class="title">
-                            Targeted Industries
+                        {{/if}}
+                        {{#if report.relationships.threat_actors.data.length}}
+                          <div class="info">
+                            <div class="title">
+                              Associated Actors
+                            </div>
+                            <div class="count">
+                              {{report.relationships.threat_actors.data.length}}
+                            </div>
                           </div>
-                          <div
-                            class="count"
-                            title="{{join "\n" report.targetedIndustryNames}}"
-                          >
-                            {{report.targetedIndustryNames.length}}
+                        {{/if}}
+                        {{#if report.targetedRegionNames.length}}
+                          <div class="info">
+                            <div class="title">
+                              Targeted Regions
+                            </div>
+                            <div
+                              class="count"
+                              title="{{join "\n" threat.targetedRegionNames}}"
+                            >
+                              {{report.targetedRegionNames.length}}
+                            </div>
                           </div>
-                        </div>
-                      {{/if}}
-                      {{#if report.relationships.threat_actors.data.length}}
-                        <div class="info">
-                          <div class="title">
-                            Associated Actors
+                        {{/if}}
+                        {{#if report.motivationNames.length}}
+                          <div class="info">
+                            <div class="title">
+                              Motivations
+                            </div>
+                            <div
+                              class="count"
+                              title="{{join "\n" report.motivationNames}}"
+                            >
+                              {{report.motivationNames.length}}
+                            </div>
                           </div>
-                          <div class="count">
-                            {{report.relationships.threat_actors.data.length}}
+                        {{/if}}
+                        {{#if report.relationships.malware_families.data.length}}
+                          <div class="info">
+                            <div class="title">
+                              Associated Malware
+                            </div>
+                            <div class="count">
+                              {{report.relationships.malware_families.data.length}}
+                            </div>
                           </div>
-                        </div>
-                      {{/if}}
-                      {{#if report.targetedRegionNames.length}}
-                        <div class="info">
-                          <div class="title">
-                            Targeted Regions
+                        {{/if}}
+                        {{#if report.counters.iocs.length}}
+                          <div class="info">
+                            <div class="title">
+                              IoCs
+                            </div>
+                            <div class="count">
+                              {{report.counters.iocs.length}}
+                            </div>
                           </div>
-                          <div
-                            class="count"
-                            title="{{join "\n" threat.targetedRegionNames}}"
-                          >
-                            {{report.targetedRegionNames.length}}
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if report.motivationNames.length}}
-                        <div class="info">
-                          <div class="title">
-                            Motivations
-                          </div>
-                          <div class="count" title="{{join "\n" report.motivationNames}}">
-                            {{report.motivationNames.length}}
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if report.relationships.malware_families.data.length}}
-                        <div class="info">
-                          <div class="title">
-                            Associated Malware
-                          </div>
-                          <div class="count">
-                            {{report.relationships.malware_families.data.length}}
-                          </div>
-                        </div>
-                      {{/if}}
-                      {{#if report.counters.iocs.length}}
-                        <div class="info">
-                          <div class="title">
-                            IoCs
-                          </div>
-                          <div class="count">
-                            {{report.counters.iocs.length}}
-                          </div>
-                        </div>
-                      {{/if}}
+                        {{/if}}
+                      </div>
+                      <div
+                        title="Details View"
+                        class="open-details-icon"
+                        {{action "toggleExpandableAssociations" "reports" reportIndex}}
+                      >
+                        {{fa-icon
+                          size="lg"
+                          icon=(if (get expandedAssociations (concat "reports" reportIndex)) "chevron-up" "chevron-down")
+                          fixedWidth=true
+                          class="open-details"
+                        }}
+                      </div>
                     </div>
-                    {{!-- <div
-                      class="open-details-icon"
-                      {{action "toggleExpandableAssociations" "reports" reportIndex}}
-                    >
-                      {{fa-icon
-                        size="lg"
-                        icon="chevron-down"
-                        fixedWidth=true
-                        class="open-details"
-                      }}
-                    </div> --}}
                   </div>
                   {{#if (get expandedAssociations (concat "reports" reportIndex))}}
                     <div class="details">
+                      fdsa
                     </div>
                   {{/if}}
                 </div>
