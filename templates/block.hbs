@@ -930,9 +930,12 @@
                             <div class="name">
                               {{threat.name}}
                             </div>
-                            {{#if threat.readableLastUpdated}}
+                            {{#if threat.last_modification_date}}
                               <div class="updated">
-                                Updated {{threat.readableLastUpdated}} ago
+                                Updated {{moment-from-now
+                                  threat.last_modification_date
+                                  hideAffix=true
+                                }} ago
                               </div>
                             {{/if}}
                           </div>
@@ -1036,7 +1039,7 @@
                       {{/if}}
                     </div>
                     <div class="description">
-                      {{threat.description}}
+                      {{{threat.htmlDescription}}}
                     </div>
                     <div class="bottom">
                       <div class="related-info">
@@ -1126,7 +1129,11 @@
                       >
                         {{fa-icon
                           size="lg"
-                          icon=(if (get expandedAssociations (concat "threats" threatIndex)) "chevron-up" "chevron-down")
+                          icon=(if
+                            (get expandedAssociations (concat "threats" threatIndex))
+                            "chevron-up"
+                            "chevron-down"
+                          )
                           fixedWidth=true
                           class="open-details"
                         }}
@@ -1161,9 +1168,12 @@
                             <div class="name">
                               {{report.name}}
                             </div>
-                            {{#if report.readableLastUpdated}}
+                            {{#if report.last_modification_date}}
                               <div class="updated">
-                                Updated {{report.readableLastUpdated}} ago
+                                Updated {{moment-from-now
+                                  report.last_modification_date
+                                  hideAffix=true
+                                }} ago
                               </div>
                             {{/if}}
                           </div>
@@ -1358,7 +1368,11 @@
                       >
                         {{fa-icon
                           size="lg"
-                          icon=(if (get expandedAssociations (concat "reports" reportIndex)) "chevron-up" "chevron-down")
+                          icon=(if
+                            (get expandedAssociations (concat "reports" reportIndex))
+                            "chevron-up"
+                            "chevron-down"
+                          )
                           fixedWidth=true
                           class="open-details"
                         }}

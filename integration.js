@@ -855,14 +855,12 @@ const _lookupThreats = (entity, options, done) => {
             (region) => `${region.country}, ${region.sub_region}`,
             threat.attributes.targeted_regions_hierarchy
           ),
+          htmlDescription: convertMarkdownToHtml(threat.attributes.description),
+          confidenceGroupedData: groupByConfidence(threat.attributes),
+          flatAggregations: flattenWithPaths(entity, threat.attributes.aggregations),
           last_modification_date: threat.attributes.last_modification_date
             ? threat.attributes.last_modification_date * 1000
             : threat.attributes.last_modification_date,
-          htmlDescription: convertMarkdownToHtml(threat.attributes.description),
-          readableLastUpdated: buildReadableTime(threat.attributes.last_modification_date),
-
-          confidenceGroupedData: groupByConfidence(threat.attributes),
-          flatAggregations: flattenWithPaths(entity, threat.attributes.aggregations)
         }))
       )(result);
 
@@ -875,40 +873,6 @@ const _lookupThreats = (entity, options, done) => {
     });
   });
 };
-
-const buildReadableTime = (milliseconds) => {
-
-  if (typeof milliseconds !== 'number' || isNaN(milliseconds)) return;
-
-  const timeDifference = DateTime.now().toMillis() - milliseconds;
-
-  let remainingMilliseconds = timeDifference;
-
-  const seconds = Math.floor((remainingMilliseconds / 1000) % 60);
-
-  const minutes = Math.floor((remainingMilliseconds / 60000) % 60);
-  
-  const hours = Math.floor(remainingMilliseconds / 3600000);
-
-  const days = Math.floor(remainingMilliseconds / 86400000);
-
-  const weeks = Math.floor(remainingMilliseconds / 604800000);
-
-  const months = Math.floor(remainingMilliseconds / 2592000000);
-
-  const years = Math.floor(remainingMilliseconds / 31536000000);
-
-  return years > 0?
-    `${years} Years`: months > 0?
-    `${months} Months`: weeks > 0?
-    `${weeks} Weeks`: days > 0?
-    `${days} Days`: hours > 0?
-    `${hours} Hours`: minutes > 0?
-    `${minutes} Minutes`: seconds > 0?
-    `${seconds} Seconds`: milliseconds > 0?
-    `${milliseconds}ms`:
-    '0ms'; 
-}
 
 const _lookupReports = (entity, options, done) => {
   Logger.trace({ entity }, 'Searching Reports');
@@ -941,7 +905,6 @@ const _lookupReports = (entity, options, done) => {
           ...report.attributes,
           id: report.id,
           relationships: report.relationships,
-          readableLastUpdated: buildReadableTime(report.attributes.last_modification_date),
           htmlDescription: convertMarkdownToHtml(report.attributes.description),
           last_modification_date: report.last_modification_date
             ? report.last_modification_date * 1000
