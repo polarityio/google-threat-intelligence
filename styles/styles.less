@@ -15,6 +15,11 @@
 @google-green: #3b9b5c;
 @google-blue: #3a69c3;
 
+* {
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
 // Summary tag styles
 
 .summary-icon {
@@ -304,15 +309,17 @@ td.positives {
       .gti-button {
         color: @dimmed-text;
         background-color: @medium-background;
-        font-weight: 500;
-        border-radius: 12px;
-        margin-right: 10px;
-        padding: 0px 11px !important;
+        font-weight: 600;
+        border-radius: 8px;
+        margin-right: 6px;
+        padding: 0px 8px !important;
+        height: 34px;
+        font-size: 12px;
+        line-height: 12px;
         border: 0px;
 
         &.active {
           border: 2.5px solid #86aaf9;
-          padding-top: 3px !important;
           color: @normal-text;
         }
       }
@@ -331,6 +338,7 @@ td.positives {
           padding-top: 7px;
           padding-bottom: 9px;
           border-radius: 5px;
+          text-wrap: nowrap;
         }
         .narrow {
           display: none;
@@ -343,18 +351,17 @@ td.positives {
     flex-direction: column;
     .associations-tab {
       .association {
-        margin-bottom: 9px;
+        margin-bottom: 6px;
 
         .association-summary {
           display: flex;
           flex-direction: column;
-          color: @normal-text;
-          padding-left: 17px;
-          padding-top: 12px;
-          padding-right: 16px;
-          border-radius: 8px;
-
-          background: linear-gradient(to right, transparent 5px, @medium-background 5px),
+          color: #fff;
+          padding-left: 12px;
+          padding-top: 7px;
+          padding-right: 7px;
+          border-radius: 7px;
+          background: linear-gradient(to right, transparent 3px, @medium-background 5px),
             linear-gradient(
               to bottom,
               @google-red 25%,
@@ -380,10 +387,10 @@ td.positives {
                 justify-content: center;
                 margin-right: 14px;
                 margin-left: 5px;
-                margin-top: -14px;
+                margin-top: -9px;
 
                 .association-icon {
-                  font-size: 30px;
+                  font-size: 22px;
                   color: @dimmed-text;
                 }
               }
@@ -410,17 +417,20 @@ td.positives {
                     color: @muted-text;
                     font-weight: 200;
                     margin-right: 10px;
+                    font-size: 11px;
                   }
                 }
                 .alt-names {
                   display: flex;
                   color: @dimmed-text;
                   font-weight: 200;
-                  margin-top: 4px;
+                  margin-top: 2px;
+                  font-size: 11px;
                 }
                 .link {
-                  margin-top: 0px;
-                  margin-bottom: 3px;
+                  margin-top: -1px;
+                  font-size: 12px;
+
                   .narrow {
                     display: none;
                   }
@@ -435,24 +445,28 @@ td.positives {
             }
           }
           .description {
-            color: @normal-text;
+            color: #fff;
             font-weight: 200;
-            margin-top: 2px;
             text-overflow: ellipsis;
             overflow: hidden;
-            white-space: nowrap;
-            margin-bottom: 7px;
+            margin-bottom: 1px;
+            max-height: 22px;
+            border-radius: 3px;
+            box-shadow: inset 0 -17px 11px -8px rgba(255, 255, 255, 0.05);
+
+            &.expanded {
+              overflow-y: auto;
+              max-height: 300px;
+              width: 100%;
+            }
           }
           .bottom {
             display: flex;
             flex-direction: row;
-            justify-content: space-around;
-            align-items: center;
 
             .related-info {
               display: flex;
               flex-direction: row;
-              justify-content: center;
               flex-wrap: wrap;
               margin-bottom: 11px;
 
@@ -465,53 +479,48 @@ td.positives {
 
                 .title {
                   color: @dimmed-text;
-                  font-weight: 400;
-                  font-size: 14px;
-                  margin-bottom: 6px;
+                  font-weight: 500;
+                  font-size: 12px;
+                  margin-bottom: 2px;
                 }
                 .count {
                   color: @normal-text;
                 }
               }
             }
-            .open-details-icon {
-              flex: 1;
-              height: 35px;
-              min-width: 62px;
-              border-radius:10px;
-
-              &:hover {
-                background-color: lighten(@medium-background, 5%);
-              }
-              &:active {
-                background-color: lighten(@medium-background, 10%);
-              }
-            }
           }
-
           .open-details-icon {
             display: flex;
             justify-content: center;
             align-items: center;
+            flex: 1;
             width: 100%;
-            margin-top: 3px;
-            margin-bottom: 10px;
+            min-width: 62px;
+            border-radius: 10px;
+            margin-top: -7px;
+            margin-bottom: 7px;
             cursor: pointer;
+            padding: 2px;
 
             .open-details {
-              font-size: 16px;
+              font-size: 15px;
               color: @dimmed-text;
             }
+
+            &:hover {
+              background-color: lighten(@medium-background, 5%);
+            }
+            &:active {
+              background-color: lighten(@medium-background, 10%);
+            }
           }
-        }
-        .details {
         }
       }
     }
   }
 }
 
-@media (max-width: 500px) {
+@media (max-width: 450px) {
   .associations {
     .control-results {
       .right {
