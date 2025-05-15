@@ -349,6 +349,7 @@ td.positives {
   .associations-tabs {
     display: flex;
     flex-direction: column;
+
     .associations-tab {
       .association {
         margin-bottom: 6px;
@@ -458,6 +459,26 @@ td.positives {
               overflow-y: auto;
               max-height: 300px;
               width: 100%;
+              box-shadow: none;
+            }
+          }
+          .details {
+            color: @dimmed-text;
+
+            .p-value {
+              color: @normal-text;
+            }
+
+            .counters {
+              .counters-title {
+                font-size: 13px;
+                font-weight: 600;
+                margin-top: 3px;
+                margin-bottom: 2px;
+              }
+              .counter-values {
+                margin-left: 7px;
+              }
             }
           }
           .bottom {
@@ -508,6 +529,7 @@ td.positives {
             }
 
             &:hover {
+              // TODO: add opacity and adjust lightening so text shows through on sides but still looks similar through stronger lightening
               background-color: lighten(@medium-background, 5%);
             }
             &:active {
@@ -515,6 +537,23 @@ td.positives {
             }
           }
         }
+      }
+    }
+
+    .remaining-link {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+
+      a {
+        color: #23b6ff;
+        background-color: #242d41;
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-top: 7px;
+        padding-bottom: 9px;
+        border-radius: 5px;
+        text-wrap: nowrap;
       }
     }
   }

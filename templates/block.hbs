@@ -832,7 +832,7 @@
                 class="btn gti-button {{if (eq associationTab "threats") "active"}}"
                 {{action "switchAssociationsTab" "threats"}}
               >
-                Threats - {{threatsCount}}
+                Threats - 5 of {{threatsCount}}
               </button>
             {{/if}}
             {{#if reports.length}}
@@ -840,7 +840,7 @@
                 class="btn gti-button {{if (eq associationTab "reporting") "active"}}"
                 {{action "switchAssociationsTab" "reporting"}}
               >
-                Reporting - {{reportsCount}}
+                Reporting - 5 of {{reportsCount}}
               </button>
             {{/if}}
           </div>
@@ -1038,6 +1038,7 @@
                         </div>
                       {{/if}}
                     </div>
+
                     {{#if threat.htmlDescription}}
                       <div
                         class="description {{
@@ -1049,117 +1050,7 @@
                         {{{threat.htmlDescription}}}
                       </div>
                     {{/if}}
-                    {{#if (get expandedAssociations (concat "threats" threatIndex))}}
-                      {{#if threat.status}}
-                        <div>
-                          <span class="p-key">
-                            Status:
-                          </span>
-                          <span class="p-value">
-                            {{threat.status}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.origin}}
-                        <div>
-                          <span class="p-key">
-                            Origin:
-                          </span>
-                          <span class="p-value">
-                            {{threat.origin}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.private}}
-                        <div>
-                          <span class="p-key">
-                            Is Private:
-                          </span>
-                          <span class="p-value">
-                            {{capitalize threat.private}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.subscribers_count}}
-                        <div>
-                          <span class="p-key">
-                            subscribers_count:
-                          </span>
-                          <span class="p-value">
-                            {{threat.subscribers_count}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.references_count}}
-                        <div>
-                          <span class="p-key">
-                            references_count:
-                          </span>
-                          <span class="p-value">
-                            {{threat.references_count}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.last_modification_date}}
-                        <div>
-                          <span class="p-key">
-                            last_modification_date:
-                          </span>
-                          <span class="p-value">
-                            {{moment-format
-                              threat.last_modification_date
-                              "YYYY-MM-DD"
-                              timeZone=timezone
-                            }}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.creation_date}}
-                        <div>
-                          <span class="p-key">
-                            creation_date:
-                          </span>
-                          <span class="p-value">
-                            {{moment-format
-                              threat.creation_date
-                              "YYYY-MM-DD"
-                              timeZone=timezone
-                            }}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.autogenerate_tags}}
-                        <div>
-                          <span class="p-key">
-                            autogenerate_tags:
-                          </span>
-                          <span class="p-value">
-                            {{join ", " threat.autogenerate_tags}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{#if threat.counters}}
-                        <div>
-                          <h3 class="p-title">
-                            Counters:
-                          </h3>
-                          <span class="p-value">
-                            {{#each-in threat.counters as |key value|}}
-                              <div>
-                                <span class="p-key">
-                                  {{titleize (humanize (dasherize key))}}:
-                                </span>
-                                <span class="p-value">
-                                  {{value}}
-                                </span>
-                              </div>
-                            {{/each-in}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{!-- {{#if threat.confidenceGroupedData}}{{/if}}
-                      {{#if threat.flatAggregations}}{{/if}} --}}
-                    {{/if}}
+
                     <div class="bottom">
                       <div class="related-info">
                         {{#if threat.malware_roles.length}}
@@ -1243,6 +1134,121 @@
                         {{/if}}
                       </div>
                     </div>
+
+                    {{#if (get expandedAssociations (concat "threats" threatIndex))}}
+                      <div class="details">
+                        {{#if threat.status}}
+                          <div>
+                            <span class="p-key">
+                              Status:
+                            </span>
+                            <span class="p-value">
+                              {{threat.status}}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.origin}}
+                          <div>
+                            <span class="p-key">
+                              Origin:
+                            </span>
+                            <span class="p-value">
+                              {{threat.origin}}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.private}}
+                          <div>
+                            <span class="p-key">
+                              Private:
+                            </span>
+                            <span class="p-value">
+                              {{if threat.private "Yes" "No"}}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.subscribers_count}}
+                          <div>
+                            <span class="p-key">
+                              subscribers_count:
+                            </span>
+                            <span class="p-value">
+                              {{threat.subscribers_count}}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.references_count}}
+                          <div>
+                            <span class="p-key">
+                              references_count:
+                            </span>
+                            <span class="p-value">
+                              {{threat.references_count}}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.last_modification_date}}
+                          <div>
+                            <span class="p-key">
+                              last_modification_date:
+                            </span>
+                            <span class="p-value">
+                              {{moment-format
+                                threat.last_modification_date
+                                "YYYY-MM-DD"
+                                timeZone=timezone
+                              }}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.creation_date}}
+                          <div>
+                            <span class="p-key">
+                              creation_date:
+                            </span>
+                            <span class="p-value">
+                              {{moment-format
+                                threat.creation_date
+                                "YYYY-MM-DD"
+                                timeZone=timezone
+                              }}
+                            </span>
+                          </div>
+                        {{/if}}
+                        {{#if threat.autogenerate_tags}}
+                          <div>
+                            <div class="p-key">
+                              Auto Generated Tags:
+                            </div>
+                            <div class="p-value">
+                              {{join ", " threat.autogenerate_tags}}
+                            </div>
+                          </div>
+                        {{/if}}
+                        {{#if threat.counters}}
+                          <div class="counters">
+                            <span class="counters-title">
+                              Counters:
+                            </span>
+                            <div class="counter-values">
+                              {{#each-in threat.counters as |key value|}}
+                                <div>
+                                  <span class="p-key">
+                                    {{titleize (humanize (dasherize key))}}:
+                                  </span>
+                                  <span class="p-value">
+                                    {{value}}
+                                  </span>
+                                </div>
+                              {{/each-in}}
+                            </div>
+                          </div>
+                        {{/if}}
+                        {{!-- {{#if threat.confidenceGroupedData}}{{/if}}
+                      {{#if threat.flatAggregations}}{{/if}} --}}
+                      </div>
+                    {{/if}}
+
                     <div
                       class="open-details-icon"
                       {{action "toggleExpandableAssociations" "threats" threatIndex}}
@@ -1390,6 +1396,7 @@
                         </div>
                       {{/if}}
                     </div>
+
                     {{#if report.executive_summary}}
                       <div
                         class="description {{
@@ -1401,19 +1408,7 @@
                         {{{report.executive_summary}}}
                       </div>
                     {{/if}}
-                    {{#if (get expandedAssociations (concat "reports" reportIndex))}}
-                      {{#if report.status}}
-                        <div>
-                          <span class="p-key">
-                            Status:
-                          </span>
-                          <span class="p-value">
-                            {{report.status}}
-                          </span>
-                        </div>
-                      {{/if}}
-                      {{!-- TODO remaining fields --}}
-                    {{/if}}
+
                     <div class="bottom">
                       <div class="related-info">
                         {{#if report.malware_roles.length}}
@@ -1497,6 +1492,24 @@
                         {{/if}}
                       </div>
                     </div>
+
+                    {{#if (get expandedAssociations (concat "reports" reportIndex))}}
+                      <div class="details">
+                        {{#if report.status}}
+                          <div>
+                            <span class="p-key">
+                              Status:
+                            </span>
+                            <span class="p-value">
+                              {{report.status}}
+                            </span>
+                          </div>
+                        {{/if}}
+
+                        {{! TODO remaining fields }}
+                      </div>
+                    {{/if}}
+
                     <div
                       title="Details View"
                       class="open-details-icon"
@@ -1518,6 +1531,17 @@
               {{/each}}
             </div>
           {{/if}}
+          <div class="remaining-link">
+            <a href="{{associationLink}}/{{associationTab}}">
+              ...View remaining
+              {{#if (eq associationTab "threats")}}
+                Threats
+              {{else}}
+                Reports
+              {{/if}}
+              in GTI
+            </a>
+          </div>
         </div>
       </div>
     {{/if}}

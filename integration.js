@@ -154,7 +154,7 @@ function doLookup(entities, options, cb) {
   let entityLookup = {};
   let hashGroups = [];
   let hashGroup = [];
-  let nonCveOrThreatActorEntities = [];
+  let nonCveOrThreatActorEntities = entities; // [];
   let threatActorsEntities = [];
 
   Logger.trace(entities);
@@ -168,13 +168,13 @@ function doLookup(entities, options, cb) {
       return;
     }
 
-    if (entity.type === 'custom') {
-      if (threatActorNames.includes(entity.value)) {
-        threatActorsEntities.push(entity);
-      }
-    } else if (entity.type !== 'cve') {
-      nonCveOrThreatActorEntities.push(entity);
-    }
+    // if (entity.type === 'custom') {
+    //   if (threatActorNames.includes(entity.value)) {
+    //     threatActorsEntities.push(entity);
+    //   }
+    // } else if (entity.type !== 'cve') {
+    //   nonCveOrThreatActorEntities.push(entity);
+    // }
 
     if (entity.isMD5 || entity.isSHA1 || entity.isSHA256) {
       // VT can only look up 4 or 25 hashes at a time depending on the key type
@@ -311,45 +311,45 @@ function doLookup(entities, options, cb) {
           callback(null, []);
         }
       },
-      cveLookups: function (callback) {
-        if (cveEntities.length > 0) {
-          async.concat(
-            cveEntities,
-            function (entity, concatDone) {
-              Logger.debug({ cve: entity.value }, 'Looking up CVE');
-              _lookupVulnerabilities(entity, options, concatDone);
-            },
-            function (err, results) {
-              if (err) return callback(err);
+      // cveLookups: function (callback) {
+      //   if (cveEntities.length > 0) {
+      //     async.concat(
+      //       cveEntities,
+      //       function (entity, concatDone) {
+      //         Logger.debug({ cve: entity.value }, 'Looking up CVE');
+      //         _lookupVulnerabilities(entity, options, concatDone);
+      //       },
+      //       function (err, results) {
+      //         if (err) return callback(err);
 
-              callback(null, results);
-            }
-          );
-        } else {
-          callback(null, []);
-        }
-      },
-      threatActorLookups: function (callback) {
-        if (threatActorsEntities.length > 0) {
-          async.concat(
-            threatActorsEntities,
-            function (entity, concatDone) {
-              Logger.debug(
-                { threatActor: entity.value },
-                'Looking up Threat Actors by Name'
-              );
-              _lookupThreatActors(entity, options, concatDone);
-            },
-            function (err, results) {
-              if (err) return callback(err);
+      //         callback(null, results);
+      //       }
+      //     );
+      //   } else {
+      //     callback(null, []);
+      //   }
+      // },
+      // threatActorLookups: function (callback) {
+      //   if (threatActorsEntities.length > 0) {
+      //     async.concat(
+      //       threatActorsEntities,
+      //       function (entity, concatDone) {
+      //         Logger.debug(
+      //           { threatActor: entity.value },
+      //           'Looking up Threat Actors by Name'
+      //         );
+      //         _lookupThreatActors(entity, options, concatDone);
+      //       },
+      //       function (err, results) {
+      //         if (err) return callback(err);
 
-              callback(null, results);
-            }
-          );
-        } else {
-          callback(null, []);
-        }
-      },
+      //         callback(null, results);
+      //       }
+      //     );
+      //   } else {
+      //     callback(null, []);
+      //   }
+      // },
       threatLookups: function (callback) {
         if (nonCveOrThreatActorEntities.length > 0) {
           async.concat(
@@ -400,8 +400,8 @@ function doLookup(entities, options, cb) {
         'ipLookups',
         'domainLookups',
         'urlLookups',
-        'cveLookups',
-        'threatActorLookups'
+        // 'cveLookups',
+        // 'threatActorLookups'
       ].forEach((key) =>
         lookupResults[key].forEach(function (lookupResult) {
           if (lookupResult && lookupResult.data && lookupResult.data.details) {
@@ -1788,13 +1788,13 @@ async function validateOptions(userOptions, cb) {
     });
   }
 
-  if (!errors.length) {
-    try {
-      if (job) job.cancel();
+  // if (!errors.length) {
+  //   try {
+  //     if (job) job.cancel();
 
-      job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
-    } catch (_) {}
-  }
+  //     job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
+  //   } catch (_) {}
+  // }
 
   cb(null, errors);
 }
