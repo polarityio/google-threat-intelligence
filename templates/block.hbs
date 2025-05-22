@@ -1170,7 +1170,7 @@
                         {{#if threat.subscribers_count}}
                           <div>
                             <span class="p-key">
-                              subscribers_count:
+                              Subscribers Count:
                             </span>
                             <span class="p-value">
                               {{threat.subscribers_count}}
@@ -1180,7 +1180,7 @@
                         {{#if threat.references_count}}
                           <div>
                             <span class="p-key">
-                              references_count:
+                              References Count:
                             </span>
                             <span class="p-value">
                               {{threat.references_count}}
@@ -1190,7 +1190,7 @@
                         {{#if threat.last_modification_date}}
                           <div>
                             <span class="p-key">
-                              last_modification_date:
+                              Last Modification Date:
                             </span>
                             <span class="p-value">
                               {{moment-format
@@ -1204,7 +1204,7 @@
                         {{#if threat.creation_date}}
                           <div>
                             <span class="p-key">
-                              creation_date:
+                              Creation Date:
                             </span>
                             <span class="p-value">
                               {{moment-format
@@ -1226,26 +1226,143 @@
                           </div>
                         {{/if}}
                         {{#if threat.counters}}
-                          <div class="counters">
-                            <span class="counters-title">
-                              Counters:
+                          <div class="threat-data-group">
+                            <span
+                              class="title"
+                              {{action
+                                "toggleExpandableAssociations"
+                                "threatCounter"
+                                threatIndex
+                              }}
+                            >
+                              Counters
+                              {{fa-icon
+                                size="md"
+                                icon=(if
+                                  (get
+                                    expandedAssociations
+                                    (concat "threatCounter" threatIndex)
+                                  )
+                                  "chevron-up"
+                                  "chevron-down"
+                                )
+                                fixedWidth=true
+                                class="open-counters"
+                              }}
                             </span>
-                            <div class="counter-values">
-                              {{#each-in threat.counters as |key value|}}
-                                <div>
-                                  <span class="p-key">
-                                    {{titleize (humanize (dasherize key))}}:
-                                  </span>
-                                  <span class="p-value">
-                                    {{value}}
-                                  </span>
-                                </div>
-                              {{/each-in}}
-                            </div>
+                            {{#if
+                              (get
+                                expandedAssociations (concat "threatCounter" threatIndex)
+                              )
+                            }}
+                              <div class="values">
+                                {{#each-in threat.counters as |key value|}}
+                                  <div>
+                                    <span class="p-key">
+                                      {{titleize (humanize (dasherize key))}}:
+                                    </span>
+                                    <span class="p-value">
+                                      {{value}}
+                                    </span>
+                                  </div>
+                                {{/each-in}}
+                              </div>
+                            {{/if}}
                           </div>
                         {{/if}}
-                        {{!-- {{#if threat.confidenceGroupedData}}{{/if}}
-                      {{#if threat.flatAggregations}}{{/if}} --}}
+                        {{#if threat.flatAggregations}}
+                          <div class="threat-data-group">
+                            <span
+                              class="title"
+                              {{action
+                                "toggleExpandableAssociations"
+                                "threatIocs"
+                                threatIndex
+                              }}
+                            >
+                              IOCs
+                              {{fa-icon
+                                size="md"
+                                icon=(if
+                                  (get
+                                    expandedAssociations (concat "threatIocs" threatIndex)
+                                  )
+                                  "chevron-up"
+                                  "chevron-down"
+                                )
+                                fixedWidth=true
+                                class="open-counters"
+                              }}
+                            </span>
+                            {{#if
+                              (get expandedAssociations (concat "threatIocs" threatIndex))
+                            }}
+                              <div class="values">
+                                {{#each threat.flatAggregations as |ioc|}}
+                                  <div>
+                                    <span class="p-key">
+                                      {{ioc.readablePath}}:
+                                    </span>
+                                    <span class="p-value">
+                                      {{ioc.value}}
+                                    </span>
+                                  </div>
+                                {{/each}}
+                              </div>
+                            {{/if}}
+                          </div>
+                        {{/if}}
+                        {{#if threat.confidenceGroupedData}}
+                          <div class="threat-data-group">
+                            <span
+                              class="title"
+                              {{action
+                                "toggleExpandableAssociations"
+                                "threatMetadata"
+                                threatIndex
+                              }}
+                            >
+                              Metadata
+                              {{fa-icon
+                                size="md"
+                                icon=(if
+                                  (get
+                                    expandedAssociations (concat "threatMetadata" threatIndex)
+                                  )
+                                  "chevron-up"
+                                  "chevron-down"
+                                )
+                                fixedWidth=true
+                                class="open-counters"
+                              }}
+                            </span>
+                            {{#if
+                              (get expandedAssociations (concat "threatMetadata" threatIndex))
+                            }}
+                              <div class="values">
+                                {{#each-in
+                                  threat.confidenceGroupedData as |confidence metadata|
+                                }}
+                                  <span
+                                    class="title"
+                                  >
+                                    {{titleize (humanize (dasherize confidence))}}
+                                  </span>
+                                  {{#each-in metadata as |key values|}}
+                                    <div class="metadata-field">
+                                      <span class="p-key">
+                                        {{titleize (humanize (dasherize key))}}:
+                                      </span>
+                                      <span class="p-value">
+                                        {{values}}
+                                      </span>
+                                    </div>
+                                  {{/each-in}}
+                                {{/each-in}}
+                              </div>
+                            {{/if}}
+                          </div>
+                        {{/if}}
                       </div>
                     {{/if}}
 
