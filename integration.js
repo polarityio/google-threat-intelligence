@@ -29,12 +29,15 @@ const {
   find,
   assign,
   mapValues,
-  forEach
+  forEach,
+  isEmpty,
+  omitBy,
+  isUndefined
 } = fp;
 const { DateTime } = require('luxon');
 
 const showdown = require('showdown');
-const convertMarkdownToHtml = (text) => (new showdown.Converter()).makeHtml(text);
+const convertMarkdownToHtml = (text) => new showdown.Converter().makeHtml(text);
 
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
@@ -399,7 +402,7 @@ function doLookup(entities, options, cb) {
         'hashLookups',
         'ipLookups',
         'domainLookups',
-        'urlLookups',
+        'urlLookups'
         // 'cveLookups',
         // 'threatActorLookups'
       ].forEach((key) =>
@@ -847,8 +850,8 @@ const _lookupThreats = (entity, options, done) => {
           relationships: threat.relationships,
           motivationNames: map('value', threat.attributes.motivations),
           targetedIndustryNames: map(
-            ({ industryGroup, industry }) =>
-              size(industryGroup) > size(industry) ? industryGroup : industry,
+            ({ industry_group, industry }) =>
+              size(industry_group) > size(industry) ? industry_group : industry,
             threat.attributes.targeted_industries_tree
           ),
           targetedRegionNames: map(
@@ -857,10 +860,10 @@ const _lookupThreats = (entity, options, done) => {
           ),
           htmlDescription: convertMarkdownToHtml(threat.attributes.description),
           confidenceGroupedData: groupByConfidence(threat.attributes),
-          flatAggregations: flattenWithPaths(entity, threat.attributes.aggregations),
+          categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
           last_modification_date: threat.attributes.last_modification_date
             ? threat.attributes.last_modification_date * 1000
-            : threat.attributes.last_modification_date,
+            : threat.attributes.last_modification_date
         }))
       )(result);
 
@@ -957,20 +960,24 @@ const getUiUrlByEntityType = (entity) =>
 
 const groupByConfidence = (threat) => {
   const groupedMotivations = groupBy('confidence', threat.motivations);
-  const groupedTargetedRegions = groupBy('confidence', threat.targeted_regions_hierarchy);
   const groupedTags = groupBy('confidence', threat.tags_details);
+  const groupedMalwareRoles = groupBy('confidence', threat.malware_roles);
+  const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
+  const groupedTargetedRegions = groupBy('confidence', threat.targeted_regions_hierarchy);
   const groupedTargetedIndustries = groupBy(
     'confidence',
     threat.targeted_industries_tree
   );
-  const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
 
   const uniqueConfidences = flow(
     assign(groupedMotivations),
-    assign(groupedTargetedRegions),
     assign(groupedTags),
-    assign(groupedTargetedIndustries),
+    assign(groupedMalwareRoles),
     assign(groupedSourceRegions),
+    assign(groupedTargetedRegions),
+    assign(groupedTargetedIndustries),
+    mapValues((val) => (isEmpty(val) ? undefined : val)),
+    omitBy(isUndefined),
     keys,
     uniq
   )({});
@@ -979,36 +986,53 @@ const groupByConfidence = (threat) => {
 
   const threatsGroupedByConfidence = reduce(
     (agg, confidence) => {
-      const getUniqueValuesInGroup = flow(get(confidence), map('value'), uniq, compact);
+      const getUniqueValuesInGroup = flow(
+        get(confidence),
+        map('value'),
+        uniq,
+        filter((x) => !['null', null, 'undefined', undefined ].includes(x)),
+        compact
+      );
 
       const formatRegion = flow(
         get(confidence),
         map((region) => `${region.country}, ${region.sub_region}`),
         uniq,
+        filter((x) => !['null', null,  'undefined', undefined].includes(x)),
         compact
       );
 
-      const motivations = size(groupedMotivations) && {
-        motivations: getUniqueValuesInGroup(groupedMotivations)
+      const motivationsContent = getUniqueValuesInGroup(groupedMotivations);
+      const motivations = size(motivationsContent) && {
+        motivations: motivationsContent
       };
       const tags = size(groupedTags) && { tags: getUniqueValuesInGroup(groupedTags) };
-      const sourceRegions = size(groupedSourceRegions) && {
-        sourceRegions: formatRegion(groupedSourceRegions)
+
+      const malwareRolesContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const malwareRoles = size(malwareRolesContent) && {
+        malwareRoles: malwareRolesContent
+      };
+      const sourceRegionsContent = formatRegion(groupedSourceRegions);
+      const sourceRegions = size(sourceRegionsContent) && {
+        sourceRegions: sourceRegionsContent
       };
 
-      const targetRegions = size(groupedTargetedRegions) && {
-        regions: formatRegion(groupedTargetedRegions)
+      const targetedRegionsContent = formatRegion(groupedTargetedRegions);
+      const targetedRegions = size(targetedRegionsContent) && {
+        targetedRegions: targetedRegionsContent
       };
 
-      const targetIndustries = size(groupedTargetedIndustries) && {
-        industries: flow(
-          get(confidence),
-          map(({ industryGroup, industry }) =>
-            size(industryGroup) > size(industry) ? industryGroup : industry
-          ),
-          uniq,
-          compact
-        )(groupedTargetedIndustries)
+      const targetedIndustriesContent = flow(
+        get(confidence),
+        map(({ industry_group, industry }) =>
+          size(industry_group) > size(industry) ? industry_group : industry
+        ),
+        uniq,
+        compact
+      )(groupedTargetedIndustries);
+
+      const targetedIndustries = size(targetedIndustriesContent) && {
+        targetedIndustries: targetedIndustriesContent
       };
 
       return {
@@ -1016,13 +1040,10 @@ const groupByConfidence = (threat) => {
         [confidence]: {
           ...motivations,
           ...tags,
+          ...malwareRoles,
           ...sourceRegions,
-          ...((!!targetRegions || !!targetIndustries) && {
-            targets: {
-              ...targetRegions,
-              ...targetIndustries
-            }
-          })
+          ...targetedRegions,
+          ...targetedIndustries
         }
       };
     },
