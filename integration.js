@@ -32,9 +32,9 @@ const {
   forEach,
   isEmpty,
   omitBy,
-  isUndefined
+  isUndefined,
+  filter
 } = fp;
-const { DateTime } = require('luxon');
 
 const showdown = require('showdown');
 const convertMarkdownToHtml = (text) => new showdown.Converter().makeHtml(text);
@@ -861,6 +861,9 @@ const _lookupThreats = (entity, options, done) => {
           htmlDescription: convertMarkdownToHtml(threat.attributes.description),
           confidenceGroupedData: groupByConfidence(threat.attributes),
           categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
+          creation_date: threat.attributes.creation_date
+            ? threat.attributes.creation_date * 1000
+            : threat.attributes.creation_date,
           last_modification_date: threat.attributes.last_modification_date
             ? threat.attributes.last_modification_date * 1000
             : threat.attributes.last_modification_date
@@ -909,6 +912,20 @@ const _lookupReports = (entity, options, done) => {
           id: report.id,
           relationships: report.relationships,
           htmlDescription: convertMarkdownToHtml(report.attributes.description),
+          targetedIndustryNames: map(
+            ({ industry_group, industry }) =>
+              size(industry_group) > size(industry) ? industry_group : industry,
+            report.attributes.targeted_industries_tree
+          ),
+          targetedRegionNames: map(
+            (region) => `${region.country}, ${region.sub_region}`,
+            report.attributes.targeted_regions_hierarchy
+          ),
+          confidenceGroupedData: groupByConfidence(report.attributes),
+          categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
+          creation_date: report.creation_date
+            ? report.creation_date * 1000
+            : report.creation_date,
           last_modification_date: report.last_modification_date
             ? report.last_modification_date * 1000
             : report.last_modification_date
@@ -962,6 +979,8 @@ const groupByConfidence = (threat) => {
   const groupedMotivations = groupBy('confidence', threat.motivations);
   const groupedTags = groupBy('confidence', threat.tags_details);
   const groupedMalwareRoles = groupBy('confidence', threat.malware_roles);
+  const groupedAvailableMitigation = groupBy('confidence', threat.available_mitigation);
+  const groupedVendorFixReferences = groupBy('confidence', threat.vendor_fix_references);
   const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
   const groupedTargetedRegions = groupBy('confidence', threat.targeted_regions_hierarchy);
   const groupedTargetedIndustries = groupBy(
@@ -973,6 +992,8 @@ const groupByConfidence = (threat) => {
     assign(groupedMotivations),
     assign(groupedTags),
     assign(groupedMalwareRoles),
+    assign(groupedAvailableMitigation),
+    assign(groupedVendorFixReferences),
     assign(groupedSourceRegions),
     assign(groupedTargetedRegions),
     assign(groupedTargetedIndustries),
@@ -1006,12 +1027,22 @@ const groupByConfidence = (threat) => {
       const motivations = size(motivationsContent) && {
         motivations: motivationsContent
       };
+
       const tags = size(groupedTags) && { tags: getUniqueValuesInGroup(groupedTags) };
 
       const malwareRolesContent = getUniqueValuesInGroup(groupedMalwareRoles);
       const malwareRoles = size(malwareRolesContent) && {
         malwareRoles: malwareRolesContent
       };
+      const availableMitigationContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const availableMitigation = size(availableMitigationContent) && {
+        availableMitigation: availableMitigationContent
+      };
+      const vendorFixReferencesContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const vendorFixReferences = size(vendorFixReferencesContent) && {
+        vendorFixReferences: vendorFixReferencesContent
+      };
+
       const sourceRegionsContent = formatRegion(groupedSourceRegions);
       const sourceRegions = size(sourceRegionsContent) && {
         sourceRegions: sourceRegionsContent
@@ -1041,6 +1072,8 @@ const groupByConfidence = (threat) => {
           ...motivations,
           ...tags,
           ...malwareRoles,
+          ...availableMitigation,
+          ...vendorFixReferences,
           ...sourceRegions,
           ...targetedRegions,
           ...targetedIndustries

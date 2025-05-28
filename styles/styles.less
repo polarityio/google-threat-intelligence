@@ -451,7 +451,7 @@ td.positives {
             text-overflow: ellipsis;
             overflow: hidden;
             margin-bottom: 1px;
-            max-height: 22px;
+            max-height: 35px;
             border-radius: 3px;
             box-shadow: inset 0 -17px 11px -8px rgba(255, 255, 255, 0.05);
 
@@ -478,6 +478,7 @@ td.positives {
                 margin-bottom: 2px;
               }
               .values {
+                margin-left: 7px;
                 .title {
                   display: block;
                   font-size: 14px;
@@ -485,7 +486,12 @@ td.positives {
                   margin-top: 7px;
                   margin-bottom: 3px;
                 }
-                margin-left: 7px;
+                .iocs {
+                  overflow-y: auto;
+                  max-height: 300px;
+                  width: 100%;
+                  box-shadow: none;
+                }
               }
             }
           }
