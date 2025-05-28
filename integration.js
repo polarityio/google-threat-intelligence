@@ -923,12 +923,12 @@ const _lookupReports = (entity, options, done) => {
           ),
           confidenceGroupedData: groupByConfidence(report.attributes),
           categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
-          creation_date: report.creation_date
-            ? report.creation_date * 1000
-            : report.creation_date,
-          last_modification_date: report.last_modification_date
-            ? report.last_modification_date * 1000
-            : report.last_modification_date
+          creation_date: report.attributes.creation_date
+            ? report.attributes.creation_date * 1000
+            : report.attributes.creation_date,
+          last_modification_date: report.attributes.last_modification_date
+            ? report.attributes.last_modification_date * 1000
+            : report.attributes.last_modification_date
         }))
       )(result);
 

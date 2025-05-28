@@ -930,6 +930,8 @@
                             <div class="name">
                               {{threat.name}}
                             </div>
+                          </div>
+                          <div class="modified-date">
                             {{#if threat.last_modification_date}}
                               <div class="updated">
                                 Updated {{moment-from-now
@@ -940,7 +942,13 @@
                             {{/if}}
                           </div>
                           {{#if threat.alt_names}}
-                            <div class="alt-names">
+                            <div
+                              class="alt-names {{
+                                if
+                                (get expandedAssociations (concat "threats" threatIndex))
+                                "expanded"
+                              }}"
+                            >
                               {{join ", " threat.alt_names}}
                             </div>
                           {{/if}}
@@ -1028,15 +1036,6 @@
                           </div>
                         </div>
                       </div>
-                      {{#if threat.last_modification_date}}
-                        <div class="last-activity">
-                          Last Activity: {{moment-format
-                            threat.last_modification_date
-                            "YYYY-MM-DD"
-                            timeZone=timezone
-                          }}
-                        </div>
-                      {{/if}}
                     </div>
 
                     {{#if threat.htmlDescription}}
@@ -1339,20 +1338,25 @@
                                     </svg>
                                   </a>
                                 </div>
-                                {{#each-in threat.categorizedIocs as |iocCategory iocs|}}
-                                  <div>
-                                    <span class="p-key">
-                                      {{iocCategory}}:
-                                    </span>
-                                    <span class="p-value">
-                                      {{#each iocs as |ioc iocIndex|}}
-                                        {{ioc.value}}{{#if
-                                          (not (eq (sub iocs.length 1) iocIndex))
-                                        }},{{/if}}
-                                      {{/each}}
-                                    </span>
-                                  </div>
-                                {{/each-in}}
+                                <div class="iocs">
+                                  {{#each-in threat.categorizedIocs as |iocCategory iocs|
+                                  }}
+                                    <div>
+                                      <span class="p-key">
+                                        {{iocCategory}}:
+                                      </span>
+                                      <span class="p-value">
+                                        {{#each iocs as |ioc iocIndex|}}
+                                          {{ioc.value}}{{#if
+                                            (not (eq (sub iocs.length 1) iocIndex))
+                                          }}
+                                            ,
+                                          {{/if}}
+                                        {{/each}}
+                                      </span>
+                                    </div>
+                                  {{/each-in}}
+                                </div>
                               </div>
                             {{/if}}
                           </div>
@@ -1494,6 +1498,8 @@
                             <div class="name">
                               {{report.name}}
                             </div>
+                          </div>
+                          <div class="modified-date">
                             {{#if report.last_modification_date}}
                               <div class="updated">
                                 Updated {{moment-from-now
@@ -1599,15 +1605,6 @@
                           </div>
                         </div>
                       </div>
-                      {{#if report.last_modification_date}}
-                        <div class="last-activity">
-                          Last Updated: {{moment-format
-                            report.last_modification_date
-                            "YYYY-MM-DD"
-                            timeZone=timezone
-                          }}
-                        </div>
-                      {{/if}}
                     </div>
 
                     {{#if report.executive_summary}}
@@ -1931,7 +1928,9 @@
                                         {{#each iocs as |ioc iocIndex|}}
                                           {{ioc.value}}{{#if
                                             (not (eq (sub iocs.length 1) iocIndex))
-                                          }},{{/if}}
+                                          }}
+                                            ,
+                                          {{/if}}
                                         {{/each}}
                                       </span>
                                     </div>

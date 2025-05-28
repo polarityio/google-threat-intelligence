@@ -402,7 +402,8 @@ td.positives {
                 .name-updated {
                   display: flex;
                   flex-direction: row;
-                  justify-content: flex-start;
+                  justify-content: space-between;
+                  align-items: center;
 
                   .name {
                     display: flex;
@@ -411,14 +412,20 @@ td.positives {
                     font-size: 14px;
                     font-weight: 700;
                     margin-right: 10px;
-                    max-width: 220px;
                   }
+                }
+                .modified-date {
+                  display: flex;
+                  flex-direction: column;
+                  justify-content: center;
+
                   .updated {
                     display: flex;
                     color: @muted-text;
                     font-weight: 200;
                     margin-right: 10px;
                     font-size: 11px;
+                    padding-top: 3px;
                   }
                 }
                 .alt-names {
@@ -427,6 +434,12 @@ td.positives {
                   font-weight: 200;
                   margin-top: 2px;
                   font-size: 11px;
+                  overflow-y: hidden;
+                  max-height: 35px;
+
+                  .expanded {
+                    max-height: 100%;
+                  }
                 }
                 .link {
                   margin-top: -1px;
@@ -437,12 +450,6 @@ td.positives {
                   }
                 }
               }
-            }
-
-            .last-activity {
-              display: flex;
-              color: @muted-text;
-              font-weight: 200;
             }
           }
           .description {
@@ -592,9 +599,6 @@ td.positives {
         .association {
           .association-summary {
             .title-section {
-              .last-activity {
-                display: none;
-              }
               .title-content {
                 .name-info {
                   .link {
