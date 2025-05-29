@@ -921,6 +921,9 @@
                             fixedWidth=true
                             class="association-icon"
                           }}
+                          {{bs-tooltip
+                            title=(titleize (humanize (dasherize threat.collection_type)))
+                          }}
                         </div>
                         <div class="name-info">
                           <div class="name-updated">
@@ -1493,10 +1496,11 @@
                       <div class="title-content">
                         <div class="threat-type-icon">
                           {{fa-icon
-                            icon=(or (get iconNamesByAssociationType "report") "file-alt")
+                            icon="file-alt"
                             fixedWidth=true
                             class="association-icon"
                           }}
+                          {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
                         </div>
                         <div class="name-info">
                           <div class="name-updated">
