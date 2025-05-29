@@ -1242,7 +1242,7 @@
                                 threatIndex
                               }}
                             >
-                              Counters
+                              IOC Counters
                               {{fa-icon
                                 size="md"
                                 icon=(if
@@ -1261,48 +1261,6 @@
                               (get
                                 expandedAssociations (concat "threatCounter" threatIndex)
                               )
-                            }}
-                              <div class="values">
-                                {{#each-in threat.counters as |key value|}}
-                                  <div>
-                                    <span class="p-key">
-                                      {{titleize (humanize (dasherize key))}}:
-                                    </span>
-                                    <span class="p-value">
-                                      {{value}}
-                                    </span>
-                                  </div>
-                                {{/each-in}}
-                              </div>
-                            {{/if}}
-                          </div>
-                        {{/if}}
-                        {{#if threat.categorizedIocs}}
-                          <div class="threat-data-group">
-                            <span
-                              class="title"
-                              {{action
-                                "toggleExpandableAssociations"
-                                "threatIocs"
-                                threatIndex
-                              }}
-                            >
-                              IOCs
-                              {{fa-icon
-                                size="md"
-                                icon=(if
-                                  (get
-                                    expandedAssociations (concat "threatIocs" threatIndex)
-                                  )
-                                  "chevron-up"
-                                  "chevron-down"
-                                )
-                                fixedWidth=true
-                                class="open-counters"
-                              }}
-                            </span>
-                            {{#if
-                              (get expandedAssociations (concat "threatIocs" threatIndex))
                             }}
                               <div class="values">
                                 <div class="link">
@@ -1346,6 +1304,48 @@
                                     </svg>
                                   </a>
                                 </div>
+                                {{#each-in threat.counters as |key value|}}
+                                  <div>
+                                    <span class="p-key">
+                                      {{titleize (humanize (dasherize key))}}:
+                                    </span>
+                                    <span class="p-value">
+                                      {{value}}
+                                    </span>
+                                  </div>
+                                {{/each-in}}
+                              </div>
+                            {{/if}}
+                          </div>
+                        {{/if}}
+                        {{#if threat.categorizedIocs}}
+                          <div class="threat-data-group">
+                            <span
+                              class="title"
+                              {{action
+                                "toggleExpandableAssociations"
+                                "threatIocs"
+                                threatIndex
+                              }}
+                            >
+                              Aggregations
+                              {{fa-icon
+                                size="md"
+                                icon=(if
+                                  (get
+                                    expandedAssociations (concat "threatIocs" threatIndex)
+                                  )
+                                  "chevron-up"
+                                  "chevron-down"
+                                )
+                                fixedWidth=true
+                                class="open-counters"
+                              }}
+                            </span>
+                            {{#if
+                              (get expandedAssociations (concat "threatIocs" threatIndex))
+                            }}
+                              <div class="values">
                                 <div class="iocs">
                                   {{#each-in threat.categorizedIocs as |iocCategory iocs|
                                   }}
@@ -1828,7 +1828,7 @@
                                 reportIndex
                               }}
                             >
-                              Counters
+                              IOC Counters
                               {{fa-icon
                                 size="md"
                                 icon=(if
@@ -1847,48 +1847,6 @@
                               (get
                                 expandedAssociations (concat "reportCounter" reportIndex)
                               )
-                            }}
-                              <div class="values">
-                                {{#each-in report.counters as |key value|}}
-                                  <div>
-                                    <span class="p-key">
-                                      {{titleize (humanize (dasherize key))}}:
-                                    </span>
-                                    <span class="p-value">
-                                      {{value}}
-                                    </span>
-                                  </div>
-                                {{/each-in}}
-                              </div>
-                            {{/if}}
-                          </div>
-                        {{/if}}
-                        {{#if report.categorizedIocs}}
-                          <div class="threat-data-group">
-                            <span
-                              class="title"
-                              {{action
-                                "toggleExpandableAssociations"
-                                "reportIocs"
-                                reportIndex
-                              }}
-                            >
-                              IOCs
-                              {{fa-icon
-                                size="md"
-                                icon=(if
-                                  (get
-                                    expandedAssociations (concat "reportIocs" reportIndex)
-                                  )
-                                  "chevron-up"
-                                  "chevron-down"
-                                )
-                                fixedWidth=true
-                                class="open-counters"
-                              }}
-                            </span>
-                            {{#if
-                              (get expandedAssociations (concat "reportIocs" reportIndex))
                             }}
                               <div class="values">
                                 <div class="link">
@@ -1932,6 +1890,48 @@
                                     </svg>
                                   </a>
                                 </div>
+                                {{#each-in report.counters as |key value|}}
+                                  <div>
+                                    <span class="p-key">
+                                      {{titleize (humanize (dasherize key))}}:
+                                    </span>
+                                    <span class="p-value">
+                                      {{value}}
+                                    </span>
+                                  </div>
+                                {{/each-in}}
+                              </div>
+                            {{/if}}
+                          </div>
+                        {{/if}}
+                        {{#if report.categorizedIocs}}
+                          <div class="threat-data-group">
+                            <span
+                              class="title"
+                              {{action
+                                "toggleExpandableAssociations"
+                                "reportIocs"
+                                reportIndex
+                              }}
+                            >
+                              Aggregations
+                              {{fa-icon
+                                size="md"
+                                icon=(if
+                                  (get
+                                    expandedAssociations (concat "reportIocs" reportIndex)
+                                  )
+                                  "chevron-up"
+                                  "chevron-down"
+                                )
+                                fixedWidth=true
+                                class="open-counters"
+                              }}
+                            </span>
+                            {{#if
+                              (get expandedAssociations (concat "reportIocs" reportIndex))
+                            }}
+                              <div class="values">
                                 <div class="iocs">
                                   {{#each-in report.categorizedIocs as |iocCategory iocs|
                                   }}

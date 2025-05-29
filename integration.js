@@ -37,6 +37,7 @@ const {
 } = fp;
 
 const showdown = require('showdown');
+showdown.setOption('tables', true);
 const convertMarkdownToHtml = (text) => new showdown.Converter().makeHtml(text);
 
 const map = require('lodash/fp/map').convert({ cap: false });
