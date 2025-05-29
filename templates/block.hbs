@@ -1,10 +1,7 @@
 <div class="d-flex align-items-center justify-content-end copy-btn-container">
-  <button
-    class="btn copy-btn p-action"
-    title="Copy Information to Clipboard"
-    {{action "copyData"}}
-  >
+  <button class="btn copy-btn p-action" {{action "copyData"}}>
     {{fa-icon icon="clipboard" fixedWidth=true}}
+    {{bs-tooltip title="Copy Information to Clipboard"}}
   </button>
   <div class="copy-success-message {{if showCopyMessage "visible" "hidden"}}">
     {{fa-icon icon="check" fixedWidth=true class="copy-success-icon"}}
@@ -929,6 +926,7 @@
                           <div class="name-updated">
                             <div class="name">
                               {{threat.name}}
+                              {{bs-tooltip title=(concat "Threat ID: " threat.id)}}
                             </div>
                           </div>
                           <div class="modified-date">
@@ -940,6 +938,16 @@
                                 }} ago
                               </div>
                             {{/if}}
+                            {{bs-tooltip
+                              title=(concat
+                                "Last Activity: "
+                                (moment-format
+                                  threat.last_modification_date
+                                  "YYYY-MM-DD"
+                                  timeZone=timezone
+                                )
+                              )
+                            }}
                           </div>
                           {{#if threat.alt_names}}
                             <div
@@ -1057,9 +1065,12 @@
                             <div class="title">
                               Role
                             </div>
-                            <div class="count" title="{{join "\n" threat.malware_roles}}">
+                            <div class="count">
                               {{threat.malware_roles.length}}
                             </div>
+                            {{#each threat.malware_roles as |malwareRole|}}
+                              {{bs-tooltip title=malwareRole.value}}
+                            {{/each}}
                           </div>
                         {{/if}}
                         {{#if threat.targetedIndustryNames.length}}
@@ -1067,12 +1078,10 @@
                             <div class="title">
                               Targeted Industries
                             </div>
-                            <div
-                              class="count"
-                              title="{{join "\n" threat.targetedIndustryNames}}"
-                            >
+                            <div class="count">
                               {{threat.targetedIndustryNames.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " threat.targetedIndustryNames)}}
                           </div>
                         {{/if}}
                         {{#if threat.relationships.threat_actors.data.length}}
@@ -1090,12 +1099,10 @@
                             <div class="title">
                               Targeted Regions
                             </div>
-                            <div
-                              class="count"
-                              title="{{join "\n" threat.targetedRegionNames}}"
-                            >
+                            <div class="count">
                               {{threat.targetedRegionNames.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " threat.targetedRegionNames)}}
                           </div>
                         {{/if}}
                         {{#if threat.motivationNames.length}}
@@ -1103,12 +1110,10 @@
                             <div class="title">
                               Motivations
                             </div>
-                            <div
-                              class="count"
-                              title="{{join "\n" threat.motivationNames}}"
-                            >
+                            <div class="count">
                               {{threat.motivationNames.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " threat.motivationNames)}}
                           </div>
                         {{/if}}
                         {{#if threat.relationships.malware_families.data.length}}
@@ -1497,6 +1502,7 @@
                           <div class="name-updated">
                             <div class="name">
                               {{report.name}}
+                              {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
                             </div>
                           </div>
                           <div class="modified-date">
@@ -1515,6 +1521,16 @@
                                 }} ago
                               </div>
                             {{/if}}
+                            {{bs-tooltip
+                              title=(concat
+                                "Last Activity: "
+                                (moment-format
+                                  report.last_modification_date
+                                  "YYYY-MM-DD"
+                                  timeZone=timezone
+                                )
+                              )
+                            }}
                           </div>
                           {{#if (or report.report_type report.threat_scape)}}
                             <div class="alt-names">
@@ -1626,9 +1642,10 @@
                             <div class="title">
                               Role
                             </div>
-                            <div class="count" title="{{join "\n" report.malware_roles}}">
+                            <div class="count">
                               {{report.malware_roles.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " report.malware_roles)}}
                           </div>
                         {{/if}}
                         {{#if report.targetedIndustryNames.length}}
@@ -1636,12 +1653,10 @@
                             <div class="title">
                               Targeted Industries
                             </div>
-                            <div
-                              class="count"
-                              title="{{join "\n" report.targetedIndustryNames}}"
-                            >
+                            <div class="count">
                               {{report.targetedIndustryNames.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " report.targetedIndustryNames)}}
                           </div>
                         {{/if}}
                         {{#if report.relationships.threat_actors.data.length}}
@@ -1659,12 +1674,10 @@
                             <div class="title">
                               Targeted Regions
                             </div>
-                            <div
-                              class="count"
-                              title="{{join "\n" threat.targetedRegionNames}}"
-                            >
+                            <div class="count">
                               {{report.targetedRegionNames.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " report.targetedRegionNames)}}
                           </div>
                         {{/if}}
                         {{#if report.motivationNames.length}}
@@ -1672,12 +1685,10 @@
                             <div class="title">
                               Motivations
                             </div>
-                            <div
-                              class="count"
-                              title="{{join "\n" report.motivationNames}}"
-                            >
+                            <div class="count">
                               {{report.motivationNames.length}}
                             </div>
+                            {{bs-tooltip title=(join " | " report.motivationNames)}}
                           </div>
                         {{/if}}
                         {{#if report.relationships.malware_families.data.length}}
@@ -1998,7 +2009,6 @@
                     {{/if}}
 
                     <div
-                      title="Details View"
                       class="open-details-icon"
                       {{action "toggleExpandableAssociations" "reports" reportIndex}}
                     >
@@ -2012,6 +2022,7 @@
                         fixedWidth=true
                         class="open-details"
                       }}
+                      {{bs-tooltip title="Details View"}}
                     </div>
                   </div>
                 </div>

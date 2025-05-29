@@ -854,10 +854,19 @@ const _lookupThreats = (entity, options, done) => {
               size(industry_group) > size(industry) ? industry_group : industry,
             threat.attributes.targeted_industries_tree
           ),
-          targetedRegionNames: map(
-            (region) => `${region.country}, ${region.sub_region}`,
-            threat.attributes.targeted_regions_hierarchy
-          ),
+          targetedRegionNames: flow(
+            map((region) =>
+              region.country || region.country_iso2 || region.sub_region || region.region
+                ? `${region.country || region.country_iso2}${
+                    (region.country || region.country_iso2) &&
+                    (region.sub_region || region.region)
+                      ? ', '
+                      : ''
+                  }${region.sub_region || region.region}`
+                : null
+            ),
+            compact
+          )(threat.attributes.targeted_regions_hierarchy),
           htmlDescription: convertMarkdownToHtml(threat.attributes.description),
           confidenceGroupedData: groupByConfidence(threat.attributes),
           categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
@@ -917,10 +926,19 @@ const _lookupReports = (entity, options, done) => {
               size(industry_group) > size(industry) ? industry_group : industry,
             report.attributes.targeted_industries_tree
           ),
-          targetedRegionNames: map(
-            (region) => `${region.country}, ${region.sub_region}`,
-            report.attributes.targeted_regions_hierarchy
-          ),
+          targetedRegionNames: flow(
+            map((region) =>
+              region.country || region.country_iso2 || region.sub_region || region.region
+                ? `${region.country || region.country_iso2}${
+                    (region.country || region.country_iso2) &&
+                    (region.sub_region || region.region)
+                      ? ', '
+                      : ''
+                  } ${region.sub_region || region.region}`
+                : null
+            ),
+            compact
+          )(report.attributes.targeted_regions_hierarchy),
           confidenceGroupedData: groupByConfidence(report.attributes),
           categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
           creation_date: report.attributes.creation_date
@@ -1011,15 +1029,23 @@ const groupByConfidence = (threat) => {
         get(confidence),
         map('value'),
         uniq,
-        filter((x) => !['null', null, 'undefined', undefined ].includes(x)),
+        filter((x) => !['null', null, 'undefined', undefined].includes(x)),
         compact
       );
 
       const formatRegion = flow(
         get(confidence),
-        map((region) => `${region.country}, ${region.sub_region}`),
+        map(
+          (region) =>
+            `${region.country || region.country_iso2}${
+              (region.country || region.country_iso2) &&
+              (region.sub_region || region.region)
+                ? ', '
+                : ''
+            } ${region.sub_region || region.region}`
+        ),
         uniq,
-        filter((x) => !['null', null,  'undefined', undefined].includes(x)),
+        filter((x) => !['null', null, 'undefined', undefined].includes(x)),
         compact
       );
 
