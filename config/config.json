@@ -2,7 +2,7 @@
   "polarityIntegrationUuid": "ff6ad000-2427-11f0-a4cb-11613a8a57b5",
   "name": "Google Threat Intel",
   "acronym": "GTI",
-  "description": "VirusTotal Integration for File and IP Address Reports via the v3.0 REST API",
+  "description": "Google Threat Intelligence Integration for File and IP Address Reports via the v3.0 REST API",
   "defaultColor": "light-pink",
   "entityTypes": ["url", "domain", "IPv4", "MD5", "SHA1", "SHA256"],
   "styles": ["./styles/styles.less"],
@@ -32,8 +32,8 @@
   "options": [
     {
       "key": "apiKey",
-      "name": "VirusTotal API Key",
-      "description": "Your VirusTotal API Key",
+      "name": "Google Threat Intelligence API Key",
+      "description": "Your Google Threat Intelligence API Key",
       "default": "",
       "type": "password",
       "userCanEdit": true,
@@ -96,7 +96,7 @@
     {
       "key": "warnOnLookupLimit",
       "name": "API Key Lookup Limit Reached Warning Message",
-      "description": "Displays a warning in the Notification Window if you have reached your VirusTotal API key lookup limit.",
+      "description": "Displays a warning in the Notification Window if you have reached your Google Threat Intelligence API key lookup limit.",
       "default": false,
       "type": "boolean",
       "userCanEdit": true,
@@ -105,7 +105,7 @@
     {
       "key": "lookupThrottleDuration",
       "name": "Lookup Throttle Duration",
-      "description": "The amount of time in minutes the integration will throttle your VirusTotal lookups in the event that you hit your lookup limit.  Once throttling has started no lookups for your configured API key will be made until the throttle time has passed.  Defaults to 1 minute.",
+      "description": "The amount of time in minutes the integration will throttle your Google Threat Intelligence lookups in the event that you hit your lookup limit.  Once throttling has started no lookups for your configured API key will be made until the throttle time has passed.  Defaults to 1 minute.",
       "default": 1,
       "type": "number",
       "userCanEdit": true,
@@ -114,7 +114,7 @@
     {
       "key": "warnOnThrottle",
       "name": "Lookup Throttle Warning Message",
-      "description": "If checked, the integration will display a warning message in the overlay window when your VirusTotal lookups are being throttled. Only one message will be shown per throttle duration.",
+      "description": "If checked, the integration will display a warning message in the overlay window when your Google Threat Intelligence lookups are being throttled. Only one message will be shown per throttle duration.",
       "default": true,
       "type": "boolean",
       "userCanEdit": true,

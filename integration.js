@@ -588,11 +588,11 @@ function _handleRequestError(err, response, body, options, cb) {
   if (err) {
     cb(
       _createJsonErrorPayload(
-        'Unable to connect to VirusTotal server',
+        'Unable to connect to GTI server',
         null,
         '500',
         '2A',
-        'VirusTotal HTTP Request Failed',
+        'GTI HTTP Request Failed',
         {
           err: err
         }
@@ -627,7 +627,7 @@ function _handleRequestError(err, response, body, options, cb) {
   }
 
   if (response.statusCode === 403 || response.statusCode === 401) {
-    cb('You do not have permission to access VirusTotal.  Validate your API key.');
+    cb('You do not have permission to access GTI.  Validate your API key.');
     return;
   }
 
@@ -644,7 +644,7 @@ function _handleRequestError(err, response, body, options, cb) {
           null,
           response.statusCode,
           '2A',
-          'VirusTotal HTTP Request Failed',
+          'GTI HTTP Request Failed',
           {
             response: response,
             body: body
@@ -1846,7 +1846,7 @@ async function validateOptions(userOptions, cb) {
   ) {
     errors.push({
       key: 'apiKey',
-      message: 'You must provide a VirusTotal API key'
+      message: 'You must provide a GTI API key'
     });
   }
 

@@ -1,18 +1,18 @@
-# Polarity VirusTotal Integration
+# Polarity Google Threat Intelligence Integration
 
-Polarity's VirusTotal integration gives users access to automated MD5, SHA1, SHA256, IPv4, Domain, and URL lookups within VirusTotal and makes use of the v3.0 REST API.
+Polarity's Google Threat Intelligence integration gives users access to automated MD5, SHA1, SHA256, IPv4, Domain, and URL lookups within Google Threat Intelligence and makes use of the v3.0 REST API.
 
-VirusTotal is a service that analyzes suspicious files and URLs and facilitates the quick detection of viruses, worms, trojans, and all kinds of malware.  For more information about VirusTotal please visit https://www.virustotal.com/.
+Google Threat Intelligence is a service that analyzes suspicious files and URLs and facilitates the quick detection of viruses, worms, trojans, and all kinds of malware.  For more information about Google Threat Intelligence please visit https://www.virustotal.com/.
 
 | ![](assets/integration-example-ip.png) |![](/assets/integration-example-md5.png)|![](assets/integration-example-url.png)
 |---|---|--|
 |*IP Address Example* |*Hash Example*| *Domain Example*|
 
-## VirusTotal Integration Options
+## Google Threat Intelligence Integration Options
 
-### VirusTotal API Key
+### Google Threat Intelligence API Key
 
-Your VirusTotal Premium API Key
+Your Google Threat Intelligence Premium API Key
 
 ### Return Unscanned or Unseen Results
 
@@ -56,19 +56,19 @@ If checked, the integration will show results for Urls that have no positive det
 
 Default: false
 
-Displays a warning in the Notification Window if you have reached your VirusTotal API key lookup limit.
+Displays a warning in the Notification Window if you have reached your Google Threat Intelligence API key lookup limit.
 
 ### Lookup Throttle Duration
 
 Default: 1 minute
 
-The amount of time in minutes the integration will throttle your VirusTotal lookups in the event that you hit your lookup limit. Once throttling has started no lookups for your configured API key will be made until the throttle time has passed. Defaults to 1 minute.
+The amount of time in minutes the integration will throttle your Google Threat Intelligence lookups in the event that you hit your lookup limit. Once throttling has started no lookups for your configured API key will be made until the throttle time has passed. Defaults to 1 minute.
 
 ### Lookup Throttle Warning Message
 
 Default: true
 
-If checked, the integration will display a warning message in the overlay window when your VirusTotal lookups are being throttled.  Only one message will be shown per throttle duration.
+If checked, the integration will display a warning message in the overlay window when your Google Threat Intelligence lookups are being throttled.  Only one message will be shown per throttle duration.
 
 ### Maximum number of hashes per lookup request
 
