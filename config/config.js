@@ -1,21 +1,6 @@
 module.exports = {
-  /**
-   * Name of the integration which is displayed in the Polarity integrations user interface
-   *
-   * @type String
-   * @required
-   */
-  name: 'VirusTotal',
-  /**
-   * The acronym that appears in the notification window when information from this integration
-   * is displayed.  Note that the acronym is included as part of each "tag" in the summary information
-   * for the integration.  As a result, it is best to keep it to 4 or less characters.  The casing used
-   * here will be carried forward into the notification window.
-   *
-   * @type String
-   * @required
-   */
-  acronym: 'VT',
+  name: 'Google Threat Intel',
+  acronym: 'GTI',
   /**
    * Description for this integration which is displayed in the Polarity integrations user interface
    *
@@ -23,9 +8,23 @@ module.exports = {
    * @optional
    */
   description:
-    'VirusTotal Integration for File and IP Address Reports via the v3.0 REST API',
+    'Google Threat Intelligence Integration for File and IP Address Reports via the v3.0 REST API',
   defaultColor: 'light-pink',
-  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256'],
+  entityTypes: [
+    'url',
+    'domain',
+    'IPv4',
+    'MD5',
+    'SHA1',
+    'SHA256'
+    // , 'string', 'cve'
+  ],
+  // customTypes: [
+  //   {
+  //     key: 'allText',
+  //     regex: '\\S[\\s\\S]{4,40}\\S'
+  //   }
+  // ],
   /**
    * An array of style files (css or less) that will be included for your integration. Any styles specified in
    * the below files can be used in your custom template.
@@ -60,7 +59,7 @@ module.exports = {
   },
   settings: {
     /**
-     * This is an experimental feature designed to reduce the number of lookups made to VirusTotal.  It works
+     * This is an experimental feature designed to reduce the number of lookups made to Google Threat Intelligence.  It works
      * by tracking pending lookups and then queuing additional lookups on an indicator until after
      * any pending lookups are returned.
      *
@@ -101,8 +100,8 @@ module.exports = {
   options: [
     {
       key: 'apiKey',
-      name: 'VirusTotal API Key',
-      description: 'Your VirusTotal API Key',
+      name: 'Google Threat Intelligence API Key',
+      description: 'Your Google Threat Intelligence API Key',
       default: '',
       type: 'password',
       userCanEdit: true,
@@ -172,7 +171,7 @@ module.exports = {
       key: 'warnOnLookupLimit',
       name: 'API Key Lookup Limit Reached Warning Message',
       description:
-        'Displays a warning in the Notification Window if you have reached your VirusTotal API key lookup limit.',
+        'Displays a warning in the Notification Window if you have reached your Google Threat Intelligence API key lookup limit.',
       default: false,
       type: 'boolean',
       userCanEdit: true,
@@ -182,7 +181,7 @@ module.exports = {
       key: 'lookupThrottleDuration',
       name: 'Lookup Throttle Duration',
       description:
-        'The amount of time in minutes the integration will throttle your VirusTotal lookups in the event that you hit your lookup limit.  Once throttling has started no lookups for your configured API key will be made until the throttle time has passed.  Defaults to 1 minute.',
+        'The amount of time in minutes the integration will throttle your Google Threat Intelligence lookups in the event that you hit your lookup limit.  Once throttling has started no lookups for your configured API key will be made until the throttle time has passed.  Defaults to 1 minute.',
       default: 1,
       type: 'number',
       userCanEdit: true,
@@ -192,7 +191,7 @@ module.exports = {
       key: 'warnOnThrottle',
       name: 'Lookup Throttle Warning Message',
       description:
-        'If checked, the integration will display a warning message in the overlay window when your VirusTotal lookups are being throttled. Only one message will be shown per throttle duration.',
+        'If checked, the integration will display a warning message in the overlay window when your Google Threat Intelligence lookups are being throttled. Only one message will be shown per throttle duration.',
       default: true,
       type: 'boolean',
       userCanEdit: true,

@@ -1,9 +1,25 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
+  threats: Ember.computed.alias('details.threats'),
+  threatsCount: Ember.computed.alias('details.threatsCount'),
+  reports: Ember.computed.alias('details.reports'),
+  reportsCount: Ember.computed.alias('details.reportsCount'),
+  associationLink: Ember.computed.alias('details.associationLink'),
   timezone: Ember.computed('Intl', function () {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }),
   maxResolutionsToShow: 20,
+  associationTab: '',
+  expandedAssociations: Ember.computed.alias('block._state.expandedAssociations'),
+  iconNamesByAssociationType: {
+    report: 'file-alt',
+    campaign: 'bullseye',
+    collection: 'layer-group',
+    'malware-family': 'bug',
+    'software-toolkit': 'tools',
+    vulnerability: 'lock',
+    'threat-actor': 'theater-masks'
+  },
   maxUrlsToShow: 20,
   showScanResults: false,
   showFilesReferring: false,
@@ -151,11 +167,14 @@ polarity.export = PolarityComponent.extend({
     );
     if (!this.get('block._state')) {
       this.set('block._state', {});
+      this.set('block._state.expandedAssociations', {});
     }
 
     if (this.get('details.names.length') <= 10) {
       this.set('block._state.showNames', true);
     }
+
+    this.set('associationTab', this.get('threats').length > 0 ? 'threats' : 'reports');
 
     let array = new Uint32Array(5);
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));
@@ -237,6 +256,15 @@ polarity.export = PolarityComponent.extend({
       });
   },
   actions: {
+    switchAssociationsTab: function (associationType) {
+      this.set('associationTab', associationType);
+    },
+    toggleExpandableAssociations: function (associationType, index) {
+      this.set(
+        `block._state.expandedAssociations.${associationType}${index}`,
+        !this.get(`block._state.expandedAssociations.${associationType}${index}`)
+      );
+    },
     copyData: function () {
       const savedSettings = {
         showScanResults: this.get('showScanResults'),
