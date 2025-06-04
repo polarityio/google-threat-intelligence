@@ -28,7 +28,7 @@ polarity.export = PolarityComponent.extend({
   expandedWhoisMap: Ember.computed.alias('block.data.details.expandedWhoisMap'),
   communityScoreWidth: Ember.computed('details.reputation', function () {
     let reputation = this.get('details.reputation');
-    if(!reputation) return 0;
+    if(!reputation) return 50;
     // clamp reputation to between -100 and 100
     if (reputation > 100) {
       reputation = 100;
