@@ -27,32 +27,39 @@
   </div>
 {{else}}
   <div class="top-section">
-    {{#if (and result.domain_risk.risk_score details.positives details.total)}}
-      <div class="indicator">
-        <div class="tic-gauge-container">
-          <svg x="0" y="0" width="100%" height="100%" viewBox="0 0 55 50">
-            <g transform="translate(28,25)">
-              <g>
-                <circle
-                  r="{{elementRadius}}"
-                  stroke="#eee"
-                  transform="rotate(-90)"
-                  fill="#fff"
-                  stroke-width="{{elementStrokeWidth}}"
-                  cx="0"
-                  cy="0"
-                ></circle>
-                <circle
-                  stroke-dasharray="{{elementCircumference}}"
-                  r="{{elementRadius}}"
-                  stroke="{{elementColor}}"
-                  transform="rotate(-90)"
-                  fill="none"
-                  stroke-dashoffset="{{elementStrokeOffset}}"
-                  stroke-width="{{elementStrokeWidth}}"
-                  cx="0"
-                  cy="0"
-                ></circle>
+    <div class="indicator">
+      <div class="tic-gauge-container">
+        <svg x="0" y="0" width="100%" height="100%" viewBox="0 0 55 50">
+          <g transform="translate(28,25)">
+            <g>
+              <circle
+                r="{{elementRadius}}"
+                stroke="#eee"
+                transform="rotate(-90)"
+                fill="#fff"
+                stroke-width="{{elementStrokeWidth}}"
+                cx="0"
+                cy="0"
+              ></circle>
+              <circle
+                stroke-dasharray="{{elementCircumference}}"
+                r="{{elementRadius}}"
+                stroke="{{elementColor}}"
+                transform="rotate(-90)"
+                fill="none"
+                stroke-dashoffset="{{elementStrokeOffset}}"
+                stroke-width="{{elementStrokeWidth}}"
+                cx="0"
+                cy="0"
+              ></circle>
+              {{#if
+                (or
+                  details.positives
+                  details.total
+                  (eq details.positives 0)
+                  (eq details.total 0)
+                )
+              }}
                 <text
                   text-anchor="middle"
                   x="0"
@@ -66,58 +73,73 @@
                   /
                   {{details.total}}
                 </text>
-              </g>
+              {{else}}
+                <text
+                  text-anchor="middle"
+                  x="0"
+                  y="0"
+                  fill="{{elementColor}}"
+                  font-size="13"
+                >
+                  No
+                </text>
+                <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
+                  Scan
+                </text>
+              {{/if}}
             </g>
-          </svg>
+          </g>
+        </svg>
+      </div>
+    </div>
+    <div class="right-column">
+      <div class="score-container">
+        <div class="score-marker" style="left: calc({{communityScoreWidth}}% - 16px)">
+          {{fa-icon
+            size="2x"
+            icon=communityScoreIcon
+            fixedWidth=true
+            class=communityScoreColorClass
+          }}
+        </div>
+        <div class="score-line"></div>
+        <div class="p-footnote score-footer">
+          Community Score ({{if
+            (or details.reputation (eq details.reputation 0))
+            details.reputation
+            "Unknown"
+          }})
         </div>
       </div>
-    {{/if}}
-
-    {{#if (and details.reputation details.positives)}}
-      <div class="right-column">
-        <div class="score-container">
-          <div class="score-marker" style="left: calc({{communityScoreWidth}}% - 16px)">
-            {{fa-icon
-              size="2x"
-              icon=communityScoreIcon
-              fixedWidth=true
-              class=communityScoreColorClass
-            }}
-          </div>
-          <div class="score-line"></div>
-          <div class="p-footnote score-footer">
-            Community Score ({{details.reputation}})
+      {{#if details.tags.length}}
+        <div class="tags-container">
+          <h1 class="p-title">
+            {{fa-icon "tags" fixedWidth=true}}
+            Tags
+          </h1>
+          <div class="tags">
+            {{#each details.tags as |tag|}}
+              <div class="tag">
+                {{tag}}
+              </div>
+            {{/each}}
           </div>
         </div>
-        {{#if details.tags.length}}
-          <div class="tags-container">
-            <h1 class="p-title">
-              {{fa-icon "tags" fixedWidth=true}}
-              Tags
-            </h1>
-            <div class="tags">
-              {{#each details.tags as |tag|}}
-                <div class="tag">
-                  {{tag}}
-                </div>
-              {{/each}}
-            </div>
-          </div>
-        {{/if}}
-      </div>
-    {{/if}}
+      {{/if}}
+    </div>
   </div>
-
   <ul class="nav nav-tabs mt-2">
-    <li class="nav-item">
-      <a
-        class="nav-link {{if (or (eq activeTab "detection") (not activeTab)) "active"}}"
-        href="#"
-        {{action "changeTab" "detection"}}
-      >
-        Detection
-      </a>
-    </li>
+    {{#if (or details.positiveScans details.scan_date details.reputation)}}
+      <li class="nav-item">
+        <a
+          class="nav-link {{if (or (eq activeTab "detection") (not activeTab)) "active"}}"
+          href="#"
+          {{action "changeTab" "detection"}}
+        >
+          Detection
+        </a>
+      </li>
+    {{/if}}
     {{#if details.detailsTab.length}}
       <li class="nav-item">
         <a
@@ -129,7 +151,8 @@
         </a>
       </li>
     {{/if}}
-    {{#if (or block.entity.isIP block.entity.isDomain)}}
+    {{#if (and (or block.entity.isIP block.entity.isDomain) details.referenceFiles.length)
+    }}
       <li class="nav-item">
         <a
           class="nav-link {{if (eq activeTab "relations") "active"}}"
@@ -140,7 +163,12 @@
         </a>
       </li>
     {{/if}}
-    {{#if (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)}}
+    {{#if
+      (and
+        (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)
+        details.behaviorSummary
+      )
+    }}
       <li class="nav-item">
         <a
           class="nav-link {{if (eq activeTab "behaviorSummary") "active"}}"
@@ -836,7 +864,7 @@
                 class="btn gti-button {{if (eq associationTab "threats") "active"}}"
                 {{action "switchAssociationsTab" "threats"}}
               >
-                Threats - 5 of {{threatsCount}}
+                Threats - {{threats.length}} of {{threatsCount}}
               </button>
             {{/if}}
             {{#if reports.length}}
@@ -844,7 +872,7 @@
                 class="btn gti-button {{if (eq associationTab "reporting") "active"}}"
                 {{action "switchAssociationsTab" "reporting"}}
               >
-                Reporting - 5 of {{reportsCount}}
+                Reporting - {{reports.length}} of {{reportsCount}}
               </button>
             {{/if}}
           </div>

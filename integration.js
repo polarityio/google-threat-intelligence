@@ -38,7 +38,8 @@ const {
 
 const showdown = require('showdown');
 showdown.setOption('tables', true);
-const convertMarkdownToHtml = (text) => new showdown.Converter().makeHtml(text);
+const showdownConverter = new showdown.Converter();
+const convertMarkdownToHtml = (text) => showdownConverter.makeHtml(text);
 
 const map = require('lodash/fp/map').convert({ cap: false });
 const config = require('./config/config');
@@ -494,6 +495,7 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
   )}`;
 
   if (
+    get('data.summary', lookupResult) &&
     lookupResult.data.summary.includes('has not seen or scanned') &&
     lookupResult.data.summary.length > 1
   ) {
@@ -501,7 +503,7 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
       (summary) => !summary.includes('has not seen or scanned')
     );
   }
-  
+
   return lookupResult;
 };
 
@@ -815,7 +817,7 @@ const _lookupThreatActors = (entity, options, done) => {
       const threatActorsLookupResult = {
         entity,
         data: {
-          summary: [`Threat Actors: ${result.data.length}`],
+          summary: [`Threat Actors: ${get('data.length', result)}`],
           details: {
             threatActors: flow(get('data'), map('attributes'))(result)
           }
