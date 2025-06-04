@@ -493,6 +493,15 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
     lookupResult.entity
   )}`;
 
+  if (
+    lookupResult.data.summary.includes('has not seen or scanned') &&
+    lookupResult.data.summary.length > 1
+  ) {
+    lookupResult.data.summary = lookupResult.data.summary.filter(
+      (summary) => !summary.includes('has not seen or scanned')
+    );
+  }
+  
   return lookupResult;
 };
 

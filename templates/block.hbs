@@ -17,7 +17,7 @@
   </div>
 </div>
 
-{{#if details.noInfoMessage}}
+{{#if (and details.noInfoMessage (not (or details.threatsCount details.reportsCount)))}}
   <div>
     <span class="p-key">
       <em>
@@ -27,80 +27,85 @@
   </div>
 {{else}}
   <div class="top-section">
-    <div class="indicator">
-      <div class="tic-gauge-container">
-        <svg x="0" y="0" width="100%" height="100%" viewBox="0 0 55 50">
-          <g transform="translate(28,25)">
-            <g>
-              <circle
-                r="{{elementRadius}}"
-                stroke="#eee"
-                transform="rotate(-90)"
-                fill="#fff"
-                stroke-width="{{elementStrokeWidth}}"
-                cx="0"
-                cy="0"
-              ></circle>
-              <circle
-                stroke-dasharray="{{elementCircumference}}"
-                r="{{elementRadius}}"
-                stroke="{{elementColor}}"
-                transform="rotate(-90)"
-                fill="none"
-                stroke-dashoffset="{{elementStrokeOffset}}"
-                stroke-width="{{elementStrokeWidth}}"
-                cx="0"
-                cy="0"
-              ></circle>
-              <text
-                text-anchor="middle"
-                x="0"
-                y="0"
-                fill="{{elementColor}}"
-                font-size="13"
-              >
-                {{details.positives}}
-              </text>
-              <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
-                /
-                {{details.total}}
-              </text>
+    {{#if (and result.domain_risk.risk_score details.positives details.total)}}
+      <div class="indicator">
+        <div class="tic-gauge-container">
+          <svg x="0" y="0" width="100%" height="100%" viewBox="0 0 55 50">
+            <g transform="translate(28,25)">
+              <g>
+                <circle
+                  r="{{elementRadius}}"
+                  stroke="#eee"
+                  transform="rotate(-90)"
+                  fill="#fff"
+                  stroke-width="{{elementStrokeWidth}}"
+                  cx="0"
+                  cy="0"
+                ></circle>
+                <circle
+                  stroke-dasharray="{{elementCircumference}}"
+                  r="{{elementRadius}}"
+                  stroke="{{elementColor}}"
+                  transform="rotate(-90)"
+                  fill="none"
+                  stroke-dashoffset="{{elementStrokeOffset}}"
+                  stroke-width="{{elementStrokeWidth}}"
+                  cx="0"
+                  cy="0"
+                ></circle>
+                <text
+                  text-anchor="middle"
+                  x="0"
+                  y="0"
+                  fill="{{elementColor}}"
+                  font-size="13"
+                >
+                  {{details.positives}}
+                </text>
+                <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
+                  /
+                  {{details.total}}
+                </text>
+              </g>
             </g>
-          </g>
-        </svg>
-      </div>
-    </div>
-    <div class="right-column">
-      <div class="score-container">
-        <div class="score-marker" style="left: calc({{communityScoreWidth}}% - 16px)">
-          {{fa-icon
-            size="2x"
-            icon=communityScoreIcon
-            fixedWidth=true
-            class=communityScoreColorClass
-          }}
-        </div>
-        <div class="score-line"></div>
-        <div class="p-footnote score-footer">
-          Community Score ({{details.reputation}})
+          </svg>
         </div>
       </div>
-      {{#if details.tags.length}}
-        <div class="tags-container">
-          <h1 class="p-title">
-            {{fa-icon "tags" fixedWidth=true}}
-            Tags
-          </h1>
-          <div class="tags">
-            {{#each details.tags as |tag|}}
-              <div class="tag">
-                {{tag}}
-              </div>
-            {{/each}}
+    {{/if}}
+
+    {{#if (and details.reputation details.positives)}}
+      <div class="right-column">
+        <div class="score-container">
+          <div class="score-marker" style="left: calc({{communityScoreWidth}}% - 16px)">
+            {{fa-icon
+              size="2x"
+              icon=communityScoreIcon
+              fixedWidth=true
+              class=communityScoreColorClass
+            }}
+          </div>
+          <div class="score-line"></div>
+          <div class="p-footnote score-footer">
+            Community Score ({{details.reputation}})
           </div>
         </div>
-      {{/if}}
-    </div>
+        {{#if details.tags.length}}
+          <div class="tags-container">
+            <h1 class="p-title">
+              {{fa-icon "tags" fixedWidth=true}}
+              Tags
+            </h1>
+            <div class="tags">
+              {{#each details.tags as |tag|}}
+                <div class="tag">
+                  {{tag}}
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
   </div>
 
   <ul class="nav nav-tabs mt-2">
@@ -194,18 +199,20 @@
         the score (-100 to 100).
         </div>
         {{! detections }}
-        <div class="toggle-header">
-          <span class="p-action" {{action "toggleShowResults" "showScanResults"}}>
-            {{fa-icon "laptop" fixedWidth=true}}
-            {{#unless block.userOptions.showNoDetections}}
-              Positive
-            {{/unless}}
-            Detections ({{details.positives}}
-            of
-            {{details.total}})
-            {{fa-icon (if showScanResults "caret-up" "caret-down") fixedWidth=true}}
-          </span>
-        </div>
+        {{#if (and details.positives details.total)}}
+          <div class="toggle-header">
+            <span class="p-action" {{action "toggleShowResults" "showScanResults"}}>
+              {{fa-icon "laptop" fixedWidth=true}}
+              {{#unless block.userOptions.showNoDetections}}
+                Positive
+              {{/unless}}
+              Detections ({{details.positives}}
+              of
+              {{details.total}})
+              {{fa-icon (if showScanResults "caret-up" "caret-down") fixedWidth=true}}
+            </span>
+          </div>
+        {{/if}}
         {{#if showScanResults}}
           <div class="scan-results">
             {{#unless details.positiveScans}}
