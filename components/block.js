@@ -1,9 +1,25 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
+  threats: Ember.computed.alias('details.threats'),
+  threatsCount: Ember.computed.alias('details.threatsCount'),
+  reports: Ember.computed.alias('details.reports'),
+  reportsCount: Ember.computed.alias('details.reportsCount'),
+  associationLink: Ember.computed.alias('details.associationLink'),
   timezone: Ember.computed('Intl', function () {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }),
   maxResolutionsToShow: 20,
+  associationTab: '',
+  expandedAssociations: Ember.computed.alias('block._state.expandedAssociations'),
+  iconNamesByAssociationType: {
+    report: 'file-alt',
+    campaign: 'bullseye',
+    collection: 'layer-group',
+    'malware-family': 'bug',
+    'software-toolkit': 'tools',
+    vulnerability: 'lock',
+    'threat-actor': 'theater-masks'
+  },
   maxUrlsToShow: 20,
   showScanResults: false,
   showFilesReferring: false,
@@ -12,6 +28,7 @@ polarity.export = PolarityComponent.extend({
   expandedWhoisMap: Ember.computed.alias('block.data.details.expandedWhoisMap'),
   communityScoreWidth: Ember.computed('details.reputation', function () {
     let reputation = this.get('details.reputation');
+    if(!reputation) return 50;
     // clamp reputation to between -100 and 100
     if (reputation > 100) {
       reputation = 100;
@@ -35,7 +52,7 @@ polarity.export = PolarityComponent.extend({
     return 'map-marker-times';
   }),
   communityScoreColorClass: Ember.computed('details.reputation', function () {
-    let reputation = this.get('details.reputation');
+    let reputation = this.get('details.reputation') || 0;
     if (reputation === 0) {
       return 'score-marker-icon p-grey';
     }
@@ -107,14 +124,17 @@ polarity.export = PolarityComponent.extend({
   elementStrokeWidth: 4,
 
   elementColor: Ember.computed('result.domain_risk.risk_score', function () {
-    return this._getThreatColor((this.details.positives / this.details.total) * 100);
+    return this._getThreatColor((this.details.positives / this.details.total) * 100 || 0);
   }),
 
   elementStrokeOffset: Ember.computed(
     'result.domain_risk.risk_score',
     'elementCircumference',
     function () {
-      return this._getStrokeOffset(this.details.positives, this.elementCircumference);
+      return this._getStrokeOffset(
+        this.details.positives || 0,
+        this.elementCircumference
+      );
     }
   ),
   threatCircumference: Ember.computed('threatRadius', function () {
@@ -136,6 +156,15 @@ polarity.export = PolarityComponent.extend({
   },
   init() {
     this.set(
+      'activeTab',
+      this.get('details.scan_date') ||
+        this.get('details.reputation') ||
+        this.get('details.positiveScans') ||
+        this.get('details.positiveScans') === 0
+        ? 'detection'
+        : 'associations'
+    );
+    this.set(
       'showScanResults',
       this.get('block.userOptions.showNoDetections') === false
         ? this.get('details.positiveScans.length') < 15
@@ -151,11 +180,14 @@ polarity.export = PolarityComponent.extend({
     );
     if (!this.get('block._state')) {
       this.set('block._state', {});
+      this.set('block._state.expandedAssociations', {});
     }
 
     if (this.get('details.names.length') <= 10) {
       this.set('block._state.showNames', true);
     }
+
+    this.set('associationTab', this.get('threats.length') > 0 ? 'threats' : 'reports');
 
     let array = new Uint32Array(5);
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));
@@ -199,7 +231,7 @@ polarity.export = PolarityComponent.extend({
         this.set('expandedWhoisMap', {});
         // If there is no data we expand the whois section automatically
         // to show a "no results" message
-        if (historicalWhoIs.length === 0) {
+        if (historicalWhoIs && historicalWhoIs.length === 0) {
           this.set('showHistoricalWhois', true);
         }
         this.set('block._state.loadedWhois', true);
@@ -223,7 +255,7 @@ polarity.export = PolarityComponent.extend({
         this.set('block.data.details.referenceFiles', referenceFiles);
         // If there is no data we expand the whois section automatically
         // to show a "no results" message
-        if (referenceFiles.length === 0) {
+        if (referenceFiles && referenceFiles.length === 0) {
           this.set('showFilesReferring', true);
         }
         this.set('block._state.loadedRelations', true);
@@ -237,6 +269,15 @@ polarity.export = PolarityComponent.extend({
       });
   },
   actions: {
+    switchAssociationsTab: function (associationType) {
+      this.set('associationTab', associationType);
+    },
+    toggleExpandableAssociations: function (associationType, index) {
+      this.set(
+        `block._state.expandedAssociations.${associationType}${index}`,
+        !this.get(`block._state.expandedAssociations.${associationType}${index}`)
+      );
+    },
     copyData: function () {
       const savedSettings = {
         showScanResults: this.get('showScanResults'),

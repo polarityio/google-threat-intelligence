@@ -1,11 +1,13 @@
 {
-  "name": "VirusTotal",
+  "name": "google-threat-intelligence",
   "version": "3.0.0",
   "main": "./integration.js",
   "private": true,
   "dependencies": {
-    "async": "^3.2.5",
+    "async": "^3.2.6",
     "lodash": "^4.17.21",
-    "postman-request": "^2.88.1-postman.40"
+    "node-schedule": "^2.1.1",
+    "postman-request": "^2.88.1-postman.42",
+    "showdown": "^2.1.0"
   }
 }
