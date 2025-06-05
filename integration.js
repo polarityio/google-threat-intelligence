@@ -177,7 +177,7 @@ function doLookup(entities, options, cb) {
       if (threatActorNames.includes(entity.value)) {
         threatActorsEntities.push(entity);
       }
-    } else if (entity.type !== 'cve') {
+    } else if (!entity.types.includes('cve')) {
       nonCveOrThreatActorEntities.push(entity);
     }
 
@@ -1880,13 +1880,13 @@ async function validateOptions(userOptions, cb) {
     });
   }
 
-  // if (!errors.length) {
-  //   try {
-  //     if (job) job.cancel();
+  if (!errors.length) {
+    try {
+      if (job) job.cancel();
 
-  //     job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
-  //   } catch (_) {}
-  // }
+      job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
+    } catch (_) {}
+  }
 
   cb(null, errors);
 }

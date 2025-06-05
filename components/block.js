@@ -4,6 +4,8 @@ polarity.export = PolarityComponent.extend({
   threatsCount: Ember.computed.alias('details.threatsCount'),
   reports: Ember.computed.alias('details.reports'),
   reportsCount: Ember.computed.alias('details.reportsCount'),
+  vulnerabilities: Ember.computed.alias('details.vulnerabilities'),
+  threatActors: Ember.computed.alias('details.threatActors'),
   associationLink: Ember.computed.alias('details.associationLink'),
   timezone: Ember.computed('Intl', function () {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
