@@ -151,8 +151,7 @@
         </a>
       </li>
     {{/if}}
-    {{#if (and (or block.entity.isIP block.entity.isDomain) details.referenceFiles.length)
-    }}
+    {{#if (or block.entity.isIP block.entity.isDomain)}}
       <li class="nav-item">
         <a
           class="nav-link {{if (eq activeTab "relations") "active"}}"
@@ -163,12 +162,7 @@
         </a>
       </li>
     {{/if}}
-    {{#if
-      (and
-        (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)
-        details.behaviorSummary
-      )
-    }}
+    {{#if (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)}}
       <li class="nav-item">
         <a
           class="nav-link {{if (eq activeTab "behaviorSummary") "active"}}"
