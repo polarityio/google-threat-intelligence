@@ -173,11 +173,11 @@ function doLookup(entities, options, cb) {
       return;
     }
 
-    if (entity.types.includes('custom')) {
+    if (entity.types.includes('custom.allText')) {
       if (threatActorNames.includes(entity.value)) {
         threatActorsEntities.push(entity);
       }
-    } else if (!entity.types.includes('cve')) {
+    } else if (!entity.types.includes('cve') && !entity.types.includes('custom.allText')) {
       nonCveOrThreatActorEntities.push(entity);
     }
 
@@ -490,9 +490,10 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
     lookupResult.data.details.reportsCursor = reportsCursor;
   }
 
-  lookupResult.data.details.associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
-    lookupResult.entity
-  )}`;
+  if (lookupResult.data && lookupResult.data.details)
+    lookupResult.data.details.associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
+      lookupResult.entity
+    )}`;
 
   if (
     get('data.summary', lookupResult) &&
@@ -778,7 +779,82 @@ const _lookupVulnerabilities = (entity, options, done) => {
         data: {
           summary: [`Vulns: ${result.data.length}`],
           details: {
-            vulnerabilities: flow(get('data'), map('attributes'))(result)
+            vulnerabilities: flow(get('data'), map((vulnerability) => ({
+              ...vulnerability.attributes,
+              id: vulnerability.id,
+              relationships: vulnerability.relationships,
+              htmlDescription: convertMarkdownToHtml(vulnerability.attributes.description),
+              confidenceGroupedData: groupByConfidence(vulnerability.attributes),
+              targetedIndustryNames: flow(
+                get('targeted_industries'),
+                uniq,
+                compact
+              )(vulnerability.attributes),
+              cvssScore: flow(
+                get('cvss.cvssv3_x.base_score'),
+                (score) => score || get('cvss.cvssv2_0.base_score', vulnerability.attributes)
+              )(vulnerability.attributes),
+              cvssVector: flow(
+                get('cvss.cvssv3_x.vector'),
+                (vector) => vector || get('cvss.cvssv2_0.vector', vulnerability.attributes)
+              )(vulnerability.attributes),
+              mitigationDetails: flow(
+                get('vendor_fix_references'),
+                map((fix) => ({
+                  ...fix,
+                  published_date: fix.published_date ? fix.published_date * 1000 : fix.published_date
+                }))
+              )(vulnerability.attributes),
+              exploitabilityMetrics: flow(
+                (attrs) => ({
+                  epssScore: get('epss.score', attrs) || 0,
+                  epssPercentile: get('epss.percentile', attrs) || 0,
+                  hasExploit: get('exploitation.exploit_release_date', attrs) ? true : false,
+                  daysToExploit: get('exploitation.first_exploitation', attrs) && get('exploitation.tech_details_release_date', attrs)
+                    ? Math.floor((get('exploitation.first_exploitation', attrs) - get('exploitation.tech_details_release_date', attrs)) / (24 * 60 * 60))
+                    : null
+                })
+              )(vulnerability.attributes),
+              severity: flow(
+                get('cvss.cvssv3_x.base_score'),
+                (score) => {
+                  if (!score) return 'Unknown';
+                  if (score >= 9.0) return 'Critical';
+                  if (score >= 7.0) return 'High';
+                  if (score >= 4.0) return 'Medium';
+                  return 'Low';
+                }
+              )(vulnerability.attributes),
+              timeToMitigation: flow(
+                (attrs) => {
+                  const exploitDate = get('exploitation.first_exploitation', attrs);
+                  const fixDate = flow(
+                    get('vendor_fix_references'),
+                    (fixes) => fixes && fixes.length ? Math.min(...fixes.map(f => get('published_date', f))) : null
+                  )(attrs);
+                  return exploitDate && fixDate
+                    ? Math.floor((fixDate - exploitDate) / (24 * 60 * 60))
+                    : null;
+                }
+              )(vulnerability.attributes),
+              impactSummary: flow(
+                (attrs) => ({
+                  systems: get('affected_systems', attrs) || [],
+                  consequence: get('exploitation_consequence', attrs),
+                  priority: get('priority', attrs),
+                  riskRating: get('risk_rating', attrs)
+                }),
+                (impact) => ({
+                  ...impact,
+                  summary: compact([
+                    impact.riskRating ? `${impact.riskRating} Risk` : null,
+                    impact.priority,
+                    impact.consequence,
+                    impact.systems.length ? `Affects ${impact.systems.join(', ')}` : null
+                  ]).join(' - ')
+                })
+              )(vulnerability.attributes)
+            })))(result)
           }
         }
       };
@@ -819,7 +895,95 @@ const _lookupThreatActors = (entity, options, done) => {
         data: {
           summary: [`Threat Actors: ${get('data.length', result)}`],
           details: {
-            threatActors: flow(get('data'), map('attributes'))(result)
+            threatActors: flow(get('data'), map((threatActor) => ({
+              ...threatActor.attributes,
+              id: threatActor.id,
+              relationships: threatActor.relationships,
+              targetedIndustryNames: flow(
+                get('targeted_industries_tree'),
+                map(({ industry_group, industry }) =>
+                  size(industry_group) > size(industry) ? industry_group : industry
+                ),
+                uniq,
+                compact
+              )(threatActor.attributes),
+              targetedRegionNames: flow(
+                get('targeted_regions_hierarchy'),
+                map((region) =>
+                  region.country || region.country_iso2 || region.sub_region || region.region
+                    ? `${region.country || region.country_iso2}${
+                        (region.country || region.country_iso2) &&
+                        (region.sub_region || region.region)
+                          ? ', '
+                          : ''
+                      }${region.sub_region || region.region}`
+                    : null
+                ),
+                compact
+              )(threatActor.attributes),
+              htmlDescription: convertMarkdownToHtml(threatActor.attributes.description),
+              confidenceGroupedData: groupByConfidence(threatActor.attributes),
+              first_seen: threatActor.attributes.first_seen 
+                ? threatActor.attributes.first_seen * 1000 
+                : threatActor.attributes.first_seen,
+              last_seen: threatActor.attributes.last_seen
+                ? threatActor.attributes.last_seen * 1000
+                : threatActor.attributes.last_seen,
+              last_modification_date: threatActor.attributes.last_modification_date
+                ? threatActor.attributes.last_modification_date * 1000
+                : threatActor.attributes.last_modification_date,
+              activityTrend: flow(
+                get('recent_activity_summary'),
+                (activity) => {
+                  if (!activity || !activity.length) return null;
+                  const trend = activity.slice(-3).reduce((a, b) => a + b, 0) / 3 -
+                              activity.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
+                  return {
+                    direction: trend > 0 ? 'increasing' : trend < 0 ? 'decreasing' : 'stable',
+                    recentAverage: activity.slice(-3).reduce((a, b) => a + b, 0) / 3,
+                    percentageChange: Math.abs(trend) * 100 / (activity.slice(0, 3).reduce((a, b) => a + b, 0) / 3)
+                  };
+                }
+              )(threatActor.attributes),
+              riskScore: flow(
+                (attrs) => {
+                  const baseScore = 5; // Base score out of 10
+                  const modifiers = {
+                    recentActivityChange: get('recent_activity_relative_change', attrs) ? Math.min(get('recent_activity_relative_change', attrs), 2) : 0,
+                    targetedIndustriesCount: (get('targeted_industries', attrs) || []).length * 0.5,
+                    regionsCount: (get('targeted_regions', attrs) || []).length * 0.25,
+                    technologiesCount: (get('technologies', attrs) || []).length * 0.25
+                  };
+                  return Math.min(10, baseScore + 
+                    modifiers.recentActivityChange + 
+                    modifiers.targetedIndustriesCount + 
+                    modifiers.regionsCount +
+                    modifiers.technologiesCount
+                  );
+                }
+              )(threatActor.attributes),
+              primaryTechniques: flow(
+                (attrs) => ({
+                  technologies: get('technologies', attrs) || [],
+                  exploitationVectors: get('exploitation_vectors', attrs) || []
+                }),
+                ({ technologies, exploitationVectors }) => ({
+                  primary: technologies.slice(0, 3),
+                  secondary: exploitationVectors,
+                  combined: uniq([...technologies, ...exploitationVectors])
+                })
+              )(threatActor.attributes),
+              activityMetrics: flow(
+                get('summary_stats'),
+                (stats) => stats ? {
+                  averageDetections: get('files_detections.avg', stats) || 0,
+                  maxDetections: get('files_detections.max', stats) || 0,
+                  activityDuration: get('last_submission_date.max', stats)
+                    ? Math.floor((get('last_submission_date.max', stats) - get('first_submission_date.min', stats)) / (24 * 60 * 60))
+                    : 0
+                } : null
+              )(threatActor.attributes)
+            })))(result)
           }
         }
       };
@@ -977,7 +1141,7 @@ const queryParams = {
   relationships: 'subscription_preferences,owner,malware_families,threat_actors'
 };
 
-const getGtiRequestOptionsByType = (entity, relationship) =>
+const getGtiRequestOptionsByType = (entity, relationship) => 
   ({
     IPv4: {
       route: `ip_addresses/${entity.value}/${relationship}`,
