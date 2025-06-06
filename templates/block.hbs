@@ -1,7 +1,193 @@
 {{#if vulnerabilities.length}}
-  {{object-to-table vulnerabilities}}
+  <h1 class="p-title">{{fa-icon "shield-alt" fixedWidth=true}} Vulnerabilities ({{vulnerabilities.length}})</h1>
+  {{#each vulnerabilities as |vulnerability vulnIndex|}}
+    <div class="association vulnerability mb-3">
+      <div class="association-summary">
+        <div class="title-section">
+          <div class="title-content">
+            <div class="threat-type-icon">
+              {{fa-icon "shield-alt" fixedWidth=true class="association-icon"}}
+              {{#if vulnerability.id}}{{bs-tooltip title=(concat "Vulnerability ID: " vulnerability.id)}}{{/if}}
+            </div>
+            <div class="name-info">
+              <div class="name-updated">
+                <div class="name">{{vulnerability.name}}</div>
+              </div>
+              {{#if vulnerability.published_date}}
+                <div class="modified-date">
+                  Published: {{moment-format vulnerability.published_date "YYYY-MM-DD" timeZone=timezone}}
+                </div>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+
+        {{#if vulnerability.description}}
+          <div class="description {{if (get expandedVulnerabilities (concat "desc" vulnIndex)) "expanded" "collapsed-description"}}">
+            {{{vulnerability.description}}}
+          </div>
+          {{#if (get expandedVulnerabilities (concat "desc" vulnIndex))}}
+          {{else}}
+            {{#if (gt vulnerability.description.length 250)}} {{! Simple length check, adjust as needed }}
+              <a class="p-action" {{action "toggleExpandableVulnerabilities" "desc" vulnIndex}}>Show more</a>
+            {{/if}}
+          {{/if}}
+        {{/if}}
+
+        {{#if vulnerability.cvss}}
+          <div><span class="p-key">CVSS Score:</span> <span class="p-value">{{vulnerability.cvss.score}} ({{vulnerability.cvss.vectorString}})</span></div>
+        {{/if}}
+        {{#if vulnerability.severity}}
+          <div><span class="p-key">Severity:</span> <span class="p-value">{{vulnerability.severity}}</span></div>
+        {{/if}}
+
+        {{! Expandable Affected Products }}
+        {{#if vulnerability.affected_products.length}}
+          <div class="threat-data-group">
+            <span class="title p-action" {{action "toggleExpandableVulnerabilities" "affectedProducts" vulnIndex}}>
+              {{fa-icon "cubes" fixedWidth=true}} Affected Products ({{vulnerability.affected_products.length}})
+              {{fa-icon size="md" icon=(if (get expandedVulnerabilities (concat "affectedProducts" vulnIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
+            </span>
+            {{#if (get expandedVulnerabilities (concat "affectedProducts" vulnIndex))}}
+              <div class="values scrollable-block">
+                {{#each vulnerability.affected_products as |product|}}
+                  <div class="mb-1">
+                    <div><span class="p-key">Vendor:</span> <span class="p-value">{{product.vendor}}</span></div>
+                    <div><span class="p-key">Product:</span> <span class="p-value">{{product.name}}</span></div>
+                    {{#if product.versions.length}}
+                      <div><span class="p-key">Versions:</span> <span class="p-value">{{join ", " product.versions}}</span></div>
+                    {{/if}}
+                  </div>
+                  {{#unless @last}}<hr class="my-1"/>{{/unless}}
+                {{/each}}
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{! Expandable References }}
+        {{#if vulnerability.references.length}}
+          <div class="threat-data-group">
+            <span class="title p-action" {{action "toggleExpandableVulnerabilities" "references" vulnIndex}}>
+              {{fa-icon "link" fixedWidth=true}} References ({{vulnerability.references.length}})
+              {{fa-icon size="md" icon=(if (get expandedVulnerabilities (concat "references" vulnIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
+            </span>
+            {{#if (get expandedVulnerabilities (concat "references" vulnIndex))}}
+              <div class="values scrollable-block">
+                <ul>
+                  {{#each vulnerability.references as |ref|}}
+                    <li><a href="{{ref.url}}" target="_blank" rel="noopener noreferrer">{{ref.name}}</a></li>
+                  {{/each}}
+                </ul>
+              </div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        <div class="open-details-icon" {{action "toggleExpandableVulnerabilities" "main" vulnIndex}}>
+          {{fa-icon size="lg" icon=(if (get expandedVulnerabilities (concat "main" vulnIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-details"}}
+          {{bs-tooltip title="Toggle Details"}}
+        </div>
+      </div>
+
+      {{#if (get expandedVulnerabilities (concat "main" vulnIndex))}}
+        <div class="details">
+          {{#if vulnerability.id}}<div><span class="p-key">ID:</span> <span class="p-value">{{vulnerability.id}}</span></div>{{/if}}
+          {{#if vulnerability.source}}<div><span class="p-key">Source:</span> <span class="p-value">{{vulnerability.source}}</span></div>{{/if}}
+          {{#if vulnerability.last_modified_date}}<div><span class="p-key">Last Modified:</span> <span class="p-value">{{moment-format vulnerability.last_modified_date "YYYY-MM-DD HH:mm" timeZone=timezone}}</span></div>{{/if}}
+          {{! Add more detailed fields here as needed }}
+        </div>
+      {{/if}}
+    </div>
+  {{/each}}
 {{else if threatActors.length}}
-  {{object-to-table threatActors}}
+  <h1 class="p-title">{{fa-icon "user-secret" fixedWidth=true}} Threat Actors ({{threatActors.length}})</h1>
+  {{#each threatActors as |actor actorIndex|}}
+    <div class="association threat-actor mb-3">
+      <div class="association-summary">
+        <div class="title-section">
+          <div class="title-content">
+            <div class="threat-type-icon">
+              {{fa-icon "user-secret" fixedWidth=true class="association-icon"}}
+              {{#if actor.id}}{{bs-tooltip title=(concat "Actor ID: " actor.id)}}{{/if}}
+            </div>
+            <div class="name-info">
+              <div class="name-updated">
+                <div class="name">{{actor.name}}</div>
+              </div>
+              {{#if actor.last_activity_date}}
+                <div class="modified-date">
+                  Last Activity: {{moment-format actor.last_activity_date "YYYY-MM-DD" timeZone=timezone}}
+                </div>
+              {{else if actor.first_activity_date}}
+                 <div class="modified-date">
+                  First Activity: {{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}
+                </div>
+              {{/if}}
+              {{#if actor.aliases.length}}
+                <div class="alt-names {{if (get expandedThreatActors (concat "aliases" actorIndex)) "expanded" "collapsed-description"}}">
+                  Aliases: {{join ", " actor.aliases}}
+                </div>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+
+        {{#if actor.description}}
+          <div class="description {{if (get expandedThreatActors (concat "desc" actorIndex)) "expanded" "collapsed-description"}}">
+            {{{actor.description}}}
+          </div>
+           {{#if (get expandedThreatActors (concat "desc" actorIndex))}}
+           {{else}}
+            {{#if (gt actor.description.length 250)}} {{! Simple length check, adjust as needed }}
+              <a class="p-action" {{action "toggleExpandableThreatActors" "desc" actorIndex}}>Show more</a>
+            {{/if}}
+          {{/if}}
+        {{/if}}
+
+        {{! Expandable Motivations }}
+        {{#if actor.motivations.length}}
+          <div class="threat-data-group">
+            <span class="title p-action" {{action "toggleExpandableThreatActors" "motivations" actorIndex}}>
+              {{fa-icon "bullseye" fixedWidth=true}} Motivations ({{actor.motivations.length}})
+              {{fa-icon size="md" icon=(if (get expandedThreatActors (concat "motivations" actorIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
+            </span>
+            {{#if (get expandedThreatActors (concat "motivations" actorIndex))}}
+              <div class="values"><p>{{join ", " actor.motivations}}</p></div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        {{! Expandable Targeted Industries }}
+        {{#if actor.targeted_industries.length}}
+          <div class="threat-data-group">
+            <span class="title p-action" {{action "toggleExpandableThreatActors" "industries" actorIndex}}>
+              {{fa-icon "industry" fixedWidth=true}} Targeted Industries ({{actor.targeted_industries.length}})
+              {{fa-icon size="md" icon=(if (get expandedThreatActors (concat "industries" actorIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
+            </span>
+            {{#if (get expandedThreatActors (concat "industries" actorIndex))}}
+              <div class="values"><p>{{join ", " actor.targeted_industries}}</p></div>
+            {{/if}}
+          </div>
+        {{/if}}
+
+        <div class="open-details-icon" {{action "toggleExpandableThreatActors" "main" actorIndex}}>
+          {{fa-icon size="lg" icon=(if (get expandedThreatActors (concat "main" actorIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-details"}}
+          {{bs-tooltip title="Toggle Details"}}
+        </div>
+      </div>
+
+      {{#if (get expandedThreatActors (concat "main" actorIndex))}}
+        <div class="details">
+          {{#if actor.id}}<div><span class="p-key">ID:</span> <span class="p-value">{{actor.id}}</span></div>{{/if}}
+          {{#if actor.country_of_origin}}<div><span class="p-key">Country of Origin:</span> <span class="p-value">{{actor.country_of_origin}}</span></div>{{/if}}
+          {{#if actor.sophistication}}<div><span class="p-key">Sophistication:</span> <span class="p-value">{{actor.sophistication}}</span></div>{{/if}}
+          {{#if actor.first_activity_date}}<div><span class="p-key">First Activity:</span> <span class="p-value">{{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}</span></div>{{/if}}
+          {{! Add more detailed fields here as needed }}
+        </div>
+      {{/if}}
+    </div>
+  {{/each}}
 {{else}}
   <div class="d-flex align-items-center justify-content-end copy-btn-container">
     <button class="btn copy-btn p-action" {{action "copyData"}}>
