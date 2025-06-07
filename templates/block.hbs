@@ -1,193 +1,471 @@
 {{#if vulnerabilities.length}}
-  <h1 class="p-title">{{fa-icon "shield-alt" fixedWidth=true}} Vulnerabilities ({{vulnerabilities.length}})</h1>
-  {{#each vulnerabilities as |vulnerability vulnIndex|}}
-    <div class="association vulnerability mb-3">
-      <div class="association-summary">
-        <div class="title-section">
-          <div class="title-content">
-            <div class="threat-type-icon">
-              {{fa-icon "shield-alt" fixedWidth=true class="association-icon"}}
-              {{#if vulnerability.id}}{{bs-tooltip title=(concat "Vulnerability ID: " vulnerability.id)}}{{/if}}
-            </div>
-            <div class="name-info">
-              <div class="name-updated">
-                <div class="name">{{vulnerability.name}}</div>
-              </div>
-              {{#if vulnerability.published_date}}
-                <div class="modified-date">
-                  Published: {{moment-format vulnerability.published_date "YYYY-MM-DD" timeZone=timezone}}
-                </div>
-              {{/if}}
-            </div>
-          </div>
+  <h1 class="p-title">
+    Vulnerabilities ({{vulnerabilities.length}})
+  </h1>
+  <div>
+    {{#each vulnerabilities as |vulnerability vulnIndex|}}
+      <div>
+        <div class="toggle-header" {{action "toggleExpandableVulnerabilities" "main" vulnIndex}}>
+          <span class="p-key">
+            {{vulnerability.name}}
+          </span>
+          <span class="chevron">
+            {{fa-icon
+              icon=(if (get expandedVulnerabilities (concat "main" vulnIndex)) "chevron-up" "chevron-down")
+              fixedWidth=true
+            }}
+          </span>
         </div>
-
-        {{#if vulnerability.description}}
-          <div class="description {{if (get expandedVulnerabilities (concat "desc" vulnIndex)) "expanded" "collapsed-description"}}">
-            {{{vulnerability.description}}}
-          </div>
-          {{#if (get expandedVulnerabilities (concat "desc" vulnIndex))}}
-          {{else}}
-            {{#if (gt vulnerability.description.length 250)}} {{! Simple length check, adjust as needed }}
-              <a class="p-action" {{action "toggleExpandableVulnerabilities" "desc" vulnIndex}}>Show more</a>
-            {{/if}}
-          {{/if}}
-        {{/if}}
-
-        {{#if vulnerability.cvss}}
-          <div><span class="p-key">CVSS Score:</span> <span class="p-value">{{vulnerability.cvss.score}} ({{vulnerability.cvss.vectorString}})</span></div>
-        {{/if}}
-        {{#if vulnerability.severity}}
-          <div><span class="p-key">Severity:</span> <span class="p-value">{{vulnerability.severity}}</span></div>
-        {{/if}}
-
-        {{! Expandable Affected Products }}
-        {{#if vulnerability.affected_products.length}}
-          <div class="threat-data-group">
-            <span class="title p-action" {{action "toggleExpandableVulnerabilities" "affectedProducts" vulnIndex}}>
-              {{fa-icon "cubes" fixedWidth=true}} Affected Products ({{vulnerability.affected_products.length}})
-              {{fa-icon size="md" icon=(if (get expandedVulnerabilities (concat "affectedProducts" vulnIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
-            </span>
-            {{#if (get expandedVulnerabilities (concat "affectedProducts" vulnIndex))}}
-              <div class="values scrollable-block">
-                {{#each vulnerability.affected_products as |product|}}
-                  <div class="mb-1">
-                    <div><span class="p-key">Vendor:</span> <span class="p-value">{{product.vendor}}</span></div>
-                    <div><span class="p-key">Product:</span> <span class="p-value">{{product.name}}</span></div>
-                    {{#if product.versions.length}}
-                      <div><span class="p-key">Versions:</span> <span class="p-value">{{join ", " product.versions}}</span></div>
-                    {{/if}}
-                  </div>
-                  {{#unless @last}}<hr class="my-1"/>{{/unless}}
-                {{/each}}
+        {{#if (get expandedVulnerabilities (concat "main" vulnIndex))}}
+          <div class="section">
+            {{#if vulnerability.description}}
+              <div class="mb-2">
+                {{{vulnerability.description}}}
               </div>
             {{/if}}
-          </div>
-        {{/if}}
+            {{#if vulnerability.cvss}}
+              <div>
+                <span class="p-key">
+                  CVSS:
+                </span>
 
-        {{! Expandable References }}
-        {{#if vulnerability.references.length}}
-          <div class="threat-data-group">
-            <span class="title p-action" {{action "toggleExpandableVulnerabilities" "references" vulnIndex}}>
-              {{fa-icon "link" fixedWidth=true}} References ({{vulnerability.references.length}})
-              {{fa-icon size="md" icon=(if (get expandedVulnerabilities (concat "references" vulnIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
-            </span>
-            {{#if (get expandedVulnerabilities (concat "references" vulnIndex))}}
-              <div class="values scrollable-block">
+                <span class="p-value">
+                  {{vulnerability.cvss.score}} ({{vulnerability.cvss.vectorString}})
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.severity}}
+              <div>
+                <span class="p-key">
+                  Severity:
+                </span>
+
+                <span class="p-value">
+                  {{vulnerability.severity}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.source}}
+              <div>
+                <span class="p-key">
+                  Source:
+                </span>
+
+                <span class="p-value">
+                  {{vulnerability.source}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.published_date}}
+              <div>
+                <span class="p-key">
+                  Published:
+                </span>
+
+                <span class="p-value">
+                  {{moment-format vulnerability.published_date "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.last_modified_date}}
+              <div>
+                <span class="p-key">
+                  Last Modified:
+                </span>
+
+                <span class="p-value">
+                  {{moment-format vulnerability.last_modified_date "YYYY-MM-DD HH:mm" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.affected_products.length}}
+              <div class="mt-2">
+                <span class="p-key">
+                  Affected Products:
+                </span>
+                <ul>
+                  {{#each vulnerability.affected_products as |product|}}
+                    <li>
+                      <span class="p-value">
+                        {{product.vendor}} {{product.name}}
+                      </span>
+                      {{#if product.versions.length}}
+                        <span class="muted">
+                          (Versions: {{join ", " product.versions}})
+                        </span>
+                      {{/if}}
+                    </li>
+                  {{/each}}
+                </ul>
+              </div>
+            {{/if}}
+            {{#if vulnerability.references.length}}
+              <div class="mt-2">
+                <span class="p-key">
+                  References:
+                </span>
                 <ul>
                   {{#each vulnerability.references as |ref|}}
-                    <li><a href="{{ref.url}}" target="_blank" rel="noopener noreferrer">{{ref.name}}</a></li>
+                    <li>
+                      <a href="{{ref.url}}" target="_blank" rel="noopener noreferrer">
+                        {{ref.name}}
+                      </a>
+                    </li>
                   {{/each}}
                 </ul>
               </div>
             {{/if}}
           </div>
         {{/if}}
-
-        <div class="open-details-icon" {{action "toggleExpandableVulnerabilities" "main" vulnIndex}}>
-          {{fa-icon size="lg" icon=(if (get expandedVulnerabilities (concat "main" vulnIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-details"}}
-          {{bs-tooltip title="Toggle Details"}}
-        </div>
       </div>
-
-      {{#if (get expandedVulnerabilities (concat "main" vulnIndex))}}
-        <div class="details">
-          {{#if vulnerability.id}}<div><span class="p-key">ID:</span> <span class="p-value">{{vulnerability.id}}</span></div>{{/if}}
-          {{#if vulnerability.source}}<div><span class="p-key">Source:</span> <span class="p-value">{{vulnerability.source}}</span></div>{{/if}}
-          {{#if vulnerability.last_modified_date}}<div><span class="p-key">Last Modified:</span> <span class="p-value">{{moment-format vulnerability.last_modified_date "YYYY-MM-DD HH:mm" timeZone=timezone}}</span></div>{{/if}}
-          {{! Add more detailed fields here as needed }}
-        </div>
-      {{/if}}
-    </div>
-  {{/each}}
+    {{/each}}
+  </div>
 {{else if threatActors.length}}
-  <h1 class="p-title">{{fa-icon "user-secret" fixedWidth=true}} Threat Actors ({{threatActors.length}})</h1>
-  {{#each threatActors as |actor actorIndex|}}
-    <div class="association threat-actor mb-3">
-      <div class="association-summary">
-        <div class="title-section">
-          <div class="title-content">
-            <div class="threat-type-icon">
-              {{fa-icon "user-secret" fixedWidth=true class="association-icon"}}
-              {{#if actor.id}}{{bs-tooltip title=(concat "Actor ID: " actor.id)}}{{/if}}
-            </div>
-            <div class="name-info">
-              <div class="name-updated">
-                <div class="name">{{actor.name}}</div>
+  <div class="threat-actors-flex-list">
+    {{#each threatActors as |actor actorIndex|}}
+      <div class="threat-actor-flex-item">
+        <div >
+          <h3 class="p-title threat-actor-title">
+            {{fa-icon "user-secret" class="threat-actor-icon" fixedWidth=true}} {{actor.name}}
+            <a href="https://www.virustotal.com/gui/collection/{{actor.id}}" target="_blank" rel="noopener noreferrer" class="gti-link">
+              {{fa-icon "external-link-square" class="external-link-icon"}}
+            </a>
+          </h3>
+          
+          <div class="threat-actor-flex-details">
+            {{#if actor.htmlDescription}}
+              <div>
+                <span class="p-key">
+                  Description:
+                </span>
+                <span class="p-value">
+                  {{{actor.htmlDescription}}}
+                </span>
               </div>
-              {{#if actor.last_activity_date}}
-                <div class="modified-date">
-                  Last Activity: {{moment-format actor.last_activity_date "YYYY-MM-DD" timeZone=timezone}}
-                </div>
-              {{else if actor.first_activity_date}}
-                 <div class="modified-date">
-                  First Activity: {{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}
+            {{/if}}
+            {{#if actor.tags}}
+              <div>
+                <span class="p-key">
+                  Tags:
+                </span>
+                <span class="threat-actor-flex-list-row">
+                  {{#each actor.tags as |tag|}}
+                    <span class="p-value">
+                      {{tag}}
+                    </span>
+                  {{/each}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.country_of_origin}}
+              <div>
+                <span class="p-key">
+                  Country of Origin:
+                </span>
+                <span class="p-value">
+                  {{actor.country_of_origin}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.sophistication}}
+              <div>
+                <span class="p-key">
+                  Sophistication:
+                </span>
+                <span class="p-value">
+                  {{actor.sophistication}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.private}}
+              <div>
+                <span class="p-key">
+                  Private:
+                </span>
+                <span class="p-value">
+                  {{if actor.private "Yes" "No"}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.origin}}
+              <div>
+                <span class="p-key">
+                  Origin:
+                </span>
+                <span class="p-value">
+                  {{actor.origin}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.vulnerable_products}}
+              <div>
+                <span class="p-key">
+                  Vulnerable Products:
+                </span>
+                <span class="p-value">
+                  {{actor.vulnerable_products}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.threat_scape}}
+              <div>
+                <span class="p-key">
+                  Threat Scape:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.threat_scape}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.mitigations}}
+              <div>
+                <span class="p-key">
+                  Mitigations:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.mitigations}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.workarounds}}
+              <div>
+                <span class="p-key">
+                  Workarounds:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.workarounds}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.merged_actors}}
+              <div>
+                <span class="p-key">
+                  Merged Actors:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.merged_actors}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.tags}}
+              <div>
+                <span class="p-key">
+                  Tags:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.tags}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.detection_names}}
+              <div>
+                <span class="p-key">
+                  Detection Names:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.detection_names}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.alt_names}}
+              <div>
+                <span class="p-key">
+                  Alt Names:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.alt_names}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.technologies}}
+              <div>
+                <span class="p-key">
+                  Technologies:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.technologies}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.malware_roles}}
+              <div>
+                <span class="p-key">
+                  Malware Roles:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.malware_roles}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.exploitation_vectors}}
+              <div>
+                <span class="p-key">
+                  Exploitation Vectors:
+                </span>
+                <span class="p-value">
+                  {{join ", " actor.exploitation_vectors}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.first_seen}}
+              <div>
+                <span class="p-key">
+                  First Seen:
+                </span>
+                <span class="p-value">
+                  {{moment-format actor.first_seen "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.last_seen}}
+              <div>
+                <span class="p-key">
+                  Last Seen:
+                </span>
+                <span class="p-value">
+                  {{moment-format actor.last_seen "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.first_activity_date}}
+              <div>
+                <span class="p-key">
+                  First Activity:
+                </span>
+                <span class="p-value">
+                  {{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if (or actor.last_modification_date actor.last_activity_date)}}
+              <div>
+                <span class="p-key">
+                  Last Activity:
+                </span>
+                <span class="p-value">
+                  {{moment-format (or actor.last_activity_date actor.last_modification_date) "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if (or actor.urls_count actor.domains_count actor.ip_addresses_count actor.references_count actor.subscribers_count)}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "actorCounts" actorIndex}}>
+                  {{fa-icon "list-ol" fixedWidth=true}}
+                  Counters
+                  {{fa-icon (if (get expandedAssociations (concat "actorCounts" actorIndex)) "caret-up" "caret-down") fixedWidth=true}}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "actorCounts" actorIndex))}}
+                <div>
+                  {{#if actor.urls_count}}
+                    <div>
+                      <span class="p-key">URLs Count:</span>
+                      <span class="p-value">{{actor.urls_count}}</span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.domains_count}}
+                    <div>
+                      <span class="p-key">Domains Count:</span>
+                      <span class="p-value">{{actor.domains_count}}</span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.ip_addresses_count}}
+                    <div>
+                      <span class="p-key">IP Addresses Count:</span>
+                      <span class="p-value">{{actor.ip_addresses_count}}</span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.references_count}}
+                    <div>
+                      <span class="p-key">References Count:</span>
+                      <span class="p-value">{{actor.references_count}}</span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.subscribers_count}}
+                    <div>
+                      <span class="p-key">Subscribers Count:</span>
+                      <span class="p-value">{{actor.subscribers_count}}</span>
+                    </div>
+                  {{/if}}
                 </div>
               {{/if}}
-              {{#if actor.aliases.length}}
-                <div class="alt-names {{if (get expandedThreatActors (concat "aliases" actorIndex)) "expanded" "collapsed-description"}}">
-                  Aliases: {{join ", " actor.aliases}}
+            {{/if}}
+
+            {{#if actor.field_sources}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "fieldSources" actorIndex}}>
+                  {{fa-icon "info-circle" fixedWidth=true}}
+                  Field Sources ({{actor.field_sources.length}})
+                  {{fa-icon (if (get expandedAssociations (concat "fieldSources" actorIndex)) "caret-up" "caret-down") fixedWidth=true}}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "fieldSources" actorIndex))}}
+                <div>
+                  {{#each actor.field_sources as |source|}}
+                    <div class="mb-1">
+                      <div>
+                        <span class="p-key">Field:</span>
+                        <span class="p-value">{{source.field}}</span>
+                      </div>
+                      <div>
+                        <span class="p-key">Source Name:</span>
+                        <span class="p-value">{{source.source.source_name}}</span>
+                      </div>
+                      <div>
+                        <span class="p-key">Type:</span>
+                        <span class="p-value">{{source.source.field_type}}</span>
+                      </div>
+                      {{#if source.source.source_url}}
+                        <div>
+                          <span class="p-key">URL:</span>
+                          <a href="{{source.source.source_url}}" target="_blank">[link]</a>
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/each}}
                 </div>
               {{/if}}
-            </div>
-          </div>
-        </div>
-
-        {{#if actor.description}}
-          <div class="description {{if (get expandedThreatActors (concat "desc" actorIndex)) "expanded" "collapsed-description"}}">
-            {{{actor.description}}}
-          </div>
-           {{#if (get expandedThreatActors (concat "desc" actorIndex))}}
-           {{else}}
-            {{#if (gt actor.description.length 250)}} {{! Simple length check, adjust as needed }}
-              <a class="p-action" {{action "toggleExpandableThreatActors" "desc" actorIndex}}>Show more</a>
             {{/if}}
-          {{/if}}
-        {{/if}}
-
-        {{! Expandable Motivations }}
-        {{#if actor.motivations.length}}
-          <div class="threat-data-group">
-            <span class="title p-action" {{action "toggleExpandableThreatActors" "motivations" actorIndex}}>
-              {{fa-icon "bullseye" fixedWidth=true}} Motivations ({{actor.motivations.length}})
-              {{fa-icon size="md" icon=(if (get expandedThreatActors (concat "motivations" actorIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
-            </span>
-            {{#if (get expandedThreatActors (concat "motivations" actorIndex))}}
-              <div class="values"><p>{{join ", " actor.motivations}}</p></div>
-            {{/if}}
-          </div>
-        {{/if}}
-
-        {{! Expandable Targeted Industries }}
-        {{#if actor.targeted_industries.length}}
-          <div class="threat-data-group">
-            <span class="title p-action" {{action "toggleExpandableThreatActors" "industries" actorIndex}}>
-              {{fa-icon "industry" fixedWidth=true}} Targeted Industries ({{actor.targeted_industries.length}})
-              {{fa-icon size="md" icon=(if (get expandedThreatActors (concat "industries" actorIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-counters"}}
-            </span>
-            {{#if (get expandedThreatActors (concat "industries" actorIndex))}}
-              <div class="values"><p>{{join ", " actor.targeted_industries}}</p></div>
+            
+            {{#if actor.confidenceGroupedData}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "actorMetadata" actorIndex}}>
+                  {{fa-icon "database" fixedWidth=true}}
+                  Telemetry and Metadata
+                  {{fa-icon (if (get expandedAssociations (concat "actorMetadata" actorIndex)) "caret-up" "caret-down") fixedWidth=true}}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "actorMetadata" actorIndex))}}
+                <div class="values">
+                  {{#each-in actor.confidenceGroupedData as |confidence metadata|}}
+                    <div style="margin-bottom: 8px;">
+                      <span class="p-key confidence-metadata-title">
+                        {{titleize (humanize (dasherize confidence))}}
+                      </span>
+                      <div class="confidence-metadata-indent">
+                        {{#each-in metadata as |key values|}}
+                          {{#if values.length}}
+                            <div class="metadata-field" >
+                              <span class="p-key">
+                                {{titleize (humanize (dasherize key))}}:
+                              </span>
+                              <span class="p-value">
+                                {{join " | " values}}
+                              </span>
+                            </div>
+                          {{/if}}
+                        {{/each-in}}
+                      </div>
+                    </div>
+                  {{/each-in}}
+                </div>
+              {{/if}}
             {{/if}}
           </div>
-        {{/if}}
-
-        <div class="open-details-icon" {{action "toggleExpandableThreatActors" "main" actorIndex}}>
-          {{fa-icon size="lg" icon=(if (get expandedThreatActors (concat "main" actorIndex)) "chevron-up" "chevron-down") fixedWidth=true class="open-details"}}
-          {{bs-tooltip title="Toggle Details"}}
         </div>
       </div>
-
-      {{#if (get expandedThreatActors (concat "main" actorIndex))}}
-        <div class="details">
-          {{#if actor.id}}<div><span class="p-key">ID:</span> <span class="p-value">{{actor.id}}</span></div>{{/if}}
-          {{#if actor.country_of_origin}}<div><span class="p-key">Country of Origin:</span> <span class="p-value">{{actor.country_of_origin}}</span></div>{{/if}}
-          {{#if actor.sophistication}}<div><span class="p-key">Sophistication:</span> <span class="p-value">{{actor.sophistication}}</span></div>{{/if}}
-          {{#if actor.first_activity_date}}<div><span class="p-key">First Activity:</span> <span class="p-value">{{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}</span></div>{{/if}}
-          {{! Add more detailed fields here as needed }}
-        </div>
-      {{/if}}
-    </div>
-  {{/each}}
+    {{/each}}
+  </div>
 {{else}}
   <div class="d-flex align-items-center justify-content-end copy-btn-container">
     <button class="btn copy-btn p-action" {{action "copyData"}}>
@@ -245,21 +523,8 @@
                   cx="0"
                   cy="0"
                 ></circle>
-                {{#if
-                  (or
-                    details.positives
-                    details.total
-                    (eq details.positives 0)
-                    (eq details.total 0)
-                  )
-                }}
-                  <text
-                    text-anchor="middle"
-                    x="0"
-                    y="0"
-                    fill="{{elementColor}}"
-                    font-size="13"
-                  >
+                {{#if (or details.positives details.total (eq details.positives 0) (eq details.total 0))}}
+                  <text text-anchor="middle" x="0" y="0" fill="{{elementColor}}" font-size="13">
                     {{details.positives}}
                   </text>
                   <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
@@ -267,13 +532,7 @@
                     {{details.total}}
                   </text>
                 {{else}}
-                  <text
-                    text-anchor="middle"
-                    x="0"
-                    y="0"
-                    fill="{{elementColor}}"
-                    font-size="13"
-                  >
+                  <text text-anchor="middle" x="0" y="0" fill="{{elementColor}}" font-size="13">
                     No
                   </text>
                   <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
@@ -288,20 +547,12 @@
       <div class="right-column">
         <div class="score-container">
           <div class="score-marker" style="left: calc({{communityScoreWidth}}% - 16px)">
-            {{fa-icon
-              size="2x"
-              icon=communityScoreIcon
-              fixedWidth=true
-              class=communityScoreColorClass
-            }}
+            {{fa-icon size="2x" icon=communityScoreIcon fixedWidth=true class=communityScoreColorClass}}
           </div>
           <div class="score-line"></div>
+          the threats or records
           <div class="p-footnote score-footer">
-            Community Score ({{if
-              (or details.reputation (eq details.reputation 0))
-              details.reputation
-              "Unknown"
-            }})
+            Community Score ({{if (or details.reputation (eq details.reputation 0)) details.reputation "Unknown"}})
           </div>
         </div>
         {{#if details.tags.length}}
@@ -325,9 +576,7 @@
       {{#if (or details.positiveScans details.scan_date details.reputation)}}
         <li class="nav-item">
           <a
-            class="nav-link {{
-              if (or (eq activeTab "detection") (not activeTab)) "active"
-            }}"
+            class="nav-link {{if (or (eq activeTab "detection") (not activeTab)) "active"}}"
             href="#"
             {{action "changeTab" "detection"}}
           >
@@ -348,11 +597,7 @@
       {{/if}}
       {{#if (or block.entity.isIP block.entity.isDomain)}}
         <li class="nav-item">
-          <a
-            class="nav-link {{if (eq activeTab "relations") "active"}}"
-            href="#"
-            {{action "changeTab" "relations"}}
-          >
+          <a class="nav-link {{if (eq activeTab "relations") "active"}}" href="#" {{action "changeTab" "relations"}}>
             Relations
           </a>
         </li>
@@ -418,7 +663,7 @@
           {{! detections }}
           {{#if (and details.positives details.total)}}
             <div class="toggle-header">
-              <span class="p-action" {{action "toggleShowResults" "showScanResults"}}>
+              <span class="p-action" style="margin-top: 5px;" {{action "toggleShowResults" "showScanResults"}}>
                 {{fa-icon "laptop" fixedWidth=true}}
                 {{#unless block.userOptions.showNoDetections}}
                   Positive
@@ -448,8 +693,7 @@
                       </td>
                       <td>
                         <span class="p-value" style="color: #FF3A59">
-                          {{fa-icon "exclamation" class="p-red table-icon" fixedWidth=true
-                          }}
+                          {{fa-icon "exclamation" class="p-red table-icon" fixedWidth=true}}
                           {{positiveScan.result}}
                         </span>
                       </td>
@@ -466,31 +710,15 @@
                         <td>
                           <span class="p-value">
                             {{#if (eq negativeScan.result "Unrated")}}
-                              {{fa-icon
-                                "question"
-                                class="p-grey table-icon"
-                                fixedWidth=true
-                              }}
+                              {{fa-icon "question" class="p-grey table-icon" fixedWidth=true}}
                             {{else}}
                               {{#if (eq negativeScan.result "type-unsupported")}}
-                                {{fa-icon
-                                  "eye-slash"
-                                  class="p-grey table-icon"
-                                  fixedWidth=true
-                                }}
+                                {{fa-icon "eye-slash" class="p-grey table-icon" fixedWidth=true}}
                               {{else}}
                                 {{#if (eq negativeScan.result "Suspicious")}}
-                                  {{fa-icon
-                                    "info"
-                                    class="p-orange table-icon"
-                                    fixedWidth=true
-                                  }}
+                                  {{fa-icon "info" class="p-orange table-icon" fixedWidth=true}}
                                 {{else}}
-                                  {{fa-icon
-                                    "check"
-                                    class="p-green table-icon"
-                                    fixedWidth=true
-                                  }}
+                                  {{fa-icon "check" class="p-green table-icon" fixedWidth=true}}
                                 {{/if}}
                               {{/if}}
                             {{/if}}
@@ -582,11 +810,7 @@
                     {{detailsField.key}}:
                   </span>
                   <span class="p-value">
-                    {{moment-format
-                      (unix detailsField.value)
-                      "YYYY-MM-DD HH:mm:ss z"
-                      timeZone=timezone
-                    }}
+                    {{moment-format (unix detailsField.value) "YYYY-MM-DD HH:mm:ss z" timeZone=timezone}}
                   </span>
                 </div>
               {{else}}
@@ -606,14 +830,10 @@
 
           {{#if (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)}}
             <div class="toggle-header">
-              <span
-                class="p-action"
-                {{action "toggleShowResults" "block._state.showNames"}}
-              >
+              <span class="p-action" {{action "toggleShowResults" "block._state.showNames"}}>
                 {{fa-icon icon="file" fixedWidth=true}}
                 Names ({{details.names.length}})
-                {{fa-icon (if showFilesReferring "caret-up" "caret-down") fixedWidth=true
-                }}
+                {{fa-icon (if showFilesReferring "caret-up" "caret-down") fixedWidth=true}}
               </span>
             </div>
             {{#if block._state.showNames}}
@@ -707,10 +927,7 @@
                 {{fa-icon icon="spinner-third" spin=true fixedWidth=true}}
                 Loading opened files ...
               {{else}}
-                Opened Files ({{if
-                  details.behaviorSummary.files_opened
-                  details.behaviorSummary.files_opened.length
-                  "0"
+                Opened Files ({{if details.behaviorSummary.files_opened details.behaviorSummary.files_opened.length "0"
                 }})
               {{/if}}
               {{fa-icon (if showFilesOpened "caret-up" "caret-down") fixedWidth=true}}
@@ -804,10 +1021,7 @@
                                 {{#if referrenceFile.link}}
                                   <a href={{referrenceFile.link}}>
                                     {{referrenceFile.name}}
-                                    {{fa-icon
-                                      "external-link-square"
-                                      class="external-link-icon"
-                                    }}
+                                    {{fa-icon "external-link-square" class="external-link-icon"}}
                                   </a>
                                 {{else}}
                                   {{referrenceFile.name}}
@@ -844,10 +1058,7 @@
                                 {{#if (eq referrenceFile.scannedDate "-")}}
                                   -
                                 {{else}}
-                                  {{moment-format
-                                    referrenceFile.scannedDate
-                                    "YYYY-MM-DD HH:mm:ss UTC"
-                                  }}
+                                  {{moment-format referrenceFile.scannedDate "YYYY-MM-DD HH:mm:ss UTC"}}
                                 {{/if}}
                               </span>
                             </div>
@@ -900,10 +1111,7 @@
                         <tbody>
                           <tr {{action "expandWhoIsRow" index}}>
                             <td>
-                              {{fa-icon
-                                (if (get expandedWhoisMap index) "caret-up" "caret-down")
-                                fixedWidth=true
-                              }}
+                              {{fa-icon (if (get expandedWhoisMap index) "caret-up" "caret-down") fixedWidth=true}}
                             </td>
                             <td>
                               <span class="p-key">
@@ -941,10 +1149,7 @@
                                 </span>
                                 <span class="p-value">
                                   {{#if ipKey.isDate}}
-                                    {{moment-format
-                                      (get whoisRow ipKey.key)
-                                      "YYYY-MM-DD HH:mm:ss UTC"
-                                      timeZone=timezone
+                                    {{moment-format (get whoisRow ipKey.key) "YYYY-MM-DD HH:mm:ss UTC" timeZone=timezone
                                     }}
                                   {{else}}
                                     {{get whoisRow ipKey.key}}
@@ -980,10 +1185,7 @@
                         <tbody>
                           <tr {{action "expandWhoIsRow" index}}>
                             <td>
-                              {{fa-icon
-                                (if (get expandedWhoisMap index) "caret-up" "caret-down")
-                                fixedWidth=true
-                              }}
+                              {{fa-icon (if (get expandedWhoisMap index) "caret-up" "caret-down") fixedWidth=true}}
                             </td>
                             <td>
                               <span class="p-key">
@@ -1021,10 +1223,7 @@
                                 </span>
                                 <span class="p-value">
                                   {{#if domainKey.isDate}}
-                                    {{moment-format
-                                      (get whoisRow domainKey.key)
-                                      "YYYY-MM-DD HH:mm:ss UTC"
-                                    }}
+                                    {{moment-format (get whoisRow domainKey.key) "YYYY-MM-DD HH:mm:ss UTC"}}
                                   {{else}}
                                     {{get whoisRow domainKey.key}}
                                   {{/if}}
@@ -1075,22 +1274,16 @@
                 <div class="association-link">
                   <a
                     class="full"
-                    href="{{associationLink}}/{{
-                      if (eq associationTab "threats") "threats"
-                    }}{{if (eq associationTab "reporting") "reporting"}}"
+                    href="{{associationLink}}/{{if (eq associationTab "threats") "threats"}}{{
+                      if (eq associationTab "reporting") "reporting"
+                    }}"
                   >
                     {{#if (eq associationTab "threats")}}
                       View in Threats in GTI
                     {{else}}
                       View in Reports in GTI
                     {{/if}}
-                    <svg
-                      width="19"
-                      height="19"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
                         d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
                         fill="#FBBC04"
@@ -1119,9 +1312,9 @@
                   </a>
                   <a
                     class="narrow"
-                    href="{{associationLink}}/{{
-                      if (eq associationTab "threats") "threats"
-                    }}{{if (eq associationTab "reporting") "reporting"}}"
+                    href="{{associationLink}}/{{if (eq associationTab "threats") "threats"}}{{
+                      if (eq associationTab "reporting") "reporting"
+                    }}"
                   >
                     {{#if (eq associationTab "threats")}}
                       View Threats
@@ -1143,18 +1336,11 @@
                         <div class="title-content">
                           <div class="threat-type-icon">
                             {{fa-icon
-                              icon=(or
-                                (get iconNamesByAssociationType threat.collection_type)
-                                "bug"
-                              )
+                              icon=(or (get iconNamesByAssociationType threat.collection_type) "bug")
                               fixedWidth=true
                               class="association-icon"
                             }}
-                            {{bs-tooltip
-                              title=(titleize
-                                (humanize (dasherize threat.collection_type))
-                              )
-                            }}
+                            {{bs-tooltip title=(titleize (humanize (dasherize threat.collection_type)))}}
                           </div>
                           <div class="name-info">
                             <div class="name-updated">
@@ -1166,43 +1352,27 @@
                             <div class="modified-date">
                               {{#if threat.last_modification_date}}
                                 <div class="updated">
-                                  Updated {{moment-from-now
-                                    threat.last_modification_date
-                                    hideAffix=true
-                                  }} ago
+                                  Updated {{moment-from-now threat.last_modification_date hideAffix=true}} ago
                                 </div>
                               {{/if}}
                               {{bs-tooltip
                                 title=(concat
                                   "Last Activity: "
-                                  (moment-format
-                                    threat.last_modification_date
-                                    "YYYY-MM-DD"
-                                    timeZone=timezone
-                                  )
+                                  (moment-format threat.last_modification_date "YYYY-MM-DD" timeZone=timezone)
                                 )
                               }}
                             </div>
                             {{#if threat.alt_names}}
                               <div
                                 class="alt-names {{
-                                  if
-                                  (get
-                                    expandedAssociations (concat "threats" threatIndex)
-                                  )
-                                  "expanded"
+                                  if (get expandedAssociations (concat "threats" threatIndex)) "expanded"
                                 }}"
                               >
                                 {{join ", " threat.alt_names}}
                               </div>
                             {{/if}}
                             <div class="link">
-                              <a
-                                class="full"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  threat.id
-                                }}"
-                              >
+                              <a class="full" href="https://www.virustotal.com/gui/collection/{{threat.id}}">
                                 View in Google Threat Intelligence
                                 <svg
                                   width="19"
@@ -1237,12 +1407,7 @@
                                   ></path>
                                 </svg>
                               </a>
-                              <a
-                                class="narrow"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  threat.id
-                                }}"
-                              >
+                              <a class="narrow" href="https://www.virustotal.com/gui/collection/{{threat.id}}">
                                 View in GTI
                                 <svg
                                   width="19"
@@ -1285,9 +1450,7 @@
                       {{#if threat.htmlDescription}}
                         <div
                           class="description {{
-                            if
-                            (get expandedAssociations (concat "threats" threatIndex))
-                            "expanded"
+                            if (get expandedAssociations (concat "threats" threatIndex)) "expanded"
                           }}"
                         >
                           {{{threat.htmlDescription}}}
@@ -1317,8 +1480,7 @@
                               <div class="count">
                                 {{threat.targetedIndustryNames.length}}
                               </div>
-                              {{bs-tooltip title=(join " | " threat.targetedIndustryNames)
-                              }}
+                              {{bs-tooltip title=(join " | " threat.targetedIndustryNames)}}
                             </div>
                           {{/if}}
                           {{#if threat.relationships.threat_actors.data.length}}
@@ -1434,11 +1596,7 @@
                                 Last Modification Date:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  threat.last_modification_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format threat.last_modification_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -1448,11 +1606,7 @@
                                 Creation Date:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  threat.creation_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format threat.creation_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -1468,22 +1622,12 @@
                           {{/if}}
                           {{#if threat.counters}}
                             <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "threatCounter"
-                                  threatIndex
-                                }}
-                              >
+                              <span class="title" {{action "toggleExpandableAssociations" "threatCounter" threatIndex}}>
                                 IOC Counters
                                 {{fa-icon
                                   size="md"
                                   icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "threatCounter" threatIndex)
-                                    )
+                                    (get expandedAssociations (concat "threatCounter" threatIndex))
                                     "chevron-up"
                                     "chevron-down"
                                   )
@@ -1491,19 +1635,10 @@
                                   class="open-counters"
                                 }}
                               </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "threatCounter" threatIndex)
-                                )
-                              }}
+                              {{#if (get expandedAssociations (concat "threatCounter" threatIndex))}}
                                 <div class="values">
                                   <div class="link">
-                                    <a
-                                      href="https://www.virustotal.com/gui/collection/{{
-                                        threat.id
-                                      }}/iocs"
-                                    >
+                                    <a href="https://www.virustotal.com/gui/collection/{{threat.id}}/iocs">
                                       View IOCs in GTI
                                       <svg
                                         width="19"
@@ -1555,22 +1690,12 @@
                           {{/if}}
                           {{#if threat.categorizedIocs}}
                             <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "threatIocs"
-                                  threatIndex
-                                }}
-                              >
+                              <span class="title" {{action "toggleExpandableAssociations" "threatIocs" threatIndex}}>
                                 Aggregations
                                 {{fa-icon
                                   size="md"
                                   icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "threatIocs" threatIndex)
-                                    )
+                                    (get expandedAssociations (concat "threatIocs" threatIndex))
                                     "chevron-up"
                                     "chevron-down"
                                   )
@@ -1578,25 +1703,17 @@
                                   class="open-counters"
                                 }}
                               </span>
-                              {{#if
-                                (get
-                                  expandedAssociations (concat "threatIocs" threatIndex)
-                                )
-                              }}
+                              {{#if (get expandedAssociations (concat "threatIocs" threatIndex))}}
                                 <div class="values">
                                   <div class="iocs">
-                                    {{#each-in
-                                      threat.categorizedIocs as |iocCategory iocs|
-                                    }}
+                                    {{#each-in threat.categorizedIocs as |iocCategory iocs|}}
                                       <div>
                                         <span class="p-key">
                                           {{iocCategory}}:
                                         </span>
                                         <span class="p-value">
                                           {{#each iocs as |ioc iocIndex|}}
-                                            {{ioc.value}}{{#if
-                                              (not (eq (sub iocs.length 1) iocIndex))
-                                            }}
+                                            {{ioc.value}}{{#if (not (eq (sub iocs.length 1) iocIndex))}}
                                               ,
                                             {{/if}}
                                           {{/each}}
@@ -1612,20 +1729,13 @@
                             <div class="threat-data-group">
                               <span
                                 class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "threatMetadata"
-                                  threatIndex
-                                }}
+                                {{action "toggleExpandableAssociations" "threatMetadata" threatIndex}}
                               >
                                 Telemetry and Metadata
                                 {{fa-icon
                                   size="md"
                                   icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "threatMetadata" threatIndex)
-                                    )
+                                    (get expandedAssociations (concat "threatMetadata" threatIndex))
                                     "chevron-up"
                                     "chevron-down"
                                   )
@@ -1633,19 +1743,10 @@
                                   class="open-counters"
                                 }}
                               </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "threatMetadata" threatIndex)
-                                )
-                              }}
+                              {{#if (get expandedAssociations (concat "threatMetadata" threatIndex))}}
                                 <div class="values">
                                   <div class="link">
-                                    <a
-                                      href="https://www.virustotal.com/gui/collection/{{
-                                        threat.id
-                                      }}/iocs/telemetry"
-                                    >
+                                    <a href="https://www.virustotal.com/gui/collection/{{threat.id}}/iocs/telemetry">
                                       View Telemetry in GTI
                                       <svg
                                         width="19"
@@ -1681,9 +1782,7 @@
                                       </svg>
                                     </a>
                                   </div>
-                                  {{#each-in
-                                    threat.confidenceGroupedData as |confidence metadata|
-                                  }}
+                                  {{#each-in threat.confidenceGroupedData as |confidence metadata|}}
                                     <span class="title">
                                       {{titleize (humanize (dasherize confidence))}}
                                     </span>
@@ -1707,16 +1806,11 @@
                         </div>
                       {{/if}}
 
-                      <div
-                        class="open-details-icon"
-                        {{action "toggleExpandableAssociations" "threats" threatIndex}}
-                      >
+                      <div class="open-details-icon" {{action "toggleExpandableAssociations" "threats" threatIndex}}>
                         {{fa-icon
                           size="lg"
                           icon=(if
-                            (get expandedAssociations (concat "threats" threatIndex))
-                            "chevron-up"
-                            "chevron-down"
+                            (get expandedAssociations (concat "threats" threatIndex)) "chevron-up" "chevron-down"
                           )
                           fixedWidth=true
                           class="open-details"
@@ -1735,45 +1829,30 @@
                       <div class="title-section">
                         <div class="title-content">
                           <div class="threat-type-icon">
-                            {{fa-icon
-                              icon="file-alt"
-                              fixedWidth=true
-                              class="association-icon"
-                            }}
+                            {{fa-icon icon="file-alt" fixedWidth=true class="association-icon"}}
                             {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
                           </div>
                           <div class="name-info">
                             <div class="name-updated">
                               <div class="name">
                                 {{report.name}}
-                                {{bs-tooltip title=(concat "Report ID: " report.report_id)
-                                }}
+                                {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
                               </div>
                             </div>
                             <div class="modified-date">
                               {{#if report.last_modification_date}}
                                 <div class="updated">
-                                  Updated {{moment-from-now
-                                    report.last_modification_date
-                                    hideAffix=true
-                                  }} ago
+                                  Updated {{moment-from-now report.last_modification_date hideAffix=true}} ago
                                 </div>
                               {{else if report.creation_date}}
                                 <div class="updated">
-                                  Published {{moment-from-now
-                                    report.creation_date
-                                    hideAffix=true
-                                  }} ago
+                                  Published {{moment-from-now report.creation_date hideAffix=true}} ago
                                 </div>
                               {{/if}}
                               {{bs-tooltip
                                 title=(concat
                                   "Last Activity: "
-                                  (moment-format
-                                    report.last_modification_date
-                                    "YYYY-MM-DD"
-                                    timeZone=timezone
-                                  )
+                                  (moment-format report.last_modification_date "YYYY-MM-DD" timeZone=timezone)
                                 )
                               }}
                             </div>
@@ -1783,12 +1862,7 @@
                               </div>
                             {{/if}}
                             <div class="link">
-                              <a
-                                class="full"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  report.id
-                                }}"
-                              >
+                              <a class="full" href="https://www.virustotal.com/gui/collection/{{report.id}}">
                                 View in Google Threat Intelligence
                                 <svg
                                   width="19"
@@ -1823,12 +1897,7 @@
                                   ></path>
                                 </svg>
                               </a>
-                              <a
-                                class="narrow"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  report.id
-                                }}"
-                              >
+                              <a class="narrow" href="https://www.virustotal.com/gui/collection/{{report.id}}">
                                 View in GTI
                                 <svg
                                   width="19"
@@ -1871,9 +1940,7 @@
                       {{#if report.executive_summary}}
                         <div
                           class="description {{
-                            if
-                            (get expandedAssociations (concat "reports" reportIndex))
-                            "expanded"
+                            if (get expandedAssociations (concat "reports" reportIndex)) "expanded"
                           }}"
                         >
                           {{{report.executive_summary}}}
@@ -1901,8 +1968,7 @@
                               <div class="count">
                                 {{report.targetedIndustryNames.length}}
                               </div>
-                              {{bs-tooltip title=(join " | " report.targetedIndustryNames)
-                              }}
+                              {{bs-tooltip title=(join " | " report.targetedIndustryNames)}}
                             </div>
                           {{/if}}
                           {{#if report.relationships.threat_actors.data.length}}
@@ -2028,11 +2094,7 @@
                                 Last Modification Date:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  report.last_modification_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format report.last_modification_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -2042,11 +2104,7 @@
                                 Published:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  report.creation_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format report.creation_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -2062,22 +2120,12 @@
                           {{/if}}
                           {{#if report.counters}}
                             <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "reportCounter"
-                                  reportIndex
-                                }}
-                              >
+                              <span class="title" {{action "toggleExpandableAssociations" "reportCounter" reportIndex}}>
                                 IOC Counters
                                 {{fa-icon
                                   size="md"
                                   icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "reportCounter" reportIndex)
-                                    )
+                                    (get expandedAssociations (concat "reportCounter" reportIndex))
                                     "chevron-up"
                                     "chevron-down"
                                   )
@@ -2085,19 +2133,10 @@
                                   class="open-counters"
                                 }}
                               </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "reportCounter" reportIndex)
-                                )
-                              }}
+                              {{#if (get expandedAssociations (concat "reportCounter" reportIndex))}}
                                 <div class="values">
                                   <div class="link">
-                                    <a
-                                      href="https://www.virustotal.com/gui/collection/{{
-                                        report.id
-                                      }}/iocs"
-                                    >
+                                    <a href="https://www.virustotal.com/gui/collection/{{report.id}}/iocs">
                                       View IOCs in GTI
                                       <svg
                                         width="19"
@@ -2149,22 +2188,12 @@
                           {{/if}}
                           {{#if report.categorizedIocs}}
                             <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "reportIocs"
-                                  reportIndex
-                                }}
-                              >
+                              <span class="title" {{action "toggleExpandableAssociations" "reportIocs" reportIndex}}>
                                 Aggregations
                                 {{fa-icon
                                   size="md"
                                   icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "reportIocs" reportIndex)
-                                    )
+                                    (get expandedAssociations (concat "reportIocs" reportIndex))
                                     "chevron-up"
                                     "chevron-down"
                                   )
@@ -2172,25 +2201,17 @@
                                   class="open-counters"
                                 }}
                               </span>
-                              {{#if
-                                (get
-                                  expandedAssociations (concat "reportIocs" reportIndex)
-                                )
-                              }}
+                              {{#if (get expandedAssociations (concat "reportIocs" reportIndex))}}
                                 <div class="values">
                                   <div class="iocs">
-                                    {{#each-in
-                                      report.categorizedIocs as |iocCategory iocs|
-                                    }}
+                                    {{#each-in report.categorizedIocs as |iocCategory iocs|}}
                                       <div>
                                         <span class="p-key">
                                           {{iocCategory}}:
                                         </span>
                                         <span class="p-value">
                                           {{#each iocs as |ioc iocIndex|}}
-                                            {{ioc.value}}{{#if
-                                              (not (eq (sub iocs.length 1) iocIndex))
-                                            }}
+                                            {{ioc.value}}{{#if (not (eq (sub iocs.length 1) iocIndex))}}
                                               ,
                                             {{/if}}
                                           {{/each}}
@@ -2206,20 +2227,13 @@
                             <div class="threat-data-group">
                               <span
                                 class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "reportMetadata"
-                                  reportIndex
-                                }}
+                                {{action "toggleExpandableAssociations" "reportMetadata" reportIndex}}
                               >
                                 Metadata
                                 {{fa-icon
                                   size="md"
                                   icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "reportMetadata" reportIndex)
-                                    )
+                                    (get expandedAssociations (concat "reportMetadata" reportIndex))
                                     "chevron-up"
                                     "chevron-down"
                                   )
@@ -2227,16 +2241,9 @@
                                   class="open-counters"
                                 }}
                               </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "reportMetadata" reportIndex)
-                                )
-                              }}
+                              {{#if (get expandedAssociations (concat "reportMetadata" reportIndex))}}
                                 <div class="values">
-                                  {{#each-in
-                                    report.confidenceGroupedData as |confidence metadata|
-                                  }}
+                                  {{#each-in report.confidenceGroupedData as |confidence metadata|}}
                                     <span class="title">
                                       {{titleize (humanize (dasherize confidence))}}
                                     </span>
@@ -2260,16 +2267,11 @@
                         </div>
                       {{/if}}
 
-                      <div
-                        class="open-details-icon"
-                        {{action "toggleExpandableAssociations" "reports" reportIndex}}
-                      >
+                      <div class="open-details-icon" {{action "toggleExpandableAssociations" "reports" reportIndex}}>
                         {{fa-icon
                           size="lg"
                           icon=(if
-                            (get expandedAssociations (concat "reports" reportIndex))
-                            "chevron-up"
-                            "chevron-down"
+                            (get expandedAssociations (concat "reports" reportIndex)) "chevron-up" "chevron-down"
                           )
                           fixedWidth=true
                           class="open-details"

@@ -33,7 +33,8 @@ const {
   isEmpty,
   omitBy,
   isUndefined,
-  filter
+  filter,
+  has
 } = fp;
 
 const showdown = require('showdown');
@@ -1216,39 +1217,52 @@ const getUiUrlByEntityType = (entity) =>
     IPv4: `ip-address/${entity.value}/associations`,
     domain: `domain/${entity.value}/associations`,
     url: `url/${entity.value}/associations`,
-    hash: `file/${entity.value}/associations`
+    hash: `file/${entity.value}/associations`,
+    cve: `file/${entity.value}/associations`,
+    custom: `collection/${entity.value}/associations`
   }[entity.isHash ? 'hash' : entity.type]);
 
 const groupByConfidence = (threat) => {
-  const groupedMotivations = groupBy('confidence', threat.motivations);
-  const groupedTags = groupBy('confidence', threat.tags_details);
-  const groupedMalwareRoles = groupBy('confidence', threat.malware_roles);
-  const groupedAvailableMitigation = groupBy('confidence', threat.available_mitigation);
-  const groupedVendorFixReferences = groupBy('confidence', threat.vendor_fix_references);
-  const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
-  const groupedTargetedRegions = groupBy('confidence', threat.targeted_regions_hierarchy);
-  const groupedTargetedIndustries = groupBy(
-    'confidence',
-    threat.targeted_industries_tree
+  const hasConfidenceArray = (threat, property) =>
+    isArray(threat[property]) &&
+    size(threat[property]) > 0 &&
+    isPlainObject(threat[property][0]) &&
+    some((obj) => obj && isPlainObject(obj) && has('confidence', obj), threat[property]);
+
+  const confidenceFields = [
+    'motivations',
+    'tags_details',
+    'malware_roles',
+    'available_mitigation',
+    'vendor_fix_references',
+    'source_regions_hierarchy',
+    'targeted_regions_hierarchy',
+    'targeted_industries_tree'
+  ];
+
+  const groupedConfidenceData = reduce(
+    (agg, field) => ({
+      ...agg,
+      ...(hasConfidenceArray(threat, field) && {
+        [field]: groupBy('confidence', threat[field])
+      })
+    }),
+    {},
+    confidenceFields
   );
 
+  // Collect all unique confidence values across all groupings
   const uniqueConfidences = flow(
-    assign(groupedMotivations),
-    assign(groupedTags),
-    assign(groupedMalwareRoles),
-    assign(groupedAvailableMitigation),
-    assign(groupedVendorFixReferences),
-    assign(groupedSourceRegions),
-    assign(groupedTargetedRegions),
-    assign(groupedTargetedIndustries),
+    reduce((acc, field) => assign(acc, groupedConfidenceData[field]), {}),
     mapValues((val) => (isEmpty(val) ? undefined : val)),
     omitBy(isUndefined),
     keys,
     uniq
-  )({});
+  )(confidenceFields);
 
   if (!size(uniqueConfidences)) return;
 
+  // For each confidence, collect values from each field in the specified order
   const threatsGroupedByConfidence = reduce(
     (agg, confidence) => {
       const getUniqueValuesInGroup = flow(
@@ -1275,46 +1289,54 @@ const groupByConfidence = (threat) => {
         compact
       );
 
-      const motivationsContent = getUniqueValuesInGroup(groupedMotivations);
+      const motivationsContent = getUniqueValuesInGroup(
+        groupedConfidenceData.motivations
+      );
       const motivations = size(motivationsContent) && {
         motivations: motivationsContent
       };
 
-      const tags = size(groupedTags) && { tags: getUniqueValuesInGroup(groupedTags) };
+      const tags = size(groupedConfidenceData.tags_details) && {
+        tags: getUniqueValuesInGroup(groupedConfidenceData.tags_details)
+      };
 
-      const malwareRolesContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const malwareRolesContent = getUniqueValuesInGroup(
+        groupedConfidenceData.malware_roles
+      );
       const malwareRoles = size(malwareRolesContent) && {
         malwareRoles: malwareRolesContent
       };
-      const availableMitigationContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const availableMitigationContent = getUniqueValuesInGroup(
+        groupedConfidenceData.available_mitigation
+      );
       const availableMitigation = size(availableMitigationContent) && {
         availableMitigation: availableMitigationContent
       };
-      const vendorFixReferencesContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const vendorFixReferencesContent = getUniqueValuesInGroup(
+        groupedConfidenceData.vendor_fix_references
+      );
       const vendorFixReferences = size(vendorFixReferencesContent) && {
         vendorFixReferences: vendorFixReferencesContent
       };
 
-      const sourceRegionsContent = formatRegion(groupedSourceRegions);
+      const sourceRegionsContent = formatRegion(
+        groupedConfidenceData.source_regions_hierarchy
+      );
       const sourceRegions = size(sourceRegionsContent) && {
         sourceRegions: sourceRegionsContent
       };
 
-      const targetedRegionsContent = formatRegion(groupedTargetedRegions);
+      const targetedRegionsContent = formatRegion(
+        groupedConfidenceData.targeted_regions_hierarchy
+      );
       const targetedRegions = size(targetedRegionsContent) && {
         targetedRegions: targetedRegionsContent
       };
 
-      const targetedIndustriesContent = flow(
-        get(confidence),
-        map(({ industry_group, industry }) =>
-          size(industry_group) > size(industry) ? industry_group : industry
-        ),
-        uniq,
-        compact
-      )(groupedTargetedIndustries);
-
-      const targetedIndustries = size(targetedIndustriesContent) && {
+      const targetedIndustriesContent = getUniqueValuesInGroup(
+        groupedConfidenceData.targeted_industries_tree
+      );
+      const targetedIndustries = size(groupedConfidenceData.targeted_industries_tree) && {
         targetedIndustries: targetedIndustriesContent
       };
 
