@@ -163,7 +163,7 @@ function doLookup(entities, options, cb) {
   let nonCveOrThreatActorEntities = [];
   let threatActorsEntities = [];
 
-  Logger.trace(entities);
+  Logger.trace({ entities }, 'Entities');
   const MAX_HASHES_PER_GROUP = options.maxHashesPerGroup;
 
   entities.forEach(function (entity) {
@@ -179,7 +179,7 @@ function doLookup(entities, options, cb) {
       const threatActorNamesForThisEntity = filter(
         (threatActorName) =>
           new RegExp(
-            `(^|[^\w])${threatActorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^\w]|$)`,
+            threatActorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
             'i'
           ).test(entity.value),
         threatActorNames
@@ -189,7 +189,8 @@ function doLookup(entities, options, cb) {
           ...map(
             (threatActorNameForThisEntity) => ({
               ...entity,
-              value: threatActorNameForThisEntity
+              value: threatActorNameForThisEntity,
+              displayValue: threatActorNameForThisEntity
             }),
             threatActorNamesForThisEntity
           )

@@ -14,7 +14,7 @@ module.exports = {
   customTypes: [
     {
       key: 'allText',
-      regex: '\\S[\\s\\S]{4,40}\\S'
+      regex: '\\S[\\s\\S]{1,200}\\S'
     }
   ],
   /**
