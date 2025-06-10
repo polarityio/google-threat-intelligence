@@ -814,6 +814,31 @@ const _lookupVulnerabilities = (entity, options, done) => {
                   convertMarkdownToHtml(vulnerability.attributes.executive_summary),
                 confidenceGroupedData: groupByConfidence(vulnerability.attributes),
 
+                // Timeline information (dates in ms)
+                date_of_disclosure: vulnerability.attributes.date_of_disclosure
+                  ? vulnerability.attributes.date_of_disclosure * 1000
+                  : null,
+                exploitation: {
+                  ...vulnerability.attributes.exploitation,
+                  first_exploitation: vulnerability.attributes.exploitation
+                    ?.first_exploitation
+                    ? vulnerability.attributes.exploitation.first_exploitation * 1000
+                    : null
+                },
+                cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
+                  ? {
+                      ...vulnerability.attributes.cisa_known_exploited,
+                      added_date:
+                        vulnerability.attributes.cisa_known_exploited.added_date
+                          ? vulnerability.attributes.cisa_known_exploited.added_date * 1000
+                          : null,
+                      due_date:
+                        vulnerability.attributes.cisa_known_exploited.due_date
+                          ? vulnerability.attributes.cisa_known_exploited.due_date * 1000
+                          : null
+                    }
+                  : null,
+
                 // Identifiers and classification
                 cve_id: vulnerability.attributes.cve_id,
                 mve_id: vulnerability.attributes.mve_id,
@@ -887,29 +912,6 @@ const _lookupVulnerabilities = (entity, options, done) => {
                   })(attrs)
                 }))(vulnerability.attributes),
 
-                // CISA Known Exploited Vulnerabilities data
-                cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
-                  ? {
-                      ...vulnerability.attributes.cisa_known_exploited,
-                      added_date:
-                        vulnerability.attributes.cisa_known_exploited.added_date * 1000,
-                      due_date:
-                        vulnerability.attributes.cisa_known_exploited.due_date * 1000
-                    }
-                  : null,
-
-                // Timeline information
-                date_of_disclosure: vulnerability.attributes.date_of_disclosure
-                  ? vulnerability.attributes.date_of_disclosure * 1000
-                  : null,
-                exploitation: {
-                  ...vulnerability.attributes.exploitation,
-                  first_exploitation: vulnerability.attributes.exploitation
-                    ?.first_exploitation
-                    ? vulnerability.attributes.exploitation.first_exploitation * 1000
-                    : null
-                },
-
                 // Impact and consequences
                 exploitation_consequence:
                   vulnerability.attributes.exploitation_consequence,
@@ -941,11 +943,14 @@ const _lookupVulnerabilities = (entity, options, done) => {
                   const fixDate = flow(get('vendor_fix_references'), (fixes) =>
                     fixes && fixes.length
                       ? Math.min(
-                          ...fixes.map((f) => get('published_date', f)).filter(Boolean)
+                          ...fixes
+                            .map((f) => get('published_date', f)
+                              ? f.published_date * 1000
+                              : null)
+                            .filter(Boolean)
                         )
                       : null
                   )(attrs);
-
                   if (exploitDate && fixDate) {
                     return Math.floor((fixDate - exploitDate) / (24 * 60 * 60));
                   }
@@ -1050,19 +1055,19 @@ const _lookupThreatActors = (entity, options, done) => {
                 )(threatActor.attributes),
                 targetedRegionNames: flow(
                   get('targeted_regions_hierarchy'),
-                  map((region) =>
-                    region.country ||
-                    region.country_iso2 ||
-                    region.sub_region ||
-                    region.region
-                      ? `${region.country || region.country_iso2}${
-                          (region.country || region.country_iso2) &&
-                          (region.sub_region || region.region)
-                            ? ', '
-                            : ''
-                        }${region.sub_region || region.region}`
-                      : null
-                  ),
+                  map((region) => {
+                    const country = region.country || region.country_iso2 || '';
+                    const subRegion = region.sub_region || region.region || '';
+                    if (country && subRegion) {
+                      return `${country}, ${subRegion}`;
+                    } else if (country) {
+                      return country;
+                    } else if (subRegion) {
+                      return subRegion;
+                    } else {
+                      return '';
+                    }
+                  }),
                   compact
                 )(threatActor.attributes),
                 htmlDescription: convertMarkdownToHtml(
@@ -1187,16 +1192,19 @@ const _lookupThreats = (entity, options, done) => {
             threat.attributes.targeted_industries_tree
           ),
           targetedRegionNames: flow(
-            map((region) =>
-              region.country || region.country_iso2 || region.sub_region || region.region
-                ? `${region.country || region.country_iso2}${
-                    (region.country || region.country_iso2) &&
-                    (region.sub_region || region.region)
-                      ? ', '
-                      : ''
-                  }${region.sub_region || region.region}`
-                : null
-            ),
+            map((region) => {
+              const country = region.country || region.country_iso2 || '';
+              const subRegion = region.sub_region || region.region || '';
+              if (country && subRegion) {
+                return `${country}, ${subRegion}`;
+              } else if (country) {
+                return country;
+              } else if (subRegion) {
+                return subRegion;
+              } else {
+                return '';
+              }
+            }),
             compact
           )(threat.attributes.targeted_regions_hierarchy),
           htmlDescription: convertMarkdownToHtml(threat.attributes.description),
@@ -1259,16 +1267,19 @@ const _lookupReports = (entity, options, done) => {
             report.attributes.targeted_industries_tree
           ),
           targetedRegionNames: flow(
-            map((region) =>
-              region.country || region.country_iso2 || region.sub_region || region.region
-                ? `${region.country || region.country_iso2}${
-                    (region.country || region.country_iso2) &&
-                    (region.sub_region || region.region)
-                      ? ', '
-                      : ''
-                  } ${region.sub_region || region.region}`
-                : null
-            ),
+            map((region) => {
+              const country = region.country || region.country_iso2 || '';
+              const subRegion = region.sub_region || region.region || '';
+              if (country && subRegion) {
+                return `${country}, ${subRegion}`;
+              } else if (country) {
+                return country;
+              } else if (subRegion) {
+                return subRegion;
+              } else {
+                return '';
+              }
+            }),
             compact
           )(report.attributes.targeted_regions_hierarchy),
           confidenceGroupedData: groupByConfidence(report.attributes),
@@ -1327,12 +1338,12 @@ const getUiUrlByEntityType = (entity) =>
     custom: `collection/${entity.value}/associations`
   }[entity.isHash ? 'hash' : entity.type]);
 
-const groupByConfidence = (threat) => {
-  const hasConfidenceArray = (threat, property) =>
-    isArray(threat[property]) &&
-    size(threat[property]) > 0 &&
-    isPlainObject(threat[property][0]) &&
-    some((obj) => obj && isPlainObject(obj) && has('confidence', obj), threat[property]);
+const groupByConfidence = (association) => {
+  const hasConfidenceArray = (association, property) =>
+    isArray(association[property]) &&
+    size(association[property]) > 0 &&
+    isPlainObject(association[property][0]) &&
+    some((obj) => obj && isPlainObject(obj) && has('confidence', obj), association[property]);
 
   const confidenceFields = [
     'motivations',
@@ -1342,14 +1353,15 @@ const groupByConfidence = (threat) => {
     'vendor_fix_references',
     'source_regions_hierarchy',
     'targeted_regions_hierarchy',
-    'targeted_industries_tree'
+    'targeted_industries_tree',
+    'merged_actors'
   ];
 
   const groupedConfidenceData = reduce(
     (agg, field) => ({
       ...agg,
-      ...(hasConfidenceArray(threat, field) && {
-        [field]: groupBy('confidence', threat[field])
+      ...(hasConfidenceArray(association, field) && {
+        [field]: groupBy('confidence', association[field])
       })
     }),
     {},
@@ -1380,6 +1392,13 @@ const groupByConfidence = (threat) => {
 
       const formatRegion = flow(
         get(confidence),
+        filter(
+          (x) =>
+            !['null', null, 'undefined', undefined].includes(x.country) &&
+            !['null', null, 'undefined', undefined].includes(x.country_iso2) &&
+            !['null', null, 'undefined', undefined].includes(x.sub_region) &&
+            !['null', null, 'undefined', undefined].includes(x.region)
+        ),
         map(
           (region) =>
             `${region.country || region.country_iso2}${
@@ -1390,7 +1409,6 @@ const groupByConfidence = (threat) => {
             } ${region.sub_region || region.region}`
         ),
         uniq,
-        filter((x) => !['null', null, 'undefined', undefined].includes(x)),
         compact
       );
 
@@ -1445,6 +1463,13 @@ const groupByConfidence = (threat) => {
         targetedIndustries: targetedIndustriesContent
       };
 
+      const mergedActorsContent = getUniqueValuesInGroup(
+        groupedConfidenceData.merged_actors
+      );
+      const mergedActors = size(mergedActorsContent) && {
+        mergedActors: mergedActorsContent
+      };
+
       return {
         ...agg,
         [confidence]: {
@@ -1455,7 +1480,8 @@ const groupByConfidence = (threat) => {
           ...vendorFixReferences,
           ...sourceRegions,
           ...targetedRegions,
-          ...targetedIndustries
+          ...targetedIndustries,
+          ...mergedActors
         }
       };
     },
