@@ -182,7 +182,18 @@ td.positives {
   overflow-y: auto;
   max-height: 300px;
   width: 100%;
-  border: 1px solid @border-color;
+  
+  &.bordered {
+    border: 1px solid lightgray;
+    border-radius: 3px;
+    margin-left: 0px !important;
+    padding-top: 3px;
+    padding-left: 5px;  
+  }
+
+  &.short{
+    max-height: 150px;
+  }
 
   &.padded {
     padding: 5px;
@@ -649,11 +660,6 @@ td.positives {
   vertical-align: middle;
 }
 
-.threat-actor-icon {
-  font-size: 14px;
-  margin-right: 2px;
-}
-
 .muted {
   font-size: 13px;
   margin-left: 4px;
@@ -681,11 +687,12 @@ td.positives {
 
 .threat-actor-title {
   font-size: 15px;
+  margin-bottom: 2px
 }
 
-.threat-actor-icon-large {
-  font-size: 18px;
-  margin-right: 1px;
+.threat-actor-icon {
+  font-size: 14px !important;
+  margin-right: 1px !important;
 }
 
 .confidence-metadata-block {
@@ -695,8 +702,16 @@ td.positives {
 .confidence-metadata-title {
   font-size: 13px;
   display: block;
-  padding-bottom: 3px;
+  padding-bottom: 2px;
   font-weight: bold;
+  font-style: italic;
+  margin-top: 3px;
+
+  &.small {
+    font-size: 12px;
+    font-style: normal;
+    margin-top: 0px;
+  }
 }
 
 .confidence-metadata-indent {
@@ -709,6 +724,82 @@ td.positives {
 
 .positive-result {
   color: #FF3A59;
+}
+
+.vulnerability-flex-item {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid;
+  border-radius: 5px;
+
+  .vulnerability-flex-details {
+    margin-top: 10px;
+    
+    .p-key {
+      font-weight: 500;
+      margin-right: 5px;
+    }
+
+    .p-value {
+      word-break: break-word;
+    }
+
+    .vulnerability-flex-list-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+  }
+}
+
+.vulnerability-title {
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.vulnerability-icon {
+  font-size: 14px !important;
+  margin-right: 1px !important;
+}
+
+.risk-rating {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+
+  &.critical {
+    background-color: @danger-color;
+    color: white;
+  }
+
+  &.high {
+    background-color: @warning-color;
+    color: white;
+  }
+
+  &.medium {
+    background-color: @google-yellow;
+    color: white;
+  }
+
+  &.low {
+    background-color: @google-green;
+    color: white;
+  }
+}
+
+.cvss-score {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+  background-color: @medium-background;
+  color: @normal-text;
 }
 
 
