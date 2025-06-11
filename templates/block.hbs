@@ -1,9 +1,9 @@
 {{#if vulnerabilities.length}}
-  <div class="threat-actors-flex-list">
+  <div>
     {{#each vulnerabilities as |vulnerability vulnIndex|}}
-      <div class="threat-actor-flex-item">
+      <div>
         <div>
-          <h3 class="p-title threat-actor-title">
+          <h3 class="p-title">
             {{fa-icon "bug" class="threat-actor-icon" fixedWidth=true}} {{vulnerability.name}}
           </h3>
           <div>
@@ -1146,87 +1146,90 @@
     {{/each}}
   </div>
 {{else if threatActors.length}}
-  <div class="threat-actors-flex-list">
     {{#each threatActors as |actor actorIndex|}}
-      <div class="threat-actor-flex-item">
-        <div>
-          <h3 class="p-title threat-actor-title">
-            {{fa-icon "user-secret" class="threat-actor-icon" fixedWidth=true}} {{actor.name}}
-          </h3>
-          <div>
+      <div class="item-container">
+          <h1 class="p-title mt-0">
+            {{actor.name}}
+          </h1>
+          <div class="mb-1">
             <a class="gti-link" href="https://www.virustotal.com/gui/collection/{{actor.id}}">
-              View Threat Actor in GTI
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                View Threat Actor in GTI
+                <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                  fill="#FBBC04"
+                        d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                        fill="#FBBC04"
                 ></path>
                 <path
-                  d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                  fill="#34A853"
+                        d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                        fill="#34A853"
                 ></path>
                 <path
-                  d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                  fill="#4285F4"
+                        d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                        fill="#4285F4"
                 ></path>
                 <path
-                  d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                  fill="#4285F4"
+                        d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                        fill="#4285F4"
                 ></path>
                 <path
-                  d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                  fill="#FBBC04"
+                        d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                        fill="#FBBC04"
                 ></path>
                 <path
-                  d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                  fill="#EA4335"
+                        d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                        fill="#EA4335"
                 ></path>
               </svg>
             </a>
           </div>
-
-          <div class="threat-actor-flex-details">
+          <div>
             {{#if actor.htmlDescription}}
-              <div>
-                <span class="p-key">
-                  Description:
-                </span>
-                <span class="p-value scrollable-block short">
-                  {{{actor.htmlDescription}}}
-                </span>
+              <div class="p-value scrollable-block short mb-1">
+                {{{actor.htmlDescription}}}
               </div>
             {{/if}}
-            {{#if actor.detection_names}}
+            
+            {{#if actor.first_seen}}
               <div>
                 <span class="p-key">
-                  Detection Names:
+                  First Seen:
                 </span>
                 <span class="p-value">
-                  {{join ", " actor.detection_names}}
+                  {{moment-format actor.first_seen "YYYY-MM-DD" timeZone=timezone}}
                 </span>
               </div>
             {{/if}}
-            {{#if actor.alt_names}}
+            {{#if actor.last_seen}}
               <div>
                 <span class="p-key">
-                  Alt Names:
+                  Last Seen:
                 </span>
                 <span class="p-value">
-                  {{join ", " actor.alt_names}}
+                  {{moment-format actor.last_seen "YYYY-MM-DD" timeZone=timezone}}
                 </span>
               </div>
             {{/if}}
-            {{#if actor.tags}}
+            {{#if actor.first_activity_date}}
               <div>
                 <span class="p-key">
-                  Tags:
+                  First Activity:
                 </span>
-                <span class="threat-actor-flex-list-row">
-                  {{#each actor.tags as |tag|}}
-                    <span class="p-value">
-                      {{tag}}
-                    </span>
-                  {{/each}}
+                <span class="p-value">
+                  {{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if (or actor.last_modification_date actor.last_activity_date)}}
+              <div>
+                <span class="p-key">
+                  Last Activity:
+                </span>
+                <span class="p-value">
+                  {{moment-format
+                          (or actor.last_activity_date actor.last_modification_date)
+                          "YYYY-MM-DD"
+                          timeZone=timezone
+                  }}
                 </span>
               </div>
             {{/if}}
@@ -1270,6 +1273,47 @@
                 </span>
               </div>
             {{/if}}
+            
+            
+            {{#if actor.detection_names}}
+              <div>
+                <h2 class="p-title">
+                  Detection Names
+                </h2>
+                {{#each actor.detection_names as |name|}}
+                  <span class="actor-tag">
+                    {{name}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.alt_names}}
+              <div>
+                <h2 class="p-title">
+                  Alt Names
+                </h2>
+                {{#each actor.alt_names as |name|}}
+                  <span class="actor-tag">
+                    {{name}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.tags}}
+              <div>
+                <h2 class="p-title">
+                  Tags
+                </h2>
+                {{#each actor.tags as |tag|}}
+                  <span class="actor-tag">
+                    {{tag}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            
+
+
             {{#if actor.vulnerable_products}}
               <div>
                 <span class="p-key">
@@ -1310,16 +1354,6 @@
                 </span>
               </div>
             {{/if}}
-            {{#if actor.tags}}
-              <div>
-                <span class="p-key">
-                  Tags:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.tags}}
-                </span>
-              </div>
-            {{/if}}
             {{#if actor.technologies}}
               <div>
                 <span class="p-key">
@@ -1350,50 +1384,6 @@
                 </span>
               </div>
             {{/if}}
-            {{#if actor.first_seen}}
-              <div>
-                <span class="p-key">
-                  First Seen:
-                </span>
-                <span class="p-value">
-                  {{moment-format actor.first_seen "YYYY-MM-DD" timeZone=timezone}}
-                </span>
-              </div>
-            {{/if}}
-            {{#if actor.last_seen}}
-              <div>
-                <span class="p-key">
-                  Last Seen:
-                </span>
-                <span class="p-value">
-                  {{moment-format actor.last_seen "YYYY-MM-DD" timeZone=timezone}}
-                </span>
-              </div>
-            {{/if}}
-            {{#if actor.first_activity_date}}
-              <div>
-                <span class="p-key">
-                  First Activity:
-                </span>
-                <span class="p-value">
-                  {{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}
-                </span>
-              </div>
-            {{/if}}
-            {{#if (or actor.last_modification_date actor.last_activity_date)}}
-              <div>
-                <span class="p-key">
-                  Last Activity:
-                </span>
-                <span class="p-value">
-                  {{moment-format
-                    (or actor.last_activity_date actor.last_modification_date)
-                    "YYYY-MM-DD"
-                    timeZone=timezone
-                  }}
-                </span>
-              </div>
-            {{/if}}
             {{#if
               (or
                 actor.urls_count
@@ -1405,7 +1395,6 @@
             }}
               <div class="toggle-header">
                 <span class="p-action" {{action "toggleExpandableAssociations" "actorCounts" actorIndex}}>
-                  {{fa-icon "list-ol" fixedWidth=true}}
                   IOC Counters
                   {{fa-icon
                     (if (get expandedAssociations (concat "actorCounts" actorIndex)) "caret-up" "caret-down")
@@ -1414,9 +1403,10 @@
                 </span>
               </div>
               {{#if (get expandedAssociations (concat "actorCounts" actorIndex))}}
-                <a href="https://www.virustotal.com/gui/collection/{{actor.id}}/iocs">
+                <div class="mt-1">
+                  <a href="https://www.virustotal.com/gui/collection/{{actor.id}}/iocs">
                   View IOCs in GTI
-                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
                       fill="#FBBC04"
@@ -1443,6 +1433,7 @@
                     ></path>
                   </svg>
                 </a>
+                </div>
                 <div>
                   {{#if actor.urls_count}}
                     <div>
@@ -1556,7 +1547,6 @@
             {{#if actor.confidenceGroupedData}}
               <div class="toggle-header">
                 <span class="p-action" {{action "toggleExpandableAssociations" "actorMetadata" actorIndex}}>
-                  {{fa-icon "database" fixedWidth=true}}
                   Telemetry and Metadata
                   {{fa-icon
                     (if (get expandedAssociations (concat "actorMetadata" actorIndex)) "caret-up" "caret-down")
@@ -1568,9 +1558,9 @@
                 <div class="values">
                   {{#each-in actor.confidenceGroupedData as |confidence metadata|}}
                     <div style="margin-bottom: 8px;">
-                      <span class="p-key confidence-metadata-title">
+                      <h3 class="p-title">
                         {{titleize (humanize (dasherize confidence))}}
-                      </span>
+                      </h3>
                       <div class="confidence-metadata-indent">
                         {{#each-in metadata as |key values|}}
                           {{#if values.length}}
@@ -1592,9 +1582,7 @@
             {{/if}}
           </div>
         </div>
-      </div>
     {{/each}}
-  </div>
 {{else}}
   <div class="d-flex align-items-center justify-content-end copy-btn-container">
     <button class="btn copy-btn p-action" {{action "copyData"}}>
