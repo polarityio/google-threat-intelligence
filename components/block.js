@@ -329,13 +329,7 @@ polarity.export = PolarityComponent.extend({
   actions: {
     switchAssociationsTab: function (associationTypeName) {
       this.set('associationTab', associationTypeName);
-      if (
-        associationTypeName === 'threats' &&
-        !this.get('block._state.loadedThreats') &&
-        !this.get('block._state.loadingThreats')
-      ) {
-        this.getThreats();
-      }
+      
       if (
         associationTypeName === 'reports' &&
         !this.get('block._state.loadedReports') &&

@@ -2371,7 +2371,7 @@
         <div class="associations">
           <div class="control-results">
             <div class="tab-buttons">
-              {{#if threats.length}}
+              {{#if (or threats.length block.userOptions.showNoResultsAssociations)}}
                 <button
                   class="btn gti-button {{if (eq associationTab "threats") "active"}}"
                   {{action "switchAssociationsTab" "threats"}}
@@ -2384,7 +2384,7 @@
                   {{/if}}
                 </button>
               {{/if}}
-              {{#if reports.length}}
+              {{#if (or reports.length block.userOptions.showNoResultsAssociations)}}
                 <button
                   class="btn gti-button {{if (eq associationTab "reporting") "active"}}"
                   {{action "switchAssociationsTab" "reporting"}}
