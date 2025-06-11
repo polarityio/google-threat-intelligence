@@ -17,6 +17,7 @@
 @google-green: #40ae66;
 @google-blue: #3b6dcd;
 @description-shadow: rgba(110, 110, 110, 0.05);
+@association-border: @association-border;
 
 * {
   overflow-wrap: break-word !important;
@@ -322,7 +323,7 @@ td.positives {
 
       .gti-button {
         color: @dimmed-text;
-        background-color: @medium-background;
+        background-color: @light-background;
         font-weight: 600;
         border-radius: 8px;
         margin-right: 6px;
@@ -330,7 +331,7 @@ td.positives {
         height: 34px;
         font-size: 12px;
         line-height: 12px;
-        border: 1px solid #dcdde2;
+        border: 1px solid @association-border;
 
         &.active {
           border: 2.5px solid @selected-text;
@@ -346,14 +347,14 @@ td.positives {
       .association-link {
         a {
           color: @link-blue;
-          background-color: @medium-background;
+          background-color: @light-background;
           padding-left: 10px;
           padding-right: 10px;
           padding-top: 7px;
           padding-bottom: 9px;
           border-radius: 5px;
           text-wrap: nowrap;
-          border: 1px solid #dcdde2;
+          border: 1px solid @association-border;
         }
         .narrow {
           display: none;
@@ -377,8 +378,8 @@ td.positives {
           padding-top: 7px;
           padding-right: 7px;
           border-radius: 7px;
-          border: 1px solid #dcdde2;
-          background: linear-gradient(to right, transparent 3px, @medium-background 5px),
+          border: 1px solid @association-border;
+          background: linear-gradient(to right, transparent 3px, @light-background 5px),
             linear-gradient(
               to bottom,
               @google-red 25%,
@@ -495,7 +496,7 @@ td.positives {
             tr {
               color: @normal-text;
               border-bottom: @muted-text 1px solid;
-              background-color: @medium-background;
+              background-color: @light-background;
             }
             th {
               color: @dimmed-text;
@@ -606,7 +607,7 @@ td.positives {
 
       a {
         color: @link-blue;
-        background-color: @medium-background;
+        background-color: @light-background;
         padding-left: 10px;
         padding-right: 10px;
         padding-top: 7px;
@@ -801,7 +802,7 @@ td.positives {
   font-size: 12px;
   font-weight: 600;
   margin-left: 8px;
-  background-color: @medium-background;
+  background-color: @light-background;
   color: @normal-text;
 }
 
