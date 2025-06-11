@@ -174,7 +174,18 @@ function doLookup(entities, options, cb) {
       return;
     }
 
-    if (entity.types.includes('custom.allText')) {
+    if (
+      entity.types.includes('custom.allText') &&
+      !(
+        entity.isMD5 ||
+        entity.isSHA1 ||
+        entity.isSHA256 ||
+        (entity.isIPv4 && !entity.isPrivateIP && !IGNORED_IPS.has(entity.value)) ||
+        entity.isDomain ||
+        entity.isURL ||
+        entity.types.includes('cve')
+      )
+    ) {
       // Improved threat actor matching: match full name, case-insensitive, including spaces and symbols, not as substring
       const threatActorNamesForThisEntity = filter(
         (threatActorName) =>
@@ -196,8 +207,7 @@ function doLookup(entities, options, cb) {
         );
       }
     } else if (
-      !entity.types.includes('cve') &&
-      !entity.types.includes('custom.allText')
+      !entity.types.includes('cve')
     ) {
       nonCveOrThreatActorEntities.push(entity);
     }

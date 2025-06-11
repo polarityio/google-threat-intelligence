@@ -5,17 +5,17 @@
 @polarity-green: #7bc942;
 
 @dark-background: #121212;
-@medium-background: #242d41;
-@light-background: #303e5c;
-@normal-text: #fff;
-@link-blue: #23b6ff;
-@selected-text: #86aaf9;
-@dimmed-text: #c3d2e8;
-@muted-text: #8997b4;
-@google-red: #c84342;
-@google-yellow: #ce9c30;
-@google-green: #3b9b5c;
-@google-blue: #3a69c3;
+@medium-background: #ECEEF4;
+@light-background: #F9FAFB;
+@normal-text: #515151;
+@link-blue: #1ba8ed;
+@selected-text: #789cea;
+@dimmed-text: #686d79;
+@muted-text: #626C84;
+@google-red: #e81716;
+@google-yellow: #fabf41;
+@google-green: #40ae66;
+@google-blue: #3b6dcd;
 
 * {
   overflow-wrap: break-word !important;
@@ -329,7 +329,7 @@ td.positives {
         height: 34px;
         font-size: 12px;
         line-height: 12px;
-        border: 0px;
+        border: 1px solid #dcdde2;
 
         &.active {
           border: 2.5px solid @selected-text;
@@ -352,6 +352,7 @@ td.positives {
           padding-bottom: 9px;
           border-radius: 5px;
           text-wrap: nowrap;
+          border: 1px solid #dcdde2;
         }
         .narrow {
           display: none;
@@ -375,6 +376,7 @@ td.positives {
           padding-top: 7px;
           padding-right: 7px;
           border-radius: 7px;
+          border: 1px solid #dcdde2;
           background: linear-gradient(to right, transparent 3px, @medium-background 5px),
             linear-gradient(
               to bottom,
@@ -473,7 +475,7 @@ td.positives {
             margin-bottom: 1px;
             max-height: 35px;
             border-radius: 3px;
-            box-shadow: inset 0 -17px 11px -8px rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 -17px 11px -8px rgb(110 110 110 / 5%);;
             h1 {
               font-size: 17px;
             }
@@ -586,10 +588,10 @@ td.positives {
 
             &:hover {
               // TODO: add opacity and adjust lightening so text shows through on sides but still looks similar through stronger lightening
-              background-color: lighten(@medium-background, 5%);
+              background-color: lighten(#fdfdfd75, 5%);
             }
             &:active {
-              background-color: lighten(@medium-background, 10%);
+              background-color: lighten(#fdfdfd75, 10%);
             }
           }
         }
