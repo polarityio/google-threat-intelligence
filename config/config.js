@@ -10,7 +10,7 @@ module.exports = {
   description:
     'Search for File and IP Address and get Associated Threats & Reports via the GTI API along with CVE & Threat Actor GTI Lookups',
   defaultColor: 'light-pink',
-  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256','cve'],
+  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256', 'cve'],
   customTypes: [
     {
       key: 'allText',
@@ -96,6 +96,16 @@ module.exports = {
       description: 'Your Google Threat Intelligence API Key',
       default: '',
       type: 'password',
+      userCanEdit: true,
+      adminOnly: false
+    },
+    {
+      key: 'showNoResultsAssociations',
+      name: 'Show Association Tab w/ No Results',
+      description:
+        "If checked, the integration will speed up in it's search speed, but will show an Associations Tab, even if there are no Associations Results.  Default is Checked.  Uncheck will query slower, but only show the Associations Tab if there are Associations Results.",
+      default: true,
+      type: 'boolean',
       userCanEdit: true,
       adminOnly: false
     },
