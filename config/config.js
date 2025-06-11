@@ -8,13 +8,13 @@ module.exports = {
    * @optional
    */
   description:
-    'Google Threat Intelligence Integration for File and IP Address Reports via the v3.0 REST API',
+    'Search for File and IP Address and get Associated Threats & Reports via the GTI API along with CVE & Threat Actor GTI Lookups',
   defaultColor: 'light-pink',
-  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256', 'string', 'cve'],
+  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256','cve'],
   customTypes: [
     {
       key: 'allText',
-      regex: '\\S[\\s\\S]{4,40}\\S'
+      regex: '\\S[\\s\\S]{1,200}\\S'
     }
   ],
   /**

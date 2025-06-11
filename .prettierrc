@@ -12,7 +12,8 @@
     {
       "files": "*.hbs",
       "options": {
-        "singleQuote": false
+        "singleQuote": false,
+        "printWidth": 120
       }
     }
   ]

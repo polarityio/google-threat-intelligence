@@ -36,3 +36,4 @@ test-runner.js
 *.vscode
 .vscode
 asdf.js
+assets/Screenshot*.png
