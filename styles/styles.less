@@ -281,8 +281,6 @@ td.positives {
   }
 
 
-
-
   .right-column {
     flex: 1 1 0;
     flex-direction: column;
@@ -695,12 +693,6 @@ td.positives {
   }
 }
 
-.chevron {
-  margin-left: 10px;
-  font-size: 18px;
-  vertical-align: middle;
-}
-
 .muted {
   font-size: 13px;
   margin-left: 4px;
@@ -714,12 +706,6 @@ td.positives {
 .modified-date {
   font-size: 12px;
   margin-right: 8px;
-}
-
-.details .p-key,
-.threat-actor-card .p-key,
-.vulnerability-card .p-key {
-  font-weight: 500 !important;
 }
 
 h2.p-title {
@@ -744,15 +730,6 @@ h3.p-title {
   display: inline-block;
 }
 
-.threat-actor-icon {
-  font-size: 14px !important;
-  margin-right: 1px !important;
-}
-
-.confidence-metadata-block {
-  margin-bottom: 8px;
-}
-
 .gti-icon {
   position: absolute;
   margin-left: 2px;
@@ -775,91 +752,3 @@ h3.p-title {
 .confidence-metadata-indent {
   margin-left: 8px;
 }
-
-.toggle-header-margin {
-  margin-top: 5px;
-}
-
-
-
-.positive-result {
-  color: #FF3A59;
-}
-
-.vulnerability-flex-item {
-  margin-bottom: 15px;
-  padding: 10px;
-  border: 1px solid;
-  border-radius: 5px;
-
-  .vulnerability-flex-details {
-    margin-top: 10px;
-
-    .p-key {
-      font-weight: 500;
-      margin-right: 5px;
-    }
-
-    .p-value {
-      word-break: break-word;
-    }
-
-    .vulnerability-flex-list-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-  }
-}
-
-.vulnerability-title {
-  font-size: 15px;
-  margin-bottom: 2px;
-}
-
-.vulnerability-icon {
-  font-size: 14px !important;
-  margin-right: 1px !important;
-}
-
-.risk-rating {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-
-  &.critical {
-    background-color: @danger-color;
-    color: white;
-  }
-
-  &.high {
-    background-color: @warning-color;
-    color: white;
-  }
-
-  &.medium {
-    background-color: @google-yellow;
-    color: white;
-  }
-
-  &.low {
-    background-color: @google-green;
-    color: white;
-  }
-}
-
-.cvss-score {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-  background-color: @medium-background;
-  color: @normal-text;
-}
-
-
