@@ -941,15 +941,17 @@ const _lookupVulnerabilities = (entity, options, done) => {
                   ? Math.min(
                       ...fixes
                         .map((f) =>
-                          get('published_date', f) ? f.published_date * 1000 : null
+                          get('published_date', f) ? f.published_date : null
                         )
                         .filter(Boolean)
                     )
                   : null
               )(attrs);
+              
               if (exploitDate && fixDate) {
-                return Math.floor((fixDate - exploitDate) / (24 * 60 * 60));
+                return Math.floor((exploitDate - fixDate) / (24 * 60 * 60));
               }
+              
               return null;
             })(vulnerability.attributes),
 
