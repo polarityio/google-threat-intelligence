@@ -3,9 +3,9 @@
     {{#each vulnerabilities as |vulnerability vulnIndex|}}
       <div>
         <div>
-          <h3 class="p-title">
-            {{fa-icon "bug" class="threat-actor-icon" fixedWidth=true}} {{vulnerability.name}}
-          </h3>
+          <h1 class="p-title">
+            {{vulnerability.name}}
+          </h1>
           <div>
             <a class="gti-link" href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}">
               View Vulnerability in GTI
@@ -42,10 +42,10 @@
             {{! EXECUTIVE OVERVIEW }}
             {{#if vulnerability.htmlExecutiveSummary}}
               <div>
-                <span class="p-key">
-                  Executive Summary:
-                </span>
-                <span class="p-value scrollable-block short">
+                <h2 class="p-title">
+                  Executive Summary
+                </h2>
+                <span class="p-value scrollable-block short html">
                   {{{vulnerability.htmlExecutiveSummary}}}
                 </span>
               </div>
@@ -379,7 +379,7 @@
                   </span>
                   <span class="threat-actor-flex-list-row">
                     {{#each vulnerability.tags as |tag|}}
-                      <span class="p-value">
+                      <span class="pill-tag">
                         {{tag}}
                       </span>
                     {{/each}}
@@ -394,7 +394,7 @@
                       ({{vulnerability.sources.length}})
                     {{/if}}
                   </span>
-                  <span class="threat-actor-flex-list-row">
+                  <span>
                     {{#each (take 10 vulnerability.sources) as |source sourceIndex|}}
                       {{#if source.name}}
                         <span class="p-value">
@@ -530,7 +530,7 @@
                 </span>
               </div>
               {{#if (get expandedAssociations (concat "vulnTimeline" vulnIndex))}}
-                <div>
+                <div class="mt-1">
                   {{#if vulnerability.date_of_disclosure}}
                     <div>
                       <span class="p-key">
@@ -609,7 +609,7 @@
                 </span>
               </div>
               {{#if (get expandedAssociations (concat "vulnIdentifiers" vulnIndex))}}
-                <div>
+                <div class="mt-1">
                   {{#if vulnerability.cve_id}}
                     <div>
                       <span class="p-key">
@@ -678,7 +678,7 @@
                 </span>
               </div>
               {{#if (get expandedAssociations (concat "vulnExploitation" vulnIndex))}}
-                <div>
+                <div class="mt-1">
                   {{#if vulnerability.exploitation_state}}
                     <div>
                       <span class="p-key">
@@ -938,7 +938,7 @@
                 </span>
               </div>
               {{#if (get expandedAssociations (concat "vulnRemediation" vulnIndex))}}
-                <div>
+                <div class="mt-1">
                   {{#if vulnerability.available_mitigation}}
                     <div>
                       <span class="p-key">
@@ -1791,7 +1791,7 @@
             </div>
           {{/if}}
           {{#if showScanResults}}
-            <div class="scan-results">
+            <div class="scan-results mt-1">
               {{#unless details.positiveScans}}
                 <span>
                   No security vendor flagged this indicator as malicious
@@ -1953,7 +1953,7 @@
             </div>
             {{#if block._state.showNames}}
               {{#if (gt details.names.length 0)}}
-                <div class="scrollable-block">
+                <div class="scrollable-block mt-1">
                   <table>
                     <tbody>
                       {{#each details.names as |name index|}}
@@ -2015,7 +2015,7 @@
 
           {{#if showRegistryKeys}}
             {{#if details.behaviorSummary.registry_keys_opened}}
-              <div class="scrollable-block">
+              <div class="scrollable-block mt-1">
                 <table>
                   <tbody>
                     {{#each details.behaviorSummary.registry_keys_opened as |key|}}
@@ -2051,7 +2051,7 @@
 
           {{#if showFilesOpened}}
             {{#if details.behaviorSummary.files_opened}}
-              <div class="scrollable-block">
+              <div class="scrollable-block mt-1">
                 <table>
                   <tbody>
                     {{#each details.behaviorSummary.files_opened as |file|}}
@@ -2121,7 +2121,7 @@
                 No files referring available
               </span>
             {{else}}
-              <div class="scrollable-block">
+              <div class="scrollable-block mt-1">
                 <table>
                   <tbody>
                     {{#each details.referenceFiles as |referrenceFile|}}
@@ -2201,7 +2201,7 @@
           </div>
 
           {{#if showHistoricalWhois}}
-            <div>
+            <div class="mt-1">
               {{#if (gt details.historicalWhoIs.length 0)}}
                 {{#if block.entity.isIP}}
                   <div class="scan-results">
