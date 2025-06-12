@@ -206,9 +206,7 @@ function doLookup(entities, options, cb) {
           )
         );
       }
-    } else if (
-      !entity.types.includes('cve')
-    ) {
+    } else if (!entity.types.includes('cve')) {
       nonCveOrThreatActorEntities.push(entity);
     }
 
@@ -805,211 +803,209 @@ const _lookupVulnerabilities = (entity, options, done) => {
 
       Logger.trace({ result }, 'Result of Vulnerabilities Lookup');
 
+      const details = {
+        vulnerabilities: flow(
+          get('data'),
+          map((vulnerability) => ({
+            ...vulnerability.attributes,
+            id: vulnerability.id,
+            relationships: vulnerability.relationships,
+            // Core description and metadata
+            htmlDescription: convertMarkdownToHtml(vulnerability.attributes.description),
+            htmlExecutiveSummary: convertMarkdownToHtml(
+              vulnerability.attributes.executive_summary
+            ),
+            confidenceGroupedData: groupByConfidence(vulnerability.attributes),
+
+            // Timeline information (dates in ms)
+            date_of_disclosure: vulnerability.attributes.date_of_disclosure
+              ? vulnerability.attributes.date_of_disclosure * 1000
+              : null,
+            exploitation: {
+              ...vulnerability.attributes.exploitation,
+              first_exploitation: vulnerability.attributes.exploitation
+                ?.first_exploitation
+                ? vulnerability.attributes.exploitation.first_exploitation * 1000
+                : null
+            },
+            cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
+              ? {
+                  ...vulnerability.attributes.cisa_known_exploited,
+                  added_date: vulnerability.attributes.cisa_known_exploited.added_date
+                    ? vulnerability.attributes.cisa_known_exploited.added_date * 1000
+                    : null,
+                  due_date: vulnerability.attributes.cisa_known_exploited.due_date
+                    ? vulnerability.attributes.cisa_known_exploited.due_date * 1000
+                    : null
+                }
+              : null,
+
+            // Identifiers and classification
+            cve_id: vulnerability.attributes.cve_id,
+            mve_id: vulnerability.attributes.mve_id,
+            cwe: vulnerability.attributes.cwe || {},
+
+            // Risk assessment
+            risk_rating: vulnerability.attributes.risk_rating,
+            predicted_risk_rating: vulnerability.attributes.predicted_risk_rating,
+            priority: vulnerability.attributes.priority,
+
+            // CVSS scoring (improved to handle different versions)
+            cvssScore: flow((attrs) => {
+              const cvss3Score =
+                get('cvss.cvssv3_1.base_score', attrs) ||
+                get('cvss.cvssv3_x.base_score', attrs);
+              const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
+              return cvss3Score || cvss2Score || null;
+            })(vulnerability.attributes),
+            cvssVector: flow((attrs) => {
+              const cvss3Vector =
+                get('cvss.cvssv3_1.vector', attrs) || get('cvss.cvssv3_x.vector', attrs);
+              const cvss2Vector = get('cvss.cvssv2_0.vector', attrs);
+              return cvss3Vector || cvss2Vector || null;
+            })(vulnerability.attributes),
+
+            // Enhanced severity calculation
+            severity: flow((attrs) => {
+              const cvss3Score =
+                get('cvss.cvssv3_1.base_score', attrs) ||
+                get('cvss.cvssv3_x.base_score', attrs);
+              const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
+              const score = cvss3Score || cvss2Score;
+
+              if (!score) return 'Unknown';
+              if (score >= 9.0) return 'Critical';
+              if (score >= 7.0) return 'High';
+              if (score >= 4.0) return 'Medium';
+              return 'Low';
+            })(vulnerability.attributes),
+
+            // Exploitation status and metrics
+            exploitation_state: vulnerability.attributes.exploitation_state,
+            exploit_availability: vulnerability.attributes.exploit_availability,
+            exploitabilityMetrics: flow((attrs) => ({
+              epssScore: get('epss.score', attrs)
+                ? parseFloat(get('epss.score', attrs).toFixed(5))
+                : 0,
+              epssPercentile: get('epss.percentile', attrs)
+                ? parseFloat(get('epss.percentile', attrs).toFixed(3))
+                : 0,
+              hasExploit: !!(
+                get('exploitation.exploit_release_date', attrs) ||
+                get('cisa_known_exploited', attrs) ||
+                get('exploitation_state', attrs) === 'exploited'
+              ),
+              daysToExploit: flow((attrs) => {
+                const firstExploit = get('exploitation.first_exploitation', attrs);
+                const techDetails = get('exploitation.tech_details_release_date', attrs);
+                const disclosure = get('date_of_disclosure', attrs);
+
+                if (firstExploit && techDetails) {
+                  return Math.floor((firstExploit - techDetails) / (24 * 60 * 60));
+                } else if (firstExploit && disclosure) {
+                  return Math.floor((firstExploit - disclosure) / (24 * 60 * 60));
+                }
+                return null;
+              })(attrs)
+            }))(vulnerability.attributes),
+
+            // Impact and consequences
+            exploitation_consequence: vulnerability.attributes.exploitation_consequence,
+            exploitation_vectors: vulnerability.attributes.exploitation_vectors || [],
+
+            // Affected systems and products
+            cpes: vulnerability.attributes.cpes || [],
+
+            // Targeting information
+            targetedIndustryNames: flow(
+              get('targeted_industries'),
+              uniq,
+              compact
+            )(vulnerability.attributes),
+
+            // Mitigation and remediation
+            available_mitigation: vulnerability.attributes.available_mitigation || [],
+            mitigationDetails: flow(
+              get('vendor_fix_references'),
+              map((fix) => ({
+                ...fix,
+                published_date: fix.published_date
+                  ? fix.published_date * 1000
+                  : fix.published_date
+              }))
+            )(vulnerability.attributes),
+            timeToMitigation: flow((attrs) => {
+              const exploitDate = get('exploitation.first_exploitation', attrs);
+              const fixDate = flow(get('vendor_fix_references'), (fixes) =>
+                fixes && fixes.length
+                  ? Math.min(
+                      ...fixes
+                        .map((f) =>
+                          get('published_date', f) ? f.published_date * 1000 : null
+                        )
+                        .filter(Boolean)
+                    )
+                  : null
+              )(attrs);
+              if (exploitDate && fixDate) {
+                return Math.floor((fixDate - exploitDate) / (24 * 60 * 60));
+              }
+              return null;
+            })(vulnerability.attributes),
+
+            // Additional metadata
+            tags: vulnerability.attributes.tags || [],
+            sources: vulnerability.attributes.sources || [],
+
+            // Enhanced impact summary
+            impactSummary: flow(
+              (attrs) => ({
+                systems: get('affected_systems', attrs) || [],
+                consequence: get('exploitation_consequence', attrs),
+                priority: get('priority', attrs),
+                riskRating: get('risk_rating', attrs),
+                cvssScore:
+                  get('cvss.cvssv3_1.base_score', attrs) ||
+                  get('cvss.cvssv3_x.base_score', attrs) ||
+                  get('cvss.cvssv2_0.base_score', attrs),
+                hasPublicExploit: !!(
+                  get('exploitation.exploit_release_date', attrs) ||
+                  get('cisa_known_exploited', attrs)
+                ),
+                epssScore: get('epss.score', attrs)
+              }),
+              (impact) => ({
+                ...impact,
+                summary: compact([
+                  impact.riskRating ? `${impact.riskRating} Risk` : null,
+                  impact.priority,
+                  impact.cvssScore ? `CVSS ${impact.cvssScore}` : null,
+                  impact.hasPublicExploit ? 'Public Exploit' : null,
+                  impact.epssScore
+                    ? `EPSS ${(impact.epssScore * 100).toFixed(1)}%`
+                    : null,
+                  impact.consequence,
+                  impact.systems.length
+                    ? `Affects ${impact.systems.slice(0, 3).join(', ')}${
+                        impact.systems.length > 3 ? '...' : ''
+                      }`
+                    : null
+                ]).join(' • ')
+              })
+            )(vulnerability.attributes)
+          }))
+        )(result)
+      };
+
       const vulnerabilitiesLookupResult = {
         entity,
         data: {
-          summary: [`Vulns: ${result.data.length}`],
-          details: {
-            vulnerabilities: flow(
-              get('data'),
-              map((vulnerability) => ({
-                ...vulnerability.attributes,
-                id: vulnerability.id,
-                relationships: vulnerability.relationships,
-                // Core description and metadata
-                htmlDescription: convertMarkdownToHtml(
-                  vulnerability.attributes.description
-                ),
-                htmlExecutiveSummary:
-                  convertMarkdownToHtml(vulnerability.attributes.executive_summary),
-                confidenceGroupedData: groupByConfidence(vulnerability.attributes),
-
-                // Timeline information (dates in ms)
-                date_of_disclosure: vulnerability.attributes.date_of_disclosure
-                  ? vulnerability.attributes.date_of_disclosure * 1000
-                  : null,
-                exploitation: {
-                  ...vulnerability.attributes.exploitation,
-                  first_exploitation: vulnerability.attributes.exploitation
-                    ?.first_exploitation
-                    ? vulnerability.attributes.exploitation.first_exploitation * 1000
-                    : null
-                },
-                cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
-                  ? {
-                      ...vulnerability.attributes.cisa_known_exploited,
-                      added_date:
-                        vulnerability.attributes.cisa_known_exploited.added_date
-                          ? vulnerability.attributes.cisa_known_exploited.added_date * 1000
-                          : null,
-                      due_date:
-                        vulnerability.attributes.cisa_known_exploited.due_date
-                          ? vulnerability.attributes.cisa_known_exploited.due_date * 1000
-                          : null
-                    }
-                  : null,
-
-                // Identifiers and classification
-                cve_id: vulnerability.attributes.cve_id,
-                mve_id: vulnerability.attributes.mve_id,
-                cwe: vulnerability.attributes.cwe || {},
-
-                // Risk assessment
-                risk_rating: vulnerability.attributes.risk_rating,
-                predicted_risk_rating: vulnerability.attributes.predicted_risk_rating,
-                priority: vulnerability.attributes.priority,
-
-                // CVSS scoring (improved to handle different versions)
-                cvssScore: flow((attrs) => {
-                  const cvss3Score =
-                    get('cvss.cvssv3_1.base_score', attrs) ||
-                    get('cvss.cvssv3_x.base_score', attrs);
-                  const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
-                  return cvss3Score || cvss2Score || null;
-                })(vulnerability.attributes),
-                cvssVector: flow((attrs) => {
-                  const cvss3Vector =
-                    get('cvss.cvssv3_1.vector', attrs) ||
-                    get('cvss.cvssv3_x.vector', attrs);
-                  const cvss2Vector = get('cvss.cvssv2_0.vector', attrs);
-                  return cvss3Vector || cvss2Vector || null;
-                })(vulnerability.attributes),
-
-                // Enhanced severity calculation
-                severity: flow((attrs) => {
-                  const cvss3Score =
-                    get('cvss.cvssv3_1.base_score', attrs) ||
-                    get('cvss.cvssv3_x.base_score', attrs);
-                  const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
-                  const score = cvss3Score || cvss2Score;
-
-                  if (!score) return 'Unknown';
-                  if (score >= 9.0) return 'Critical';
-                  if (score >= 7.0) return 'High';
-                  if (score >= 4.0) return 'Medium';
-                  return 'Low';
-                })(vulnerability.attributes),
-
-                // Exploitation status and metrics
-                exploitation_state: vulnerability.attributes.exploitation_state,
-                exploit_availability: vulnerability.attributes.exploit_availability,
-                exploitabilityMetrics: flow((attrs) => ({
-                  epssScore: get('epss.score', attrs)
-                    ? parseFloat(get('epss.score', attrs).toFixed(5))
-                    : 0,
-                  epssPercentile: get('epss.percentile', attrs)
-                    ? parseFloat(get('epss.percentile', attrs).toFixed(3))
-                    : 0,
-                  hasExploit: !!(
-                    get('exploitation.exploit_release_date', attrs) ||
-                    get('cisa_known_exploited', attrs) ||
-                    get('exploitation_state', attrs) === 'exploited'
-                  ),
-                  daysToExploit: flow((attrs) => {
-                    const firstExploit = get('exploitation.first_exploitation', attrs);
-                    const techDetails = get(
-                      'exploitation.tech_details_release_date',
-                      attrs
-                    );
-                    const disclosure = get('date_of_disclosure', attrs);
-
-                    if (firstExploit && techDetails) {
-                      return Math.floor((firstExploit - techDetails) / (24 * 60 * 60));
-                    } else if (firstExploit && disclosure) {
-                      return Math.floor((firstExploit - disclosure) / (24 * 60 * 60));
-                    }
-                    return null;
-                  })(attrs)
-                }))(vulnerability.attributes),
-
-                // Impact and consequences
-                exploitation_consequence:
-                  vulnerability.attributes.exploitation_consequence,
-                exploitation_vectors: vulnerability.attributes.exploitation_vectors || [],
-
-                // Affected systems and products
-                cpes: vulnerability.attributes.cpes || [],
-
-                // Targeting information
-                targetedIndustryNames: flow(
-                  get('targeted_industries'),
-                  uniq,
-                  compact
-                )(vulnerability.attributes),
-
-                // Mitigation and remediation
-                available_mitigation: vulnerability.attributes.available_mitigation || [],
-                mitigationDetails: flow(
-                  get('vendor_fix_references'),
-                  map((fix) => ({
-                    ...fix,
-                    published_date: fix.published_date
-                      ? fix.published_date * 1000
-                      : fix.published_date
-                  }))
-                )(vulnerability.attributes),
-                timeToMitigation: flow((attrs) => {
-                  const exploitDate = get('exploitation.first_exploitation', attrs);
-                  const fixDate = flow(get('vendor_fix_references'), (fixes) =>
-                    fixes && fixes.length
-                      ? Math.min(
-                          ...fixes
-                            .map((f) => get('published_date', f)
-                              ? f.published_date * 1000
-                              : null)
-                            .filter(Boolean)
-                        )
-                      : null
-                  )(attrs);
-                  if (exploitDate && fixDate) {
-                    return Math.floor((fixDate - exploitDate) / (24 * 60 * 60));
-                  }
-                  return null;
-                })(vulnerability.attributes),
-
-                // Additional metadata
-                tags: vulnerability.attributes.tags || [],
-                sources: vulnerability.attributes.sources || [],
-
-                // Enhanced impact summary
-                impactSummary: flow(
-                  (attrs) => ({
-                    systems: get('affected_systems', attrs) || [],
-                    consequence: get('exploitation_consequence', attrs),
-                    priority: get('priority', attrs),
-                    riskRating: get('risk_rating', attrs),
-                    cvssScore:
-                      get('cvss.cvssv3_1.base_score', attrs) ||
-                      get('cvss.cvssv3_x.base_score', attrs) ||
-                      get('cvss.cvssv2_0.base_score', attrs),
-                    hasPublicExploit: !!(
-                      get('exploitation.exploit_release_date', attrs) ||
-                      get('cisa_known_exploited', attrs)
-                    ),
-                    epssScore: get('epss.score', attrs)
-                  }),
-                  (impact) => ({
-                    ...impact,
-                    summary: compact([
-                      impact.riskRating ? `${impact.riskRating} Risk` : null,
-                      impact.priority,
-                      impact.cvssScore ? `CVSS ${impact.cvssScore}` : null,
-                      impact.hasPublicExploit ? 'Public Exploit' : null,
-                      impact.epssScore
-                        ? `EPSS ${(impact.epssScore * 100).toFixed(1)}%`
-                        : null,
-                      impact.consequence,
-                      impact.systems.length
-                        ? `Affects ${impact.systems.slice(0, 3).join(', ')}${
-                            impact.systems.length > 3 ? '...' : ''
-                          }`
-                        : null
-                    ]).join(' • ')
-                  })
-                )(vulnerability.attributes)
-              }))
-            )(result)
-          }
+          summary: [
+            details.vulnerabilities.length === 1 && details.vulnerabilities[0].risk_rating
+              ? `Risk: ${details.vulnerabilities[0].risk_rating}`
+              : `Vulns: ${details.vulnerabilities.length}`
+          ],
+          details
         }
       };
 
@@ -1353,7 +1349,10 @@ const groupByConfidence = (association) => {
     isArray(association[property]) &&
     size(association[property]) > 0 &&
     isPlainObject(association[property][0]) &&
-    some((obj) => obj && isPlainObject(obj) && has('confidence', obj), association[property]);
+    some(
+      (obj) => obj && isPlainObject(obj) && has('confidence', obj),
+      association[property]
+    );
 
   const confidenceFields = [
     'motivations',
