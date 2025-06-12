@@ -1273,6 +1273,16 @@
                 </span>
               </div>
             {{/if}}
+            {{#if actor.vulnerable_products}}
+              <div>
+                <span class="p-key">
+                  Vulnerable Products:
+                </span>
+                <span class="p-value">
+                  {{actor.vulnerable_products}}
+                </span>
+              </div>
+            {{/if}}
             
             
             {{#if actor.detection_names}}
@@ -1281,7 +1291,7 @@
                   Detection Names
                 </h2>
                 {{#each actor.detection_names as |name|}}
-                  <span class="actor-tag">
+                  <span class="pill-tag">
                     {{name}}
                   </span>
                 {{/each}}
@@ -1293,7 +1303,7 @@
                   Alt Names
                 </h2>
                 {{#each actor.alt_names as |name|}}
-                  <span class="actor-tag">
+                  <span class="pill-tag">
                     {{name}}
                   </span>
                 {{/each}}
@@ -1305,83 +1315,82 @@
                   Tags
                 </h2>
                 {{#each actor.tags as |tag|}}
-                  <span class="actor-tag">
+                  <span class="pill-tag">
                     {{tag}}
                   </span>
                 {{/each}}
               </div>
             {{/if}}
-            
-
-
-            {{#if actor.vulnerable_products}}
-              <div>
-                <span class="p-key">
-                  Vulnerable Products:
-                </span>
-                <span class="p-value">
-                  {{actor.vulnerable_products}}
-                </span>
-              </div>
-            {{/if}}
             {{#if actor.threat_scape}}
               <div>
-                <span class="p-key">
-                  Threat Scape:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.threat_scape}}
-                </span>
+                <h2 class="p-title">
+                  Threat Scape
+                </h2>
+                {{#each actor.threat_scape as |threat|}}
+                  <span class="pill-tag">
+                    {{threat}}
+                  </span>
+                {{/each}}
               </div>
             {{/if}}
             {{#if actor.mitigations}}
               <div>
-                <span class="p-key">
-                  Mitigations:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.mitigations}}
-                </span>
+                <h2 class="p-title">
+                  Mitigations
+                </h2>
+                {{#each actor.mitigations as |mitigation|}}
+                  <span class="pill-tag">
+                    {{mitigation}}
+                  </span>
+                {{/each}}
               </div>
             {{/if}}
             {{#if actor.workarounds}}
               <div>
-                <span class="p-key">
-                  Workarounds:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.workarounds}}
-                </span>
+                <h2 class="p-title">
+                  Workaround
+                </h2>
+                {{#each actor.workarounds as |workaround|}}
+                  <span class="pill-tag">
+                    {{workaround}}
+                  </span>
+                {{/each}}
               </div>
             {{/if}}
             {{#if actor.technologies}}
               <div>
-                <span class="p-key">
-                  Technologies:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.technologies}}
-                </span>
+                <h2 class="p-title">
+                  Technologies
+                </h2>
+                {{#each actor.technologies as |technology|}}
+                  <span class="pill-tag">
+                    {{technology}}
+                  </span>
+                {{/each}}
               </div>
             {{/if}}
             {{#if actor.malware_roles}}
               <div>
-                <span class="p-key">
-                  Malware Roles:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.malware_roles}}
-                </span>
+                <h2 class="p-title">
+                  Malware Roles
+                </h2>
+                {{#each actor.malware_roles as |malware|}}
+                  <span class="pill-tag">
+                    {{malware}}
+                  </span>
+                {{/each}}
               </div>
             {{/if}}
             {{#if actor.exploitation_vectors}}
               <div>
-                <span class="p-key">
-                  Exploitation Vectors:
-                </span>
-                <span class="p-value">
-                  {{join ", " actor.exploitation_vectors}}
-                </span>
+                <h2 class="p-title">
+                  Exploitation Vectors
+                </h2>
+                {{#each actor.exploitation_vectors as |vector|}}
+                  <span class="pill-tag">
+                    {{vector}}
+                  </span>
+                {{/each}}
               </div>
             {{/if}}
             {{#if
