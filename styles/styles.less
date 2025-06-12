@@ -188,9 +188,15 @@ td.positives {
 .scrollable-block {
   overflow-y: auto;
   max-height: 300px;
+  display: block;
   width: 100%;
   padding-right: 3px;
-  
+  resize: vertical;
+
+  &[style*="height"] {
+    max-height: unset;
+  }
+
   &.bordered {
     border: 1px solid lightgray;
     border-radius: 3px;
