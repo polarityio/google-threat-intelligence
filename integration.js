@@ -812,6 +812,7 @@ const _lookupVulnerabilities = (entity, options, done) => {
             relationships: vulnerability.relationships,
             // Core description and metadata
             htmlDescription: convertMarkdownToHtml(vulnerability.attributes.description),
+            htmlAnalysis: convertMarkdownToHtml(vulnerability.attributes.analysis),
             htmlExecutiveSummary: convertMarkdownToHtml(
               vulnerability.attributes.executive_summary
             ),

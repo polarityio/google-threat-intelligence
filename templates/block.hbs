@@ -62,17 +62,17 @@
               </div>
             {{/if}}
 
-            {{#if vulnerability.alt_names_details}}
+            {{#if vulnerability.alt_names}}
               <div>
                 <h2 class="p-title">
                   Alternate Names
-                  {{#if (gt vulnerability.alt_names_details.length 1)}}
-                    ({{vulnerability.alt_names_details.length}})
+                  {{#if (gt vulnerability.alt_names.length 1)}}
+                    ({{vulnerability.alt_names.length}})
                   {{/if}}
                 </h2>
-                {{#each vulnerability.alt_names_details as |name|}}
+                {{#each vulnerability.alt_names as |name|}}
                   <span class="pill-tag">
-                    {{name.value}}
+                    {{name}}
                   </span>
                 {{/each}}
               </div>
@@ -550,6 +550,25 @@
             {{/if}}
             {{! DROPDOWN ALT FIELD DISPLAYS END }}
 
+            {{! ANALYSIS - Dropdown --}}
+            {{#if vulnerability.htmlAnalysis}}
+              <div class="toggle-header">
+                  <span class="p-action" {{action "toggleExpandableAssociations" "vulnAnalysis" vulnIndex}}>
+                    {{fa-icon "book" fixedWidth=true}}
+                    Analysis
+                    {{fa-icon
+                            (if (get expandedAssociations (concat "vulnAnalysis" vulnIndex)) "caret-up" "caret-down")
+                            fixedWidth=true
+                    }}
+                  </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnAnalysis" vulnIndex))}}
+                <div class="scrollable-block mt-1 bordered">
+                  {{{vulnerability.htmlAnalysis}}}
+                </div>
+              {{/if}}
+            {{/if}}
+            
             {{! CRITICAL TIMELINE - Dropdown }}
             {{#if
               (or
