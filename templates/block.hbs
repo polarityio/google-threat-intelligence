@@ -7,9 +7,9 @@
             {{vulnerability.name}}
           </h1>
           <div>
-            <a class="gti-link" href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}">
+            <a class="p-link" href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}">
               View Vulnerability in GTI
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
                   d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
                   fill="#FBBC04"
@@ -45,32 +45,53 @@
                 <h2 class="p-title">
                   Executive Summary
                 </h2>
-                <span class="p-value scrollable-block short html">
+                <div class="scrollable-block short html">
                   {{{vulnerability.htmlExecutiveSummary}}}
-                </span>
+                </div>
               </div>
             {{/if}}
-            {{#if (get expandedAssociations (concat "vulnTechnical" vulnIndex))}}
+            
+            {{#if vulnerability.htmlDescription}}
               <div>
-                <div>
-                  <span class="p-key">
-                    Description:
-                  </span>
-                  <span class="p-value scrollable-block short">
-                    {{{vulnerability.htmlDescription}}}
-                  </span>
+                <h2 class="p-title">
+                  Description
+                </h2>
+                <div class="scrollable-block short">
+                  {{{vulnerability.htmlDescription}}}
                 </div>
               </div>
             {{/if}}
 
+            {{#if vulnerability.tags}}
+              <div>
+                <h2 class="p-title">
+                  Tags
+                  {{#if (gt vulnerability.tags.length 1)}}
+                    ({{vulnerability.tags.length}})
+                  {{/if}}
+                </h2>
+                {{#each vulnerability.tags as |tag|}}
+                  <span class="pill-tag">
+                    {{tag}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            
             {{! CORE RISK ASSESSMENT - Always visible }}
+            {{#if (or vulnerability.risk_rating vulnerability.priority vulnerability.cvssScore vulnerability.exploitabilityMetrics.epssScore)}}
+              <h2 class="p-title">
+                Risk Assessment
+              </h2>
+            {{/if}}
             {{#if vulnerability.risk_rating}}
               <div>
                 <span class="p-key">
                   Risk Rating:
                 </span>
                 <span class="p-value">
-                  {{vulnerability.risk_rating}}{{#if vulnerability.predicted_risk_rating}}
+                  {{vulnerability.risk_rating}}
+                  {{#if vulnerability.predicted_risk_rating}}
                     (Predicted: {{vulnerability.predicted_risk_rating}})
                   {{/if}}
                 </span>
@@ -377,7 +398,7 @@
                   <span class="p-key">
                     Tags:
                   </span>
-                  <span class="threat-actor-flex-list-row">
+                  <span>
                     {{#each vulnerability.tags as |tag|}}
                       <span class="pill-tag">
                         {{tag}}
@@ -441,15 +462,15 @@
               )
             }}
               <div>
-                <span class="p-key confidence-metadata-title">
+                <div class="p-key confidence-metadata-title">
                   Vendor Fix References
                   {{#if (gt vulnerability.mitigationDetails.length 1)}}
                     ({{vulnerability.mitigationDetails.length}})
                   {{/if}}
-                </span>
+                </div>
                 <div class="scrollable-block short bordered">
                   {{#each (take 100 vulnerability.mitigationDetails) as |fix|}}
-                    <div class="mb-2">
+                    <div class="scrollable-block-list-item">
                       {{#if fix.url}}
                         <a href="{{fix.url}}" target="_blank">
                           {{or fix.title fix.name fix.source_description fix.cvss fix.unique_id fix.url}}
@@ -478,7 +499,7 @@
                       }}/products-and-fixes/vendor-fix-details"
                     >
                       View all Vendor Fix References in GTI
-                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
                           d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
                           fill="#FBBC04"
@@ -741,21 +762,21 @@
                 <div>
                   {{#if vulnerability.cpes}}
                     <div style="margin-bottom: 8px;">
-                      <span class="p-key confidence-metadata-title">
+                      <div class="p-key confidence-metadata-title">
                         Affected Products:
                         {{#if (gt vulnerability.cpes.length 1)}}
                           ({{vulnerability.cpes.length}})
                         {{/if}}
-                      </span>
+                      </div>
                       <div class="confidence-metadata-indent scrollable-block short bordered">
                         {{#each (take 100 vulnerability.cpes) as |cpe|}}
                           <div style="margin-bottom: 8px;">
-                            <span class="p-key confidence-metadata-title small">
+                            <div class="p-key confidence-metadata-title small">
                               {{or cpe.end_cpe.vendor cpe.start_cpe.vendor}} {{or
                                 cpe.end_cpe.product
                                 cpe.start_cpe.product
                               }}
-                            </span>
+                            </div>
                             <div class="confidence-metadata-indent">
                               {{#if (or cpe.end_cpe.vendor cpe.start_cpe.vendor)}}
                                 <div class="metadata-field">
@@ -961,15 +982,15 @@
                   {{/if}}
                   {{#if vulnerability.mitigationDetails.length}}
                     <div>
-                      <span class="p-key confidence-metadata-title">
+                      <div class="p-key confidence-metadata-title">
                         Vendor Fix References
                         {{#if (gt vulnerability.mitigationDetails.length 1)}}
                           ({{vulnerability.mitigationDetails.length}})
                         {{/if}}
-                      </span>
+                      </div>
                       <div class="scrollable-block short bordered">
                         {{#each (take 100 vulnerability.mitigationDetails) as |fix|}}
-                          <div class="mb-2">
+                          <div class="scrollable-block-list-item">
                             {{#if fix.url}}
                               <a href="{{fix.url}}" target="_blank">
                                 {{or fix.title fix.name fix.source_description fix.cvss fix.unique_id fix.url}}
@@ -1039,12 +1060,12 @@
               {{/if}}
             {{/if}}
 
-            {{! METADATA & SOURCES - Dropdown }}
-            {{#if (and vulnerability.tags vulnerability.sources)}}
+            {{! SOURCES - Dropdown }}
+            {{#if vulnerability.sources}}
               <div class="toggle-header">
                 <span class="p-action" {{action "toggleExpandableAssociations" "vulnMetadata" vulnIndex}}>
                   {{fa-icon "database" fixedWidth=true}}
-                  Metadata & Sources
+                  Sources
                   {{fa-icon
                     (if (get expandedAssociations (concat "vulnMetadata" vulnIndex)) "caret-up" "caret-down")
                     fixedWidth=true
@@ -1052,89 +1073,34 @@
                 </span>
               </div>
               {{#if (get expandedAssociations (concat "vulnMetadata" vulnIndex))}}
-                <div>
-                  {{#if vulnerability.tags}}
-                    <div>
-                      <span class="p-key">
-                        Tags:
-                      </span>
-                      <span class="threat-actor-flex-list-row">
-                        {{#each vulnerability.tags as |tag|}}
-                          <span class="p-value">
-                            {{tag}}
-                          </span>
-                        {{/each}}
-                      </span>
-                    </div>
-                  {{/if}}
+                <div class="mt-1">
                   {{#if vulnerability.sources}}
                     <div>
-                      <span class="p-key">
-                        Sources:
+                      <div class="p-key confidence-metadata-title">
+                        Sources
                         {{#if (gt vulnerability.sources.length 1)}}
                           ({{vulnerability.sources.length}})
                         {{/if}}
-                      </span>
-                      <span class="threat-actor-flex-list-row">
+                      </div>
+                      <div class="scrollable-block bordered">
                         {{#each vulnerability.sources as |source sourceIndex|}}
-                          {{#if (or source.name source.description source.md5 source.url)}}
-                            <span class="p-value">
+                          {{#if (or source.title source.name source.description source.url source.md5)}}
+                            <div class="scrollable-block-list-item">
                               {{#if source.url}}
                                 <a href="{{source.url}}">
-                                  {{or source.name source.description source.md5 source.url}}
+                                  {{#if (and source.title source.name)}}
+                                    [{{source.name}}] {{source.title}}
+                                  {{else}}
+                                    {{or source.title source.name source.description source.url source.md5}}  
+                                  {{/if}}
                                 </a>
                               {{else}}
-                                {{or source.name source.description source.md5}}
-                              {{/if}}{{#if
-                                (and
-                                  (not (eq sourceIndex (sub vulnerability.sources.length 1)))
-                                  (or source.name source.description source.md5 source.url)
-                                )
-                              }}
-                                |
+                                {{or source.title source.name source.description source.md5}}
                               {{/if}}
-                            </span>
+                            </div>
                           {{/if}}
                         {{/each}}
-                        {{#if (gt vulnerability.sources.length 10)}}
-                          |
-                          <a href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}/sources">
-                            ... Remaining Sources
-                            <svg
-                              width="19"
-                              height="19"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                fill="#FBBC04"
-                              ></path>
-                              <path
-                                d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                fill="#34A853"
-                              ></path>
-                              <path
-                                d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                fill="#4285F4"
-                              ></path>
-                              <path
-                                d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                fill="#4285F4"
-                              ></path>
-                              <path
-                                d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                fill="#FBBC04"
-                              ></path>
-                              <path
-                                d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                fill="#EA4335"
-                              ></path>
-                            </svg>
-                          </a>
-                        {{/if}}
-                      </span>
+                      </div>
                     </div>
                   {{/if}}
                 </div>
