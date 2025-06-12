@@ -2898,9 +2898,11 @@
                                     </a>
                                   </div>
                                   {{#each-in threat.confidenceGroupedData as |confidence metadata|}}
+                                  {{#if metadata.length}}
                                     <span class="title">
                                       {{titleize (humanize (dasherize confidence))}}
                                     </span>
+                                  {{/if}}
                                     {{#each-in metadata as |key values|}}
                                       {{#if values.length}}
                                         <div class="metadata-field">
