@@ -62,6 +62,24 @@
               </div>
             {{/if}}
 
+            {{#if vulnerability.alt_names_details}}
+              <div>
+                <h2 class="p-title">
+                  Alternate Names
+                  {{#if (gt vulnerability.alt_names_details.length 1)}}
+                    ({{vulnerability.alt_names_details.length}})
+                  {{/if}}
+                </h2>
+                {{#each vulnerability.alt_names_details as |name|}}
+                  <span class="pill-tag">
+                    {{name.value}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+
+            
+
             {{#if vulnerability.tags}}
               <div>
                 <h2 class="p-title">
