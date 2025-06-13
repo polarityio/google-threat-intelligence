@@ -2643,13 +2643,13 @@
                               </div>
                             </div>
                           {{/if}}
-                          {{#if threat.counters.iocs.length}}
+                          {{#if (gt threat.counters.iocs 0)}}
                             <div class="info">
                               <div class="title">
                                 IoCs
                               </div>
                               <div class="count">
-                                {{threat.counters.iocs.length}}
+                                {{threat.counters.iocs}}
                               </div>
                             </div>
                           {{/if}}
