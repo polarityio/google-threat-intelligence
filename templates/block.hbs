@@ -3249,7 +3249,7 @@
                               {{/if}}
                             </div>
                           {{/if}}
-                          {{#if report.categorizedIocs}}
+                          {{#if (gt report.categorizedIocs.length 0)}}
                             <div class="threat-data-group">
                               <span class="title" {{action "toggleExpandableAssociations" "reportIocs" reportIndex}}>
                                 Aggregations
