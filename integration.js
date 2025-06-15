@@ -889,7 +889,7 @@ const _lookupVulnerabilities = (entity, options, done) => {
                 ? parseFloat(get('epss.score', attrs).toFixed(5))
                 : 0,
               epssPercentile: get('epss.percentile', attrs)
-                ? parseFloat(get('epss.percentile', attrs).toFixed(3))
+                ? parseFloat(get('epss.percentile', attrs) * 100).toFixed(2)
                 : 0,
               hasExploit: !!(
                 get('exploitation.exploit_release_date', attrs) ||
