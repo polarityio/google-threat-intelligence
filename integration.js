@@ -1003,11 +1003,7 @@ const _lookupVulnerabilities = (entity, options, done) => {
       const vulnerabilitiesLookupResult = {
         entity,
         data: {
-          summary: [
-            details.vulnerabilities.length === 1 && details.vulnerabilities[0].risk_rating
-              ? `Risk: ${details.vulnerabilities[0].risk_rating}`
-              : `Vulns: ${details.vulnerabilities.length}`
-          ],
+          summary: _getVulnSummaryTags(details),
           details
         }
       };
@@ -1015,6 +1011,21 @@ const _lookupVulnerabilities = (entity, options, done) => {
       done(null, vulnerabilitiesLookupResult);
     });
   });
+};
+
+const _getVulnSummaryTags = (details) => {
+  if (details.vulnerabilities.length === 1 && details.vulnerabilities[0].risk_rating) {
+    return [`Risk: ${details.vulnerabilities[0].risk_rating}`];
+  }
+
+  if (
+    details.vulnerabilities.length === 1 &&
+    details.vulnerabilities[0].predicted_risk_rating
+  ) {
+    return [`Risk: ${details.vulnerabilities[0].predicted_risk_rating}`];
+  }
+
+  return [`Vulns: ${details.vulnerabilities.length}`];
 };
 
 const _lookupThreatActors = (entity, options, done) => {
