@@ -409,63 +409,6 @@
               {{/if}}
             {{/if}}
 
-            {{! METADATA & SOURCES - Individual Fields }}
-            {{#if (not (and vulnerability.tags vulnerability.sources))}}
-              {{#if vulnerability.tags}}
-                <div>
-                  <span class="p-key">
-                    Tags:
-                  </span>
-                  <span>
-                    {{#each vulnerability.tags as |tag|}}
-                      <span class="pill-tag">
-                        {{tag}}
-                      </span>
-                    {{/each}}
-                  </span>
-                </div>
-              {{/if}}
-              {{#if vulnerability.sources}}
-                <div>
-                  <span class="p-key">
-                    Sources:
-                    {{#if (gt vulnerability.sources.length 1)}}
-                      ({{vulnerability.sources.length}})
-                    {{/if}}
-                  </span>
-                  <span>
-                    {{#each (take 10 vulnerability.sources) as |source sourceIndex|}}
-                      {{#if source.name}}
-                        <span class="p-value">
-                          {{#if source.url}}
-                            <a href="{{source.url}}">
-                              {{or source.name source.description source.md5 source.url}}
-                            </a>
-                          {{else}}
-                            {{or source.name source.description source.md5}}
-                          {{/if}}{{#if
-                            (and
-                              (not (eq sourceIndex 9))
-                              (lt sourceIndex (sub vulnerability.sources.length 1))
-                              (or source.name source.description source.md5 source.url)
-                            )
-                          }}
-                            |
-                          {{/if}}
-                        </span>
-                      {{/if}}
-                    {{/each}}
-                    {{#if (gt vulnerability.sources.length 10)}}
-                      |
-                      <a href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}/sources">
-                        ... Remaining Sources
-                      </a>
-                    {{/if}}
-                  </span>
-                </div>
-              {{/if}}
-            {{/if}}
-
             {{! REMEDIATION & MITIGATION - Individual Fields 2 }}
             {{#if
               (and
