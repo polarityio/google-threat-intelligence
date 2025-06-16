@@ -407,7 +407,7 @@ function doLookup(entities, options, cb) {
           async.concat(
             nonCveOrThreatActorEntities,
             function (entity, concatDone) {
-              Logger.debug({ entity: entity.value }, 'Looking up Threats');
+              Logger.debug({ entity: entity.value }, 'Looking up Reports');
               _lookupReports(entity, options, concatDone);
             },
             function (err, results) {
@@ -941,18 +941,16 @@ const _lookupVulnerabilities = (entity, options, done) => {
                 fixes && fixes.length
                   ? Math.min(
                       ...fixes
-                        .map((f) =>
-                          get('published_date', f) ? f.published_date : null
-                        )
+                        .map((f) => (get('published_date', f) ? f.published_date : null))
                         .filter(Boolean)
                     )
                   : null
               )(attrs);
-              
+
               if (exploitDate && fixDate) {
                 return Math.floor((exploitDate - fixDate) / (24 * 60 * 60));
               }
-              
+
               return null;
             })(vulnerability.attributes),
 
@@ -1239,6 +1237,13 @@ const _lookupThreats = (entity, options, done) => {
         }))
       )(result);
 
+      // The original `aggregations` property is not used in the template.  Instead, we use the
+      // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+      // original aggregations which can be an extremely large object.
+      delete formattedThreats.aggregations;
+
+      Logger.debug({ formattedThreats }, 'Parsed Threats Result');
+
       done(null, {
         entity,
         threats: formattedThreats,
@@ -1312,6 +1317,13 @@ const _lookupReports = (entity, options, done) => {
             : report.attributes.last_modification_date
         }))
       )(result);
+
+      // The original `aggregations` property is not used in the template.  Instead, we use the
+      // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+      // original aggregations which can be an extremely large object.
+      delete reports.aggregations;
+
+      Logger.debug({ reports }, 'Parsed Reports Result');
 
       done(null, {
         entity,
@@ -1515,6 +1527,15 @@ const groupByConfidence = (association) => {
   return threatsGroupedByConfidence;
 };
 
+/**
+ * Flattens a nested object or array into a list of objects with their paths.
+ * The function traverses the input recursively and returns a sorted list of values
+ * based on entity presence and prevalence.
+ *
+ * @param {Object} entity - The entity used for sorting the flattened values.
+ * @param {Object|Array} obj - The object or array to be flattened.
+ * @returns {Array} - A sorted list of flattened objects with their paths.
+ */
 const flattenWithPaths = (entity, obj) => {
   const traverse = curry((path, val) => {
     const isPlainObjectWithNoNested =
