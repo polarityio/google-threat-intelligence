@@ -2507,17 +2507,22 @@
                           </div>
                         </div>
                       </div>
-
+                      
+                      {{!-- Threat Expanding Description --}}
                       {{#if threat.htmlDescription}}
                         <div
-                          class="description {{
+                          class="description mt-1 {{
                             if (get expandedAssociations (concat "threats" threatIndex)) "expanded"
                           }}"
                         >
                           {{{threat.htmlDescription}}}
+                          {{#unless (get expandedAssociations (concat "threats" threatIndex))}}
+                            <div class="transparent-gradient"></div>
+                          {{/unless}}
                         </div>
                       {{/if}}
-
+                      
+                      {{!-- Threat Stats --}}
                       <div class="bottom">
                         <div class="related-info">
                           {{#if threat.malware_roles.length}}
@@ -3000,13 +3005,17 @@
                         </div>
                       </div>
 
+                      {{!-- Report Expanding Description --}}
                       {{#if report.executive_summary}}
                         <div
-                          class="description {{
+                          class="description mt-1 {{
                             if (get expandedAssociations (concat "reports" reportIndex)) "expanded"
                           }}"
                         >
                           {{{report.executive_summary}}}
+                          {{#unless (get expandedAssociations (concat "reports" threatIndex))}}
+                            <div class="transparent-gradient"></div>
+                          {{/unless}}
                         </div>
                       {{/if}}
 

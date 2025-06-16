@@ -508,10 +508,23 @@ td.positives {
             font-weight: 200;
             text-overflow: ellipsis;
             overflow: hidden;
-            margin-bottom: 1px;
-            max-height: 35px;
-            border-radius: 3px;
-            box-shadow: inset 0 -17px 11px -8px @description-shadow;
+            max-height: 50px;
+            padding-right: 3px;
+            position: relative;
+
+            .transparent-gradient {
+              width: calc(100% + 10px);
+              margin-left: -5px;
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              height: 13.0208333333vw;
+              background: linear-gradient(180deg, transparent 0, white 100%);
+            }
+
+            ul {
+              padding-left: 20px;
+            }
 
             h1 {
               font-size: 17px;
