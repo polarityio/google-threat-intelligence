@@ -1342,25 +1342,35 @@ const queryParams = {
   relationships: 'subscription_preferences,owner,malware_families,threat_actors'
 };
 
-const getGtiRequestOptionsByType = (entity, relationship) =>
-  ({
-    IPv4: {
+const getGtiRequestOptionsByType = (entity, relationship) => {
+  if (entity.isIP) {
+    return {
       route: `ip_addresses/${entity.value}/${relationship}`,
       queryParams
-    },
-    domain: {
+    };
+  }
+
+  if (entity.isDomain) {
+    return {
       route: `domains/${entity.value}/${relationship}`,
       queryParams
-    },
-    url: {
+    };
+  }
+
+  if (entity.isURL) {
+    return {
       route: `urls/${entity.value}/${relationship}`,
       queryParams
-    },
-    hash: {
+    };
+  }
+
+  if (entity.isHash) {
+    return {
       route: `files/${entity.value}/${relationship}`,
       queryParams
-    }
-  }[entity.isHash ? 'hash' : entity.type]);
+    };
+  }
+};
 
 const getUiUrlByEntityType = (entity) =>
   ({
@@ -1685,11 +1695,11 @@ const sortByEntityPresenceAndPrevalence = (entity, arrayOfObjects) =>
     groupBy('readablePath'), // 6) → { key: [records] }
     mapValues((records) => {
       /* 7) wrap each group:
-                               {
-                                 data: [ …records ],
-                                 averageLength: <rounded-up mean length of record.value>
-                               }
-                        */
+                                     {
+                                       data: [ …records ],
+                                       averageLength: <rounded-up mean length of record.value>
+                                     }
+                              */
       const lengths = records
         .filter(has('value')) // only items with a `value` field
         .map((r) => String(r.value).length); // length in characters
