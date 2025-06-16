@@ -224,7 +224,26 @@ td.positives {
       border-radius: 4px;
     }
   }
+
+  .sticky-title {
+    position: sticky;
+    top: 0;
+    background-color: #eee;
+    background: #F9FAFB;
+    //border-bottom: 1px solid #ddd;
+    margin: 0;
+    padding: 5px 5px 5px 5px;
+    border-bottom: 1px solid #eee;
+    width: calc(100% + 10px);
+    margin-left: -5px;
+  }
+
+  .pill-tag-container {
+    margin-top: 2px;
+    margin-bottom: 5px;
+  }
 }
+
 
 .toggle-header {
   margin-top: 8px;
@@ -379,7 +398,7 @@ td.positives {
       }
     }
   }
-
+  
   .associations-tabs {
     display: flex;
     flex-direction: column;
@@ -403,7 +422,7 @@ td.positives {
 
             .title-content {
               width: 100%;
-              
+
               .threat-type-icon {
                 margin-right: 5px;
                 margin-top: 4px;
@@ -653,7 +672,7 @@ h3.p-title {
   margin: 3px 3px 0px 0px;
   border: 1px solid #e4e9f2;
   display: inline-block;
-  
+
   svg {
     font-size: 9px;
     color: @muted-text;

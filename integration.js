@@ -34,7 +34,8 @@ const {
   omitBy,
   isUndefined,
   filter,
-  has
+  has,
+  mean
 } = fp;
 
 const showdown = require('showdown');
@@ -1199,50 +1200,50 @@ const _lookupThreats = (entity, options, done) => {
 
       const formattedThreats = flow(
         get('data'),
-        map((threat) => ({
-          ...threat.attributes,
-          id: threat.id,
-          relationships: threat.relationships,
-          motivationNames: map('value', threat.attributes.motivations),
-          targetedIndustryNames: map(
-            ({ industry_group, industry }) =>
-              size(industry_group) > size(industry) ? industry_group : industry,
-            threat.attributes.targeted_industries_tree
-          ),
-          targetedRegionNames: flow(
-            map((region) => {
-              const country = region.country || region.country_iso2 || '';
-              const subRegion = region.sub_region || region.region || '';
-              if (country && subRegion) {
-                return `${country}, ${subRegion}`;
-              } else if (country) {
-                return country;
-              } else if (subRegion) {
-                return subRegion;
-              } else {
-                return '';
-              }
-            }),
-            compact
-          )(threat.attributes.targeted_regions_hierarchy),
-          htmlDescription: convertMarkdownToHtml(threat.attributes.description),
-          confidenceGroupedData: groupByConfidence(threat.attributes),
-          categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
-          creation_date: threat.attributes.creation_date
-            ? threat.attributes.creation_date * 1000
-            : threat.attributes.creation_date,
-          last_modification_date: threat.attributes.last_modification_date
-            ? threat.attributes.last_modification_date * 1000
-            : threat.attributes.last_modification_date
-        }))
+        map((threat) => {
+          let formattedThreat = {
+            ...threat.attributes,
+            id: threat.id,
+            relationships: threat.relationships,
+            motivationNames: map('value', threat.attributes.motivations),
+            targetedIndustryNames: map(
+              ({ industry_group, industry }) =>
+                size(industry_group) > size(industry) ? industry_group : industry,
+              threat.attributes.targeted_industries_tree
+            ),
+            targetedRegionNames: flow(
+              map((region) => {
+                const country = region.country || region.country_iso2 || '';
+                const subRegion = region.sub_region || region.region || '';
+                if (country && subRegion) {
+                  return `${country}, ${subRegion}`;
+                } else if (country) {
+                  return country;
+                } else if (subRegion) {
+                  return subRegion;
+                } else {
+                  return '';
+                }
+              }),
+              compact
+            )(threat.attributes.targeted_regions_hierarchy),
+            htmlDescription: convertMarkdownToHtml(threat.attributes.description),
+            confidenceGroupedData: groupByConfidence(threat.attributes),
+            categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
+            creation_date: threat.attributes.creation_date
+              ? threat.attributes.creation_date * 1000
+              : threat.attributes.creation_date,
+            last_modification_date: threat.attributes.last_modification_date
+              ? threat.attributes.last_modification_date * 1000
+              : threat.attributes.last_modification_date
+          };
+          // The original `aggregations` property is not used in the template.  Instead, we use the
+          // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+          // original aggregations which can be an extremely large object.
+          delete formattedThreat.aggregations;
+          return formattedThreat;
+        })
       )(result);
-
-      // The original `aggregations` property is not used in the template.  Instead, we use the
-      // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
-      // original aggregations which can be an extremely large object.
-      delete formattedThreats.aggregations;
-
-      Logger.debug({ formattedThreats }, 'Parsed Threats Result');
 
       done(null, {
         entity,
@@ -1281,49 +1282,50 @@ const _lookupReports = (entity, options, done) => {
 
       const reports = flow(
         get('data'),
-        map((report) => ({
-          ...report.attributes,
-          id: report.id,
-          relationships: report.relationships,
-          htmlDescription: convertMarkdownToHtml(report.attributes.description),
-          targetedIndustryNames: map(
-            ({ industry_group, industry }) =>
-              size(industry_group) > size(industry) ? industry_group : industry,
-            report.attributes.targeted_industries_tree
-          ),
-          targetedRegionNames: flow(
-            map((region) => {
-              const country = region.country || region.country_iso2 || '';
-              const subRegion = region.sub_region || region.region || '';
-              if (country && subRegion) {
-                return `${country}, ${subRegion}`;
-              } else if (country) {
-                return country;
-              } else if (subRegion) {
-                return subRegion;
-              } else {
-                return '';
-              }
-            }),
-            compact
-          )(report.attributes.targeted_regions_hierarchy),
-          confidenceGroupedData: groupByConfidence(report.attributes),
-          categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
-          creation_date: report.attributes.creation_date
-            ? report.attributes.creation_date * 1000
-            : report.attributes.creation_date,
-          last_modification_date: report.attributes.last_modification_date
-            ? report.attributes.last_modification_date * 1000
-            : report.attributes.last_modification_date
-        }))
+        map((report) => {
+          let formattedReport = {
+            ...report.attributes,
+            id: report.id,
+            relationships: report.relationships,
+            htmlDescription: convertMarkdownToHtml(report.attributes.description),
+            targetedIndustryNames: map(
+              ({ industry_group, industry }) =>
+                size(industry_group) > size(industry) ? industry_group : industry,
+              report.attributes.targeted_industries_tree
+            ),
+            targetedRegionNames: flow(
+              map((region) => {
+                const country = region.country || region.country_iso2 || '';
+                const subRegion = region.sub_region || region.region || '';
+                if (country && subRegion) {
+                  return `${country}, ${subRegion}`;
+                } else if (country) {
+                  return country;
+                } else if (subRegion) {
+                  return subRegion;
+                } else {
+                  return '';
+                }
+              }),
+              compact
+            )(report.attributes.targeted_regions_hierarchy),
+            confidenceGroupedData: groupByConfidence(report.attributes),
+            categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
+            creation_date: report.attributes.creation_date
+              ? report.attributes.creation_date * 1000
+              : report.attributes.creation_date,
+            last_modification_date: report.attributes.last_modification_date
+              ? report.attributes.last_modification_date * 1000
+              : report.attributes.last_modification_date
+          };
+
+          // The original `aggregations` property is not used in the template.  Instead, we use the
+          // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+          // original aggregations which can be an extremely large object.
+          delete formattedReport.aggregations;
+          return formattedReport;
+        })
       )(result);
-
-      // The original `aggregations` property is not used in the template.  Instead, we use the
-      // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
-      // original aggregations which can be an extremely large object.
-      delete reports.aggregations;
-
-      Logger.debug({ reports }, 'Parsed Reports Result');
 
       done(null, {
         entity,
@@ -1528,15 +1530,76 @@ const groupByConfidence = (association) => {
 };
 
 /**
- * Flattens a nested object or array into a list of objects with their paths.
- * The function traverses the input recursively and returns a sorted list of values
- * based on entity presence and prevalence.
+ * Recursively walks an arbitrarily-nested object/array, “lifts” every
+ * **leaf** node into a flat list while preserving its dot-notation path,
+ * then ranks and groups those leaves into a convenient, UI-ready shape.
  *
- * @param {Object} entity - The entity used for sorting the flattened values.
- * @param {Object|Array} obj - The object or array to be flattened.
- * @returns {Array} - A sorted list of flattened objects with their paths.
+ * The final structure is an object whose **keys** are human-readable
+ * versions of each path (e.g. `"User Name"`), and whose **values** look
+ * like:
+ *
+ * ```ts
+ * {
+ *   data:            Array<FlattenedLeaf>,
+ *   averageLength:   number   // ⬆︎ ceil( mean( String(value).length ) )
+ * }
+ * ```
+ *
+ * where `FlattenedLeaf` may contain:
+ *
+ * * `value` or `values` — the original primitive / array / shallow object
+ * * `path`             — dot-notation path inside the source object
+ * * `readablePath`     — Pretty casing of `path`
+ * * `matchesSubstring` — `true` if `value` contains `entity.value`
+ * * `prevalence`       — optional business metric used for sorting
+ *
+ * @param {Object} entity
+ *        Arbitrary object that at least has a **`value`** property.
+ *        Its `value` is used to highlight / prioritise matching leaves.
+ * @param {(Object|Array)} obj
+ *        The data structure you want to flatten.
+ * @returns {Object.<string, {data:Array<Object>, averageLength:number}>}
+ *
+ * @example
+ * const entity = { value: 'email' };
+ * const src = {
+ *   user: {
+ *     name: 'Alice',
+ *     contacts: [
+ *       { type: 'email',  value: 'a@example.com' },
+ *       { type: 'phone',  value: '555-0101' }
+ *     ]
+ *   }
+ * };
+ *
+ * flattenWithPaths(entity, src);
+ * // → {
+ * //   'User Name': {
+ * //     data: [{
+ * //       value: 'Alice',
+ * //       path: 'user.name',
+ * //       readablePath: 'User Name',
+ * //       matchesSubstring: false
+ * //     }],
+ * //     averageLength: 5
+ * //   },
+ * //   'User Contacts': {
+ * //     data: [
+ * //       { type:'email', value:'a@example.com', path:'user.contacts',
+ * //         readablePath:'User Contacts', matchesSubstring:true },
+ * //       { type:'phone', value:'555-0101',      path:'user.contacts',
+ * //         readablePath:'User Contacts', matchesSubstring:false }
+ * //     ],
+ * //     averageLength: 11
+ * //   }
+ * // }
  */
 const flattenWithPaths = (entity, obj) => {
+  // Convert empty object to a null value to make it easier to skip in the template
+  if (Object.keys(obj).length === 0) {
+    return null;
+  }
+
   const traverse = curry((path, val) => {
     const isPlainObjectWithNoNested =
       isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val));
@@ -1582,23 +1645,91 @@ const flattenWithPaths = (entity, obj) => {
   return sortedListOfValues;
 };
 
+/**
+ * Takes the flat list produced by `traverse`, decorates each record with
+ * extra metadata, removes duplicates, sorts by *entity relevance* and
+ * *prevalence*, then groups by a prettified path.
+ * It also calculates **`averageLength`** for every group and wraps the
+ * records under a `data` key.
+ *
+ * @private
+ * @param {Object} entity
+ *        Same `entity` object passed to `flattenWithPaths`.
+ * @param {Array<Object>} arrayOfObjects
+ *        Flat list of leaf records created by `traverse`.
+ * @returns {Object.<string, {data:Array<Object>, averageLength:number}>}
+ *
+ * @example
+ * // Given `entity = { value: 'email' }` and a list containing
+ * //   { value:'Bob',   path:'user.name' }
+ * //   { value:'Alice', path:'user.name' }
+ * //   { value:'bob@example.com', path:'user.email' }
+ * // sortByEntityPresenceAndPrevalence(entity, list) →
+ * //   {
+ * //     'User Name':   { data:[{…Bob},{…Alice}], averageLength:4 },
+ * //     'User Email':  { data:[{…bob@example.com}], averageLength:15 }
+ * //   }
+ */
 const sortByEntityPresenceAndPrevalence = (entity, arrayOfObjects) =>
   flow(
-    compact,
-    uniqBy('value'),
+    compact, // 1) remove falsey
+    uniqBy('value'), // 2) de-dupe on value
     map((obj) => ({
+      // 3) decorate each record
       ...obj,
       readablePath: makeHumanReadable(obj.path),
       matchesSubstring: hasSubstringInValue(obj, entity.value)
     })),
-    sortBy((obj) => -(obj.prevalence || 0)),
-    sortBy((obj) => (obj.matchesSubstring ? 0 : 1)),
-    groupBy('readablePath')
+    sortBy((o) => -(o.prevalence || 0)), // 4) high prevalence first
+    sortBy((o) => (o.matchesSubstring ? 0 : 1)), // 5) hits on entity first
+    groupBy('readablePath'), // 6) → { key: [records] }
+    mapValues((records) => {
+      /* 7) wrap each group:
+                               {
+                                 data: [ …records ],
+                                 averageLength: <rounded-up mean length of record.value>
+                               }
+                        */
+      const lengths = records
+        .filter(has('value')) // only items with a `value` field
+        .map((r) => String(r.value).length); // length in characters
+
+      const avg = lengths.length
+        ? Math.ceil(mean(lengths)) // round -> nearest higher int
+        : 0; // empty group → 0
+
+      return { data: records, averageLength: avg };
+    })
   )(arrayOfObjects);
 
+/**
+ * Case-insensitive substring test that gracefully handles non-string
+ * values.
+ *
+ * @param {{value:*}} leaf      – A flattened leaf record.
+ * @param {string}    substring – Text to search for.
+ * @returns {boolean}           – `true` if `substring` occurs in
+ *                                `String(leaf.value)`.
+ *
+ * @example
+ * hasSubstringInValue({ value: 'Hello World' }, 'world'); // → true
+ * hasSubstringInValue({ value: 12345 },        '234');   // → true
+ */
 const hasSubstringInValue = ({ value: val }, substring) =>
   includes(substring.toLowerCase(), (isString(val) ? val : String(val)).toLowerCase());
 
+/**
+ * Converts a dot-separated / snake-cased path such as
+ * `"user.contacts_0.email"` into a nicely capitalised string
+ * `"User Contacts 0 Email"`.
+ *
+ * @param {string} path – Original dot-notation path.
+ * @returns {string}    – Human-readable version.
+ *
+ * @example
+ * makeHumanReadable('user.name');          // → 'User Name'
+ * makeHumanReadable('system.cpu_load_1');  // → 'System Cpu Load 1'
+ */
 const makeHumanReadable = flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase);
 // End Google Threat Intelligence
 

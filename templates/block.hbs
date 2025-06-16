@@ -2762,18 +2762,28 @@
                                 </span>
                                 {{#if (get expandedAssociations (concat "threatIocs" threatIndex))}}
                                   <div class="values mt-1">
-                                    <div class="scrollable-block bordered">
+                                    <div class="scrollable-block bordered position-relative pt-0">
                                       {{#each-in threat.categorizedIocs as |iocCategory iocs|}}
                                         <div>
-                                          <h2 class="p-title">
+                                          <h2 class="p-title sticky-title">
                                             {{iocCategory}}
                                           </h2>
                                           <div class="p-value">
-                                            {{#each iocs as |ioc iocIndex|}}
-                                              {{ioc.value}}{{#if (not (eq (sub iocs.length 1) iocIndex))}}
-                                                ,
-                                              {{/if}}
-                                            {{/each}}
+                                            {{#if (gte iocs.averageLength 32)}}
+                                              <div class="my-1">
+                                                {{#each iocs.data as |ioc iocIndex|}}
+                                                  <div class="scrollable-block-list-item">
+                                                    {{ioc.value}}
+                                                  </div>
+                                                {{/each}}
+                                              </div>
+                                            {{else}}
+                                              <div class="pill-tag-container">
+                                                {{#each iocs.data as |ioc iocIndex|}}
+                                                  <span class="pill-tag">{{ioc.value}}</span>
+                                                {{/each}}  
+                                              </div>
+                                            {{/if}}
                                           </div>
                                         </div>
                                       {{/each-in}}
@@ -3154,7 +3164,7 @@
                               </div>
                             </div>
                           {{/if}}
-                          {{#if (or report.counters (gt report.categorizedIocs.length 0) report.confidenceGroupedData)}}
+                          {{#if (or report.counters report.categorizedIocs report.confidenceGroupedData)}}
                             <div class="mt-1">
                               {{#if report.counters}}
                                 <div class="threat-data-group">
@@ -3224,7 +3234,7 @@
                                   {{/if}}
                                 </div>
                               {{/if}}
-                              {{#if (gt report.categorizedIocs.length 0)}}
+                              {{#if report.categorizedIocs}}
                                 <div class="threat-data-group">
                                   <span class="p-action" {{action "toggleExpandableAssociations" "reportIocs" reportIndex}}>
                                     Aggregations
@@ -3240,20 +3250,28 @@
                                   </span>
                                   {{#if (get expandedAssociations (concat "reportIocs" reportIndex))}}
                                     <div class="values mt-1">
-                                      <div class="iocs">
+                                      <div class="scrollable-block bordered position-relative pt-0">
                                         {{#each-in report.categorizedIocs as |iocCategory iocs|}}
-                                          <div>
-                                            <span class="p-key">
-                                              {{iocCategory}}:
-                                            </span>
-                                            <span class="p-value">
-                                              {{#each iocs as |ioc iocIndex|}}
-                                                {{ioc.value}}{{#if (not (eq (sub iocs.length 1) iocIndex))}}
-                                                  ,
-                                                {{/if}}
-                                              {{/each}}
-                                            </span>
-                                          </div>
+                                            <h2 class="p-title sticky-title">
+                                              {{iocCategory}}
+                                            </h2>
+                                            <div class="p-value">
+                                              {{#if (gte iocs.averageLength 32)}}
+                                                <div class="my-1">
+                                                  {{#each iocs.data as |ioc iocIndex|}}
+                                                    <div class="scrollable-block-list-item">
+                                                      {{ioc.value}}
+                                                    </div>
+                                                  {{/each}}
+                                                </div>
+                                              {{else}}
+                                                <div class="pill-tag-container">
+                                                  {{#each iocs.data as |ioc iocIndex|}}
+                                                    <span class="pill-tag">{{ioc.value}}</span>
+                                                  {{/each}}
+                                                </div>
+                                              {{/if}}
+                                            </div>                                          
                                         {{/each-in}}
                                       </div>
                                     </div>
