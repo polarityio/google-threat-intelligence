@@ -31,7 +31,7 @@ polarity.export = PolarityComponent.extend({
   expandedWhoisMap: Ember.computed.alias('block.data.details.expandedWhoisMap'),
   communityScoreWidth: Ember.computed('details.reputation', function () {
     let reputation = this.get('details.reputation');
-    if(!reputation) return 50;
+    if (!reputation) return 50;
     // clamp reputation to between -100 and 100
     if (reputation > 100) {
       reputation = 100;
@@ -115,6 +115,7 @@ polarity.export = PolarityComponent.extend({
   redThreat: '#ed2e4d',
   greenThreat: '#7dd21b',
   yellowThreat: '#ffc15d',
+  noThreat: '#999',
   /**
    * Radius of the ticScore circle
    */
@@ -127,6 +128,12 @@ polarity.export = PolarityComponent.extend({
   elementStrokeWidth: 4,
 
   elementColor: Ember.computed('result.domain_risk.risk_score', function () {
+    if (
+      typeof this.get('details.positives') === 'undefined' &&
+      typeof this.get('details.total') === 'undefined'
+    ) {
+      return this.get('noThreat');
+    }
     return this._getThreatColor((this.details.positives / this.details.total) * 100 || 0);
   }),
 
@@ -359,7 +366,7 @@ polarity.export = PolarityComponent.extend({
         `block._state.expandedVulnerabilities.${key}`,
         !this.get(`block._state.expandedVulnerabilities.${key}`)
       );
-    },
+    }
   },
   copyElementToClipboard(element) {
     window.getSelection().removeAllRanges();
