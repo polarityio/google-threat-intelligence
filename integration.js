@@ -1101,67 +1101,7 @@ const _lookupThreatActors = (entity, options, done) => {
                   : threatActor.attributes.last_seen,
                 last_modification_date: threatActor.attributes.last_modification_date
                   ? threatActor.attributes.last_modification_date * 1000
-                  : threatActor.attributes.last_modification_date,
-                activityTrend: flow(get('recent_activity_summary'), (activity) => {
-                  if (!activity || !activity.length) return null;
-                  const trend =
-                    activity.slice(-3).reduce((a, b) => a + b, 0) / 3 -
-                    activity.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-                  return {
-                    direction:
-                      trend > 0 ? 'increasing' : trend < 0 ? 'decreasing' : 'stable',
-                    recentAverage: activity.slice(-3).reduce((a, b) => a + b, 0) / 3,
-                    percentageChange:
-                      (Math.abs(trend) * 100) /
-                      (activity.slice(0, 3).reduce((a, b) => a + b, 0) / 3)
-                  };
-                })(threatActor.attributes),
-                riskScore: flow((attrs) => {
-                  const baseScore = 5; // Base score out of 10
-                  const modifiers = {
-                    recentActivityChange: get('recent_activity_relative_change', attrs)
-                      ? Math.min(get('recent_activity_relative_change', attrs), 2)
-                      : 0,
-                    targetedIndustriesCount:
-                      (get('targeted_industries', attrs) || []).length * 0.5,
-                    regionsCount: (get('targeted_regions', attrs) || []).length * 0.25,
-                    technologiesCount: (get('technologies', attrs) || []).length * 0.25
-                  };
-                  return Math.min(
-                    10,
-                    baseScore +
-                      modifiers.recentActivityChange +
-                      modifiers.targetedIndustriesCount +
-                      modifiers.regionsCount +
-                      modifiers.technologiesCount
-                  );
-                })(threatActor.attributes),
-                primaryTechniques: flow(
-                  (attrs) => ({
-                    technologies: get('technologies', attrs) || [],
-                    exploitationVectors: get('exploitation_vectors', attrs) || []
-                  }),
-                  ({ technologies, exploitationVectors }) => ({
-                    primary: technologies.slice(0, 3),
-                    secondary: exploitationVectors,
-                    combined: uniq([...technologies, ...exploitationVectors])
-                  })
-                )(threatActor.attributes),
-                activityMetrics: flow(get('summary_stats'), (stats) =>
-                  stats
-                    ? {
-                        averageDetections: get('files_detections.avg', stats) || 0,
-                        maxDetections: get('files_detections.max', stats) || 0,
-                        activityDuration: get('last_submission_date.max', stats)
-                          ? Math.floor(
-                              (get('last_submission_date.max', stats) -
-                                get('first_submission_date.min', stats)) /
-                                (24 * 60 * 60)
-                            )
-                          : 0
-                      }
-                    : null
-                )(threatActor.attributes)
+                  : threatActor.attributes.last_modification_date
               }))
             )(result)
           }
