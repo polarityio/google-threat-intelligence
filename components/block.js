@@ -13,6 +13,7 @@ polarity.export = PolarityComponent.extend({
   maxResolutionsToShow: 20,
   associationTab: '',
   expandedAssociations: Ember.computed.alias('block._state.expandedAssociations'),
+  expandedVulnerabilities: Ember.computed.alias('block._state.expandedVulnerabilities'),
   iconNamesByAssociationType: {
     report: 'file-alt',
     campaign: 'bullseye',
@@ -30,7 +31,7 @@ polarity.export = PolarityComponent.extend({
   expandedWhoisMap: Ember.computed.alias('block.data.details.expandedWhoisMap'),
   communityScoreWidth: Ember.computed('details.reputation', function () {
     let reputation = this.get('details.reputation');
-    if(!reputation) return 50;
+    if (!reputation) return 50;
     // clamp reputation to between -100 and 100
     if (reputation > 100) {
       reputation = 100;
@@ -114,6 +115,7 @@ polarity.export = PolarityComponent.extend({
   redThreat: '#ed2e4d',
   greenThreat: '#7dd21b',
   yellowThreat: '#ffc15d',
+  noThreat: '#999',
   /**
    * Radius of the ticScore circle
    */
@@ -126,6 +128,12 @@ polarity.export = PolarityComponent.extend({
   elementStrokeWidth: 4,
 
   elementColor: Ember.computed('result.domain_risk.risk_score', function () {
+    if (
+      typeof this.get('details.positives') === 'undefined' &&
+      typeof this.get('details.total') === 'undefined'
+    ) {
+      return this.get('noThreat');
+    }
     return this._getThreatColor((this.details.positives / this.details.total) * 100 || 0);
   }),
 
@@ -183,6 +191,7 @@ polarity.export = PolarityComponent.extend({
     if (!this.get('block._state')) {
       this.set('block._state', {});
       this.set('block._state.expandedAssociations', {});
+      this.set('block._state.expandedVulnerabilities', {});
     }
 
     if (this.get('details.names.length') <= 10) {
@@ -347,6 +356,16 @@ polarity.export = PolarityComponent.extend({
     },
     expandWhoIsRow: function (index) {
       this.set(`expandedWhoisMap.${index}`, !this.get(`expandedWhoisMap.${index}`));
+    },
+    toggleExpandableVulnerabilities: function (section, index) {
+      const key = `${section}${index}`;
+      if (!this.get('block._state.expandedVulnerabilities')) {
+        this.set('block._state.expandedVulnerabilities', {});
+      }
+      this.set(
+        `block._state.expandedVulnerabilities.${key}`,
+        !this.get(`block._state.expandedVulnerabilities.${key}`)
+      );
     }
   },
   copyElementToClipboard(element) {

@@ -1,12 +1,14 @@
 # Polarity Google Threat Intelligence Integration
 
-Polarity's Google Threat Intelligence integration gives users access to automated MD5, SHA1, SHA256, IPv4, Domain, and URL lookups within Google Threat Intelligence and makes use of the v3.0 REST API.
+Polarity's Google Threat Intelligence integration gives users access to automated MD5, SHA1, SHA256, IPv4, Domain, URL, CVE, & Threat Actor Lookups within Google Threat Intelligence and makes use of the v3.0 REST API.
 
-Google Threat Intelligence is a service that analyzes suspicious files and URLs and facilitates the quick detection of viruses, worms, trojans, and all kinds of malware.  For more information about Google Threat Intelligence please visit https://www.virustotal.com/.
+Google Threat Intelligence is a service that analyzes suspicious files and URLs and facilitates the quick detection of viruses, worms, trojans, and all kinds of malware.  For more information about Google Threat Intelligence please visit https://www.virustotal.com/. It also allows for searching for File and IP Address and get Associated Threats & Reports via the GTI API along with CVE & Threat Actor GTI Lookups.
 
-| ![](assets/integration-example-ip.png) |![](/assets/integration-example-md5.png)|![](assets/integration-example-url.png)
-|---|---|--|
-|*IP Address Example* |*Hash Example*| *Domain Example*|
+| ![](assets/integration-example-ip.png) | ![](assets/integration-example-hash.png)   | ![](assets/integration-example-domain.png) 
+|----------------------------------------|--------------------------------------------|--------------------------------------------|
+| *IP Address Example*                   | *Hash Example*                             | *Domain Example*                           |
+| ![](assets/integration-threats.png) | ![](assets/integration-vuln.png)           | ![](assets/integration-actor.png) 
+| *Threat Example*                       | *Vulnerability Example*                    | *Threat Actor Example*                     |
 
 ## Google Threat Intelligence Integration Options
 

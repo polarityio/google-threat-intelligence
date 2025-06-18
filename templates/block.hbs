@@ -1,7 +1,1545 @@
 {{#if vulnerabilities.length}}
-  {{object-to-table vulnerabilities}}
+  <div>
+    {{#each vulnerabilities as |vulnerability vulnIndex|}}
+      <div>
+        <div>
+          <h1 class="p-title">
+            {{vulnerability.name}}
+          </h1>
+          <div>
+            <a class="p-link" href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}">
+              View Vulnerability in GTI
+              <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                  fill="#FBBC04"
+                ></path>
+                <path
+                  d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                  fill="#34A853"
+                ></path>
+                <path
+                  d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                  fill="#4285F4"
+                ></path>
+                <path
+                  d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                  fill="#4285F4"
+                ></path>
+                <path
+                  d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                  fill="#FBBC04"
+                ></path>
+                <path
+                  d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                  fill="#EA4335"
+                ></path>
+              </svg>
+            </a>
+          </div>
+
+          <div>
+            {{! EXECUTIVE OVERVIEW }}
+            {{#if vulnerability.htmlExecutiveSummary}}
+              <div>
+                <h2 class="p-title">
+                  Executive Summary
+                </h2>
+                <div class="scrollable-block short html">
+                  {{{vulnerability.htmlExecutiveSummary}}}
+                </div>
+              </div>
+            {{/if}}
+            
+            {{#if vulnerability.htmlDescription}}
+              <div>
+                <h2 class="p-title">
+                  Description
+                </h2>
+                <div class="scrollable-block short">
+                  {{{vulnerability.htmlDescription}}}
+                </div>
+              </div>
+            {{/if}}
+
+            {{#if vulnerability.alt_names}}
+              <div>
+                <h2 class="p-title">
+                  Alternate Names
+                  {{#if (gt vulnerability.alt_names.length 1)}}
+                    ({{vulnerability.alt_names.length}})
+                  {{/if}}
+                </h2>
+                {{#each vulnerability.alt_names as |name|}}
+                  <span class="pill-tag">
+                    {{name}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+
+            
+
+            {{#if vulnerability.tags}}
+              <div>
+                <h2 class="p-title">
+                  Tags
+                  {{#if (gt vulnerability.tags.length 1)}}
+                    ({{vulnerability.tags.length}})
+                  {{/if}}
+                </h2>
+                {{#each vulnerability.tags as |tag|}}
+                  <span class="pill-tag">
+                    {{tag}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            
+            {{! CORE RISK ASSESSMENT - Always visible }}
+            {{#if (or vulnerability.risk_rating vulnerability.priority vulnerability.cvssScore vulnerability.exploitabilityMetrics.epssScore)}}
+              <h2 class="p-title">
+                Risk Assessment
+              </h2>
+            {{/if}}
+            {{#if vulnerability.risk_rating}}
+              <div>
+                <span class="p-key">
+                  Risk Rating:
+                </span>
+                <span class="p-value">
+                  {{vulnerability.risk_rating}}
+                  {{#if vulnerability.predicted_risk_rating}}
+                    (Predicted: {{vulnerability.predicted_risk_rating}})
+                  {{/if}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.priority}}
+              <div>
+                <span class="p-key">
+                  Priority:
+                </span>
+                <span class="p-value">
+                  {{vulnerability.priority}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.cvssScore}}
+              <div>
+                <span class="p-key">
+                  CVSS Score:
+                </span>
+                <span class="p-value">
+                  {{vulnerability.cvssScore}}{{#if vulnerability.severity}}
+                    ({{vulnerability.severity}})
+                  {{/if}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if vulnerability.exploitabilityMetrics.epssScore}}
+              <div>
+                <span class="p-key">
+                  EPSS Score:
+                </span>
+                <span class="p-value">
+                  {{vulnerability.exploitabilityMetrics.epssScore}} ({{
+                    vulnerability.exploitabilityMetrics.epssPercentile
+                  }}% percentile)
+                  {{#if vulnerability.exploitabilityMetrics.hasExploit}}
+                    - Exploit Available
+                  {{/if}}
+                </span>
+              </div>
+            {{/if}}
+
+            {{! DROPDOWN ALTERNATIVE INDIVIDUAL FIELDS DISPLAYS START }}
+
+            {{! CRITICAL TIMELINE - Individual Fields }}
+            {{#if
+              (not
+                (or
+                  (and vulnerability.cisa_known_exploited vulnerability.date_of_disclosure)
+                  (and vulnerability.cisa_known_exploited vulnerability.exploitation.first_exploitation)
+                  (and vulnerability.date_of_disclosure vulnerability.exploitation.first_exploitation)
+                )
+              )
+            }}
+              {{#if vulnerability.date_of_disclosure}}
+                <div>
+                  <span class="p-key">
+                    Disclosure Date:
+                  </span>
+                  <span class="p-value">
+                    {{moment-format vulnerability.date_of_disclosure "YYYY-MM-DD" timeZone=timezone}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.exploitation.first_exploitation}}
+                <div>
+                  <span class="p-key">
+                    First Exploitation:
+                  </span>
+                  <span class="p-value">
+                    {{moment-format vulnerability.exploitation.first_exploitation "YYYY-MM-DD" timeZone=timezone}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.cisa_known_exploited}}
+                {{#if vulnerability.cisa_known_exploited.added_date}}
+                  <div>
+                    <span class="p-key">
+                      CISA KEV Added:
+                    </span>
+                    <span class="p-value">
+                      {{moment-format vulnerability.cisa_known_exploited.added_date "YYYY-MM-DD" timeZone=timezone}}
+                    </span>
+                  </div>
+                {{/if}}
+                {{#if vulnerability.cisa_known_exploited.due_date}}
+                  <div>
+                    <span class="p-key">
+                      CISA KEV Due Date:
+                    </span>
+                    <span class="p-value">
+                      {{moment-format vulnerability.cisa_known_exploited.due_date "YYYY-MM-DD" timeZone=timezone}}
+                    </span>
+                  </div>
+                {{/if}}
+                {{#if vulnerability.cisa_known_exploited.ransomware_use}}
+                  <div>
+                    <span class="p-key">
+                      Ransomware Use:
+                    </span>
+                    <span class="p-value">
+                      {{vulnerability.cisa_known_exploited.ransomware_use}}
+                    </span>
+                  </div>
+                {{/if}}
+              {{/if}}
+            {{/if}}
+
+            {{! IDENTIFIERS & CLASSIFICATION - Individual Fields }}
+            {{#if
+              (not
+                (or
+                  (and vulnerability.cve_id vulnerability.mve_id)
+                  (and vulnerability.cve_id vulnerability.cwe.title)
+                  (and vulnerability.cve_id vulnerability.cvssVector)
+                  (and vulnerability.mve_id vulnerability.cwe.title)
+                  (and vulnerability.mve_id vulnerability.cvssVector)
+                  (and vulnerability.cwe.title vulnerability.cvssVector)
+                )
+              )
+            }}
+              {{#if vulnerability.cve_id}}
+                <div>
+                  <span class="p-key">
+                    CVE ID:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.cve_id}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.mve_id}}
+                <div>
+                  <span class="p-key">
+                    MVE ID:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.mve_id}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.cwe.title}}
+                <div>
+                  <span class="p-key">
+                    CWE:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.cwe.title}}{{#if vulnerability.cwe.id}}
+                      ({{vulnerability.cwe.id}})
+                    {{/if}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.cvssVector}}
+                <div>
+                  <span class="p-key">
+                    CVSS Vector:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.cvssVector}}
+                  </span>
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! EXPLOITATION STATUS & METRICS - Individual Fields }}
+            {{#if
+              (not
+                (or
+                  (and vulnerability.exploitation_state vulnerability.exploitabilityMetrics.daysToExploit)
+                  (and vulnerability.exploitation_state vulnerability.exploitation_vectors)
+                  (and vulnerability.exploitation_state vulnerability.exploitation_consequence)
+                  (and vulnerability.exploitabilityMetrics.daysToExploit vulnerability.exploitation_vectors)
+                  (and vulnerability.exploitabilityMetrics.daysToExploit vulnerability.exploitation_consequence)
+                  (and vulnerability.exploitation_vectors vulnerability.exploitation_consequence)
+                )
+              )
+            }}
+              {{#if vulnerability.exploitation_state}}
+                <div>
+                  <span class="p-key">
+                    Exploitation Status:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.exploitation_state}}{{#if vulnerability.exploit_availability}}
+                      - {{vulnerability.exploit_availability}}
+                    {{/if}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.exploitabilityMetrics.daysToExploit}}
+                <div>
+                  <span class="p-key">
+                    Days to Exploit:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.exploitabilityMetrics.daysToExploit}} days
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.exploitation_vectors}}
+                <div>
+                  <span class="p-key">
+                    Attack Vectors:
+                  </span>
+                  <span class="p-value">
+                    {{join ", " vulnerability.exploitation_vectors}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.exploitation_consequence}}
+                <div>
+                  <span class="p-key">
+                    Impact:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.exploitation_consequence}}
+                  </span>
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! AFFECTED SYSTEMS & PRODUCTS - Individual Fields }}
+            {{#if (not vulnerability.cpes)}}
+              {{#if vulnerability.targetedIndustryNames}}
+                <div class="metadata-field">
+                  <span class="p-key">
+                    Industries:
+                  </span>
+                  <span class="p-value">
+                    {{join " | " vulnerability.targetedIndustryNames}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.impactSummary.systems}}
+                <div class="metadata-field">
+                  <span class="p-key">
+                    System Types:
+                  </span>
+                  <span class="p-value">
+                    {{join " | " vulnerability.impactSummary.systems}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.exploitation_vectors}}
+                <div>
+                  <span class="p-key">
+                    Attack Vectors:
+                  </span>
+                  <span class="p-value">
+                    {{join " | " vulnerability.exploitation_vectors}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.exploitation_consequence}}
+                <div>
+                  <span class="p-key">
+                    Potential Impact:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.exploitation_consequence}}
+                  </span>
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! REMEDIATION & MITIGATION - Individual Fields }}
+            {{#if
+              (not
+                (or
+                  (and vulnerability.available_mitigation vulnerability.mitigationDetails.length)
+                  (and vulnerability.available_mitigation vulnerability.timeToMitigation)
+                  (and vulnerability.mitigationDetails.length vulnerability.timeToMitigation)
+                )
+              )
+            }}
+              {{#if vulnerability.available_mitigation}}
+                <div>
+                  <span class="p-key">
+                    Available Mitigations:
+                  </span>
+                  <span class="p-value">
+                    {{join ", " vulnerability.available_mitigation}}
+                  </span>
+                </div>
+              {{/if}}
+              {{#if vulnerability.timeToMitigation}}
+                <div>
+                  <span class="p-key">
+                    Time to Mitigation:
+                  </span>
+                  <span class="p-value">
+                    {{vulnerability.timeToMitigation}} days
+                  </span>
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! REMEDIATION & MITIGATION - Individual Fields 2 }}
+            {{#if
+              (and
+                vulnerability.mitigationDetails.length
+                (not
+                  (or
+                    (and vulnerability.available_mitigation vulnerability.mitigationDetails.length)
+                    (and vulnerability.available_mitigation vulnerability.timeToMitigation)
+                    (and vulnerability.mitigationDetails.length vulnerability.timeToMitigation)
+                  )
+                )
+              )
+            }}
+              <div>
+                <div class="p-key confidence-metadata-title">
+                  Vendor Fix References
+                  {{#if (gt vulnerability.mitigationDetails.length 1)}}
+                    ({{vulnerability.mitigationDetails.length}})
+                  {{/if}}
+                </div>
+                <div class="scrollable-block short bordered">
+                  {{#each (take 100 vulnerability.mitigationDetails) as |fix|}}
+                    <div class="scrollable-block-list-item">
+                      {{#if fix.url}}
+                        <a href="{{fix.url}}" target="_blank">
+                          {{or fix.title fix.name fix.source_description fix.cvss fix.unique_id fix.url}}
+                        </a>
+                      {{else}}
+                        {{or fix.title fix.name fix.source_description fix.cvss fix.unique_id}}
+                      {{/if}}
+                      {{#if fix.published_date}}
+                        <span class="p-value">
+                          - {{moment-format fix.published_date "YYYY-MM-DD" timeZone=timezone}}
+                        </span>
+                      {{/if}}
+                    </div>
+                  {{/each}}
+                  {{#if (gt vulnerability.mitigationDetails.length 100)}}
+                    <span class="p-value">
+                      ...
+                    </span>
+                  {{/if}}
+                </div>
+                {{#if (gt vulnerability.mitigationDetails.length 10)}}
+                  <div>
+                    <a
+                      href="https://www.virustotal.com/gui/collection/{{
+                        vulnerability.id
+                      }}/products-and-fixes/vendor-fix-details"
+                    >
+                      View all Vendor Fix References in GTI
+                      <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                          fill="#FBBC04"
+                        ></path>
+                        <path
+                          d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                          fill="#34A853"
+                        ></path>
+                        <path
+                          d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                          fill="#4285F4"
+                        ></path>
+                        <path
+                          d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                          fill="#4285F4"
+                        ></path>
+                        <path
+                          d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                          fill="#FBBC04"
+                        ></path>
+                        <path
+                          d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                          fill="#EA4335"
+                        ></path>
+                      </svg>
+                    </a>
+                  </div>
+                {{/if}}
+              </div>
+            {{/if}}
+            {{! DROPDOWN ALT FIELD DISPLAYS END }}
+
+            {{! ANALYSIS - Dropdown --}}
+            {{#if vulnerability.htmlAnalysis}}
+              <div class="toggle-header">
+                  <span class="p-action" {{action "toggleExpandableAssociations" "vulnAnalysis" vulnIndex}}>
+                    {{fa-icon "book" fixedWidth=true}}
+                    Analysis
+                    {{fa-icon
+                      (if (get expandedAssociations (concat "vulnAnalysis" vulnIndex)) "caret-up" "caret-down")
+                      fixedWidth=true
+                    }}
+                  </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnAnalysis" vulnIndex))}}
+                <div class="scrollable-block mt-1 bordered">
+                  {{{vulnerability.htmlAnalysis}}}
+                </div>
+              {{/if}}
+            {{/if}}
+            
+            {{! CRITICAL TIMELINE - Dropdown }}
+            {{#if
+              (or
+                (and vulnerability.cisa_known_exploited vulnerability.date_of_disclosure)
+                (and vulnerability.cisa_known_exploited vulnerability.exploitation.first_exploitation)
+                (and vulnerability.date_of_disclosure vulnerability.exploitation.first_exploitation)
+              )
+            }}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "vulnTimeline" vulnIndex}}>
+                  {{fa-icon "clock" fixedWidth=true}}
+                  Critical Timeline
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "vulnTimeline" vulnIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnTimeline" vulnIndex))}}
+                <div class="mt-1">
+                  {{#if vulnerability.date_of_disclosure}}
+                    <div>
+                      <span class="p-key">
+                        Disclosure Date:
+                      </span>
+                      <span class="p-value">
+                        {{moment-format vulnerability.date_of_disclosure "YYYY-MM-DD" timeZone=timezone}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.exploitation.first_exploitation}}
+                    <div>
+                      <span class="p-key">
+                        First Exploitation:
+                      </span>
+                      <span class="p-value">
+                        {{moment-format vulnerability.exploitation.first_exploitation "YYYY-MM-DD" timeZone=timezone}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.cisa_known_exploited}}
+                    {{#if vulnerability.cisa_known_exploited.added_date}}
+                      <div>
+                        <span class="p-key">
+                          CISA KEV Added:
+                        </span>
+                        <span class="p-value">
+                          {{moment-format vulnerability.cisa_known_exploited.added_date "YYYY-MM-DD" timeZone=timezone}}
+                        </span>
+                      </div>
+                    {{/if}}
+                    {{#if vulnerability.cisa_known_exploited.due_date}}
+                      <div>
+                        <span class="p-key">
+                          CISA KEV Due Date:
+                        </span>
+                        <span class="p-value">
+                          {{moment-format vulnerability.cisa_known_exploited.due_date "YYYY-MM-DD" timeZone=timezone}}
+                        </span>
+                      </div>
+                    {{/if}}
+                    {{#if vulnerability.cisa_known_exploited.ransomware_use}}
+                      <div>
+                        <span class="p-key">
+                          Ransomware Use:
+                        </span>
+                        <span class="p-value">
+                          {{vulnerability.cisa_known_exploited.ransomware_use}}
+                        </span>
+                      </div>
+                    {{/if}}
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! IDENTIFIERS & CLASSIFICATION - Dropdown }}
+            {{#if
+              (or
+                (and vulnerability.cve_id vulnerability.mve_id)
+                (and vulnerability.cve_id vulnerability.cwe.title)
+                (and vulnerability.cve_id vulnerability.cvssVector)
+                (and vulnerability.mve_id vulnerability.cwe.title)
+                (and vulnerability.mve_id vulnerability.cvssVector)
+                (and vulnerability.cwe.title vulnerability.cvssVector)
+              )
+            }}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "vulnIdentifiers" vulnIndex}}>
+                  {{fa-icon "id-badge" fixedWidth=true}}
+                  Identifiers & Classification
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "vulnIdentifiers" vulnIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnIdentifiers" vulnIndex))}}
+                <div class="mt-1">
+                  {{#if vulnerability.cve_id}}
+                    <div>
+                      <span class="p-key">
+                        CVE ID:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.cve_id}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.mve_id}}
+                    <div>
+                      <span class="p-key">
+                        MVE ID:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.mve_id}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.cwe.title}}
+                    <div>
+                      <span class="p-key">
+                        CWE:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.cwe.title}}{{#if vulnerability.cwe.id}}
+                          ({{vulnerability.cwe.id}})
+                        {{/if}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.cvssVector}}
+                    <div>
+                      <span class="p-key">
+                        CVSS Vector:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.cvssVector}}
+                      </span>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! EXPLOITATION STATUS & METRICS - Dropdown }}
+            {{#if
+              (or
+                (and vulnerability.exploitation_state vulnerability.exploitabilityMetrics.daysToExploit)
+                (and vulnerability.exploitation_state vulnerability.exploitation_vectors)
+                (and vulnerability.exploitation_state vulnerability.exploitation_consequence)
+                (and vulnerability.exploitabilityMetrics.daysToExploit vulnerability.exploitation_vectors)
+                (and vulnerability.exploitabilityMetrics.daysToExploit vulnerability.exploitation_consequence)
+                (and vulnerability.exploitation_vectors vulnerability.exploitation_consequence)
+              )
+            }}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "vulnExploitation" vulnIndex}}>
+                  {{fa-icon "crosshairs" fixedWidth=true}}
+                  Exploitation Status & Metrics
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "vulnExploitation" vulnIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnExploitation" vulnIndex))}}
+                <div class="mt-1">
+                  {{#if vulnerability.exploitation_state}}
+                    <div>
+                      <span class="p-key">
+                        Exploitation Status:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.exploitation_state}}{{#if vulnerability.exploit_availability}}
+                          - {{vulnerability.exploit_availability}}
+                        {{/if}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.exploitabilityMetrics.daysToExploit}}
+                    <div>
+                      <span class="p-key">
+                        Days to Exploit:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.exploitabilityMetrics.daysToExploit}} days
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.exploitation_vectors}}
+                    <div>
+                      <span class="p-key">
+                        Attack Vectors:
+                      </span>
+                      <span class="p-value">
+                        {{join ", " vulnerability.exploitation_vectors}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.exploitation_consequence}}
+                    <div>
+                      <span class="p-key">
+                        Impact:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.exploitation_consequence}}
+                      </span>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! AFFECTED SYSTEMS & PRODUCTS - Dropdown }}
+            {{#if vulnerability.cpes}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "vulnAffected" vulnIndex}}>
+                  {{fa-icon "server" fixedWidth=true}}
+                  Affected Systems & Targeting
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "vulnAffected" vulnIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnAffected" vulnIndex))}}
+                <div>
+                  {{#if vulnerability.cpes}}
+                    <div style="margin-bottom: 8px;">
+                      <div class="p-key confidence-metadata-title">
+                        Affected Products:
+                        {{#if (gt vulnerability.cpes.length 1)}}
+                          ({{vulnerability.cpes.length}})
+                        {{/if}}
+                      </div>
+                      <div class="confidence-metadata-indent scrollable-block short bordered">
+                        {{#each (take 100 vulnerability.cpes) as |cpe|}}
+                          <div style="margin-bottom: 8px;">
+                            <div class="p-key confidence-metadata-title small">
+                              {{or cpe.end_cpe.vendor cpe.start_cpe.vendor}} {{or
+                                cpe.end_cpe.product
+                                cpe.start_cpe.product
+                              }}
+                            </div>
+                            <div class="confidence-metadata-indent">
+                              {{#if (or cpe.end_cpe.vendor cpe.start_cpe.vendor)}}
+                                <div class="metadata-field">
+                                  <span class="p-key">
+                                    Vendor:
+                                  </span>
+                                  <span class="p-value">
+                                    {{or cpe.end_cpe.vendor cpe.start_cpe.vendor}}
+                                  </span>
+                                </div>
+                              {{/if}}
+                              {{#if (or cpe.end_cpe.product cpe.start_cpe.product)}}
+                                <div class="metadata-field">
+                                  <span class="p-key">
+                                    Product:
+                                  </span>
+                                  <span class="p-value">
+                                    {{or cpe.end_cpe.product cpe.start_cpe.product}}
+                                  </span>
+                                </div>
+                              {{/if}}
+                              {{#if cpe.start_cpe.version}}
+                                <div class="metadata-field">
+                                  <span class="p-key">
+                                    Version Range:
+                                  </span>
+                                  <span class="p-value">
+                                    {{cpe.start_cpe.version}}
+                                    {{#if cpe.end_cpe.version}}
+                                      - {{cpe.end_cpe.version}}
+                                    {{else}}
+                                      and later
+                                    {{/if}}
+                                  </span>
+                                </div>
+                              {{/if}}
+                              {{#if (and cpe.end_cpe.version (not cpe.start_cpe.version))}}
+                                <div class="metadata-field">
+                                  <span class="p-key">
+                                    Version Range:
+                                  </span>
+                                  <span class="p-value">
+                                    {{cpe.end_rel}} {{cpe.end_cpe.version}}
+                                  </span>
+                                </div>
+                              {{/if}}
+                            </div>
+                          </div>
+                        {{/each}}
+                        {{#if (gt vulnerability.cpes.length 100)}}
+                          <span class="p-value">
+                            ...
+                          </span>
+                        {{/if}}
+                      </div>
+                      {{#if (gt vulnerability.cpes.length 10)}}
+                        <div>
+                          <a href="https://www.virustotal.com/gui/collection/{{vulnerability.id}}/products-and-fixes">
+                            View all Affected Products in GTI
+                            <svg
+                              class="gti-icon"      
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                fill="#FBBC04"
+                              ></path>
+                              <path
+                                d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                fill="#34A853"
+                              ></path>
+                              <path
+                                d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                fill="#4285F4"
+                              ></path>
+                              <path
+                                d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                fill="#4285F4"
+                              ></path>
+                              <path
+                                d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                fill="#FBBC04"
+                              ></path>
+                              <path
+                                d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                fill="#EA4335"
+                              ></path>
+                            </svg>
+                          </a>
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.targetedIndustryNames}}
+                    <div class="metadata-field">
+                      <span class="p-key">
+                        Targeted Industries:
+                        {{#if (gt vulnerability.targetedIndustryNames.length 1)}}
+                          ({{vulnerability.targetedIndustryNames.length}})
+                        {{/if}}
+                      </span>
+                      <span class="p-value">
+                        {{join " | " vulnerability.targetedIndustryNames}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.impactSummary.systems}}
+                    <div class="metadata-field">
+                      <span class="p-key">
+                        System Types:
+                        {{#if (gt vulnerability.impactSummary.systems.length 1)}}
+                          ({{vulnerability.impactSummary.systems.length}})
+                        {{/if}}
+                      </span>
+                      <span class="p-value">
+                        {{join " | " vulnerability.impactSummary.systems}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.targetedRegionNames}}
+                    <div class="metadata-field">
+                      <span class="p-key">
+                        Targeted Regions:
+                        {{#if (gt vulnerability.targetedRegionNames.length 1)}}
+                          ({{vulnerability.targetedRegionNames.length}})
+                        {{/if}}
+                      </span>
+                      <span class="p-value">
+                        {{join " | " vulnerability.targetedRegionNames}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.exploitation_vectors}}
+                    <div>
+                      <span class="p-key">
+                        Attack Vectors
+                        {{#if (gt vulnerability.exploitation_vectors.length 1)}}
+                          ({{vulnerability.exploitation_vectors.length}})
+                        {{/if}}
+                        :
+                      </span>
+                      <span class="p-value">
+                        {{join " | " vulnerability.exploitation_vectors}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.exploitation_consequence}}
+                    <div>
+                      <span class="p-key">
+                        Potential Impact:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.exploitation_consequence}}
+                      </span>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! REMEDIATION & MITIGATION - Dropdown }}
+            {{#if
+              (or
+                (and vulnerability.available_mitigation vulnerability.mitigationDetails.length)
+                (and vulnerability.available_mitigation vulnerability.timeToMitigation)
+                (and vulnerability.mitigationDetails.length vulnerability.timeToMitigation)
+              )
+            }}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "vulnRemediation" vulnIndex}}>
+                  {{fa-icon "shield-alt" fixedWidth=true}}
+                  Remediation & Mitigation
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "vulnRemediation" vulnIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnRemediation" vulnIndex))}}
+                <div class="mt-1">
+                  {{#if vulnerability.available_mitigation}}
+                    <div>
+                      <span class="p-key">
+                        Available Mitigations:
+                      </span>
+                      <span class="p-value">
+                        {{join ", " vulnerability.available_mitigation}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.timeToMitigation}}
+                    <div>
+                      <span class="p-key">
+                        Time to Mitigation:
+                      </span>
+                      <span class="p-value">
+                        {{vulnerability.timeToMitigation}} days
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if vulnerability.mitigationDetails.length}}
+                    <div>
+                      <div class="p-key confidence-metadata-title">
+                        Vendor Fix References
+                        {{#if (gt vulnerability.mitigationDetails.length 1)}}
+                          ({{vulnerability.mitigationDetails.length}})
+                        {{/if}}
+                      </div>
+                      <div class="scrollable-block short bordered">
+                        {{#each (take 100 vulnerability.mitigationDetails) as |fix|}}
+                          <div class="scrollable-block-list-item">
+                            {{#if fix.url}}
+                              <a href="{{fix.url}}" target="_blank">
+                                {{or fix.title fix.name fix.source_description fix.cvss fix.unique_id fix.url}}
+                              </a>
+                            {{else}}
+                              {{or fix.title fix.name fix.source_description fix.cvss fix.unique_id}}
+                            {{/if}}
+                            {{#if fix.published_date}}
+                              <span class="p-value">
+                                - {{moment-format fix.published_date "YYYY-MM-DD" timeZone=timezone}}
+                              </span>
+                            {{/if}}
+                          </div>
+                        {{/each}}
+                        {{#if (gt vulnerability.mitigationDetails.length 100)}}
+                          <span class="p-value">
+                            ...
+                          </span>
+                        {{/if}}
+                      </div>
+                      {{#if (gt vulnerability.mitigationDetails.length 10)}}
+                        <div>
+                          <a
+                            href="https://www.virustotal.com/gui/collection/{{
+                              vulnerability.id
+                            }}/products-and-fixes/vendor-fix-details"
+                          >
+                            View all Vendor Fix References in GTI
+                            <svg
+                              class="gti-icon"       
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                fill="#FBBC04"
+                              ></path>
+                              <path
+                                d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                fill="#34A853"
+                              ></path>
+                              <path
+                                d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                fill="#4285F4"
+                              ></path>
+                              <path
+                                d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                fill="#4285F4"
+                              ></path>
+                              <path
+                                d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                fill="#FBBC04"
+                              ></path>
+                              <path
+                                d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                fill="#EA4335"
+                              ></path>
+                            </svg>
+                          </a>
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{! SOURCES - Dropdown }}
+            {{#if vulnerability.sources}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "vulnMetadata" vulnIndex}}>
+                  {{fa-icon "database" fixedWidth=true}}
+                  Sources
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "vulnMetadata" vulnIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "vulnMetadata" vulnIndex))}}
+                <div class="mt-1">
+                  {{#if vulnerability.sources}}
+                    <div>
+                      <div class="p-key confidence-metadata-title">
+                        Sources
+                        {{#if (gt vulnerability.sources.length 1)}}
+                          ({{vulnerability.sources.length}})
+                        {{/if}}
+                      </div>
+                      <div class="scrollable-block bordered">
+                        {{#each vulnerability.sources as |source sourceIndex|}}
+                          {{#if (or source.title source.name source.description source.url source.md5)}}
+                            <div class="scrollable-block-list-item">
+                              {{#if source.url}}
+                                <a href="{{source.url}}">
+                                  {{#if (and source.title source.name)}}
+                                    [{{source.name}}] {{source.title}}
+                                  {{else}}
+                                    {{or source.title source.name source.description source.url source.md5}}  
+                                  {{/if}}
+                                </a>
+                              {{else}}
+                                {{or source.title source.name source.description source.md5}}
+                              {{/if}}
+                            </div>
+                          {{/if}}
+                        {{/each}}
+                      </div>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+          </div>
+        </div>
+      </div>
+    {{/each}}
+  </div>
 {{else if threatActors.length}}
-  {{object-to-table threatActors}}
+    {{#each threatActors as |actor actorIndex|}}
+      <div class="item-container">
+          <h1 class="p-title mt-0">
+            {{actor.name}}
+          </h1>
+          <div class="mb-1">
+            <a class="gti-link" href="https://www.virustotal.com/gui/collection/{{actor.id}}">
+                View Threat Actor in GTI
+                <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                        d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                        fill="#FBBC04"
+                ></path>
+                <path
+                        d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                        fill="#34A853"
+                ></path>
+                <path
+                        d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                        fill="#4285F4"
+                ></path>
+                <path
+                        d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                        fill="#4285F4"
+                ></path>
+                <path
+                        d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                        fill="#FBBC04"
+                ></path>
+                <path
+                        d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                        fill="#EA4335"
+                ></path>
+              </svg>
+            </a>
+          </div>
+          <div>
+            {{#if actor.htmlDescription}}
+              <div class="p-value scrollable-block short mb-1">
+                {{{actor.htmlDescription}}}
+              </div>
+            {{/if}}
+            
+            {{#if actor.first_seen}}
+              <div>
+                <span class="p-key">
+                  First Seen:
+                </span>
+                <span class="p-value">
+                  {{moment-format actor.first_seen "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.last_seen}}
+              <div>
+                <span class="p-key">
+                  Last Seen:
+                </span>
+                <span class="p-value">
+                  {{moment-format actor.last_seen "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.first_activity_date}}
+              <div>
+                <span class="p-key">
+                  First Activity:
+                </span>
+                <span class="p-value">
+                  {{moment-format actor.first_activity_date "YYYY-MM-DD" timeZone=timezone}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if (or actor.last_modification_date actor.last_activity_date)}}
+              <div>
+                <span class="p-key">
+                  Last Activity:
+                </span>
+                <span class="p-value">
+                  {{moment-format
+                          (or actor.last_activity_date actor.last_modification_date)
+                          "YYYY-MM-DD"
+                          timeZone=timezone
+                  }}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.country_of_origin}}
+              <div>
+                <span class="p-key">
+                  Country of Origin:
+                </span>
+                <span class="p-value">
+                  {{actor.country_of_origin}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.sophistication}}
+              <div>
+                <span class="p-key">
+                  Sophistication:
+                </span>
+                <span class="p-value">
+                  {{actor.sophistication}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.private}}
+              <div>
+                <span class="p-key">
+                  Private:
+                </span>
+                <span class="p-value">
+                  {{if actor.private "Yes" "No"}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.origin}}
+              <div>
+                <span class="p-key">
+                  Origin:
+                </span>
+                <span class="p-value">
+                  {{actor.origin}}
+                </span>
+              </div>
+            {{/if}}
+            {{#if actor.vulnerable_products}}
+              <div>
+                <span class="p-key">
+                  Vulnerable Products:
+                </span>
+                <span class="p-value">
+                  {{actor.vulnerable_products}}
+                </span>
+              </div>
+            {{/if}}
+            
+            
+            {{#if actor.detection_names}}
+              <div>
+                <h2 class="p-title">
+                  Detection Names
+                </h2>
+                {{#each actor.detection_names as |name|}}
+                  <span class="pill-tag">
+                    {{name}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.alt_names}}
+              <div>
+                <h2 class="p-title">
+                  Alt Names
+                </h2>
+                {{#each actor.alt_names as |name|}}
+                  <span class="pill-tag">
+                    {{name}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.tags}}
+              <div>
+                <h2 class="p-title">
+                  Tags
+                </h2>
+                {{#each actor.tags as |tag|}}
+                  <span class="pill-tag">
+                    {{tag}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.threat_scape}}
+              <div>
+                <h2 class="p-title">
+                  Threat Scape
+                </h2>
+                {{#each actor.threat_scape as |threat|}}
+                  <span class="pill-tag">
+                    {{threat}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.mitigations}}
+              <div>
+                <h2 class="p-title">
+                  Mitigations
+                </h2>
+                {{#each actor.mitigations as |mitigation|}}
+                  <span class="pill-tag">
+                    {{mitigation}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.workarounds}}
+              <div>
+                <h2 class="p-title">
+                  Workaround
+                </h2>
+                {{#each actor.workarounds as |workaround|}}
+                  <span class="pill-tag">
+                    {{workaround}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.technologies}}
+              <div>
+                <h2 class="p-title">
+                  Technologies
+                </h2>
+                {{#each actor.technologies as |technology|}}
+                  <span class="pill-tag">
+                    {{technology}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.malware_roles}}
+              <div>
+                <h2 class="p-title">
+                  Malware Roles
+                </h2>
+                {{#each actor.malware_roles as |malware|}}
+                  <span class="pill-tag">
+                    {{malware}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if actor.exploitation_vectors}}
+              <div>
+                <h2 class="p-title">
+                  Exploitation Vectors
+                </h2>
+                {{#each actor.exploitation_vectors as |vector|}}
+                  <span class="pill-tag">
+                    {{vector}}
+                  </span>
+                {{/each}}
+              </div>
+            {{/if}}
+            {{#if
+              (or
+                actor.urls_count
+                actor.domains_count
+                actor.ip_addresses_count
+                actor.references_count
+                actor.subscribers_count
+              )
+            }}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "actorCounts" actorIndex}}>
+                  IOC Counters
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "actorCounts" actorIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "actorCounts" actorIndex))}}
+                <div class="mt-1">
+                  <a href="https://www.virustotal.com/gui/collection/{{actor.id}}/iocs">
+                  View IOCs in GTI
+                  <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                      fill="#FBBC04"
+                    ></path>
+                    <path
+                      d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                      fill="#34A853"
+                    ></path>
+                    <path
+                      d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                      fill="#4285F4"
+                    ></path>
+                    <path
+                      d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                      fill="#4285F4"
+                    ></path>
+                    <path
+                      d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                      fill="#FBBC04"
+                    ></path>
+                    <path
+                      d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                      fill="#EA4335"
+                    ></path>
+                  </svg>
+                </a>
+                </div>
+                <div>
+                  {{#if actor.urls_count}}
+                    <div>
+                      <span class="p-key">
+                        URLs Count:
+                      </span>
+                      <span class="p-value">
+                        {{actor.urls_count}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.domains_count}}
+                    <div>
+                      <span class="p-key">
+                        Domains Count:
+                      </span>
+                      <span class="p-value">
+                        {{actor.domains_count}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.ip_addresses_count}}
+                    <div>
+                      <span class="p-key">
+                        IP Addresses Count:
+                      </span>
+                      <span class="p-value">
+                        {{actor.ip_addresses_count}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.references_count}}
+                    <div>
+                      <span class="p-key">
+                        References Count:
+                      </span>
+                      <span class="p-value">
+                        {{actor.references_count}}
+                      </span>
+                    </div>
+                  {{/if}}
+                  {{#if actor.subscribers_count}}
+                    <div>
+                      <span class="p-key">
+                        Subscribers Count:
+                      </span>
+                      <span class="p-value">
+                        {{actor.subscribers_count}}
+                      </span>
+                    </div>
+                  {{/if}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{#if actor.field_sources}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "fieldSources" actorIndex}}>
+                  {{fa-icon "info-circle" fixedWidth=true}}
+                  Field Sources ({{actor.field_sources.length}})
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "fieldSources" actorIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "fieldSources" actorIndex))}}
+                <div>
+                  {{#each actor.field_sources as |source|}}
+                    <div class="mb-1">
+                      <div>
+                        <span class="p-key">
+                          Field:
+                        </span>
+                        <span class="p-value">
+                          {{source.field}}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="p-key">
+                          Source Name:
+                        </span>
+                        <span class="p-value">
+                          {{source.source.source_name}}
+                        </span>
+                      </div>
+                      <div>
+                        <span class="p-key">
+                          Type:
+                        </span>
+                        <span class="p-value">
+                          {{source.source.field_type}}
+                        </span>
+                      </div>
+                      {{#if source.source.source_url}}
+                        <div>
+                          <span class="p-key">
+                            URL:
+                          </span>
+                          <a href="{{source.source.source_url}}" target="_blank">
+                            [link]
+                          </a>
+                        </div>
+                      {{/if}}
+                    </div>
+                  {{/each}}
+                </div>
+              {{/if}}
+            {{/if}}
+
+            {{#if actor.confidenceGroupedData}}
+              <div class="toggle-header">
+                <span class="p-action" {{action "toggleExpandableAssociations" "actorMetadata" actorIndex}}>
+                  Telemetry and Metadata
+                  {{fa-icon
+                    (if (get expandedAssociations (concat "actorMetadata" actorIndex)) "caret-up" "caret-down")
+                    fixedWidth=true
+                  }}
+                </span>
+              </div>
+              {{#if (get expandedAssociations (concat "actorMetadata" actorIndex))}}
+                <div class="values">
+                  {{#each-in actor.confidenceGroupedData as |confidence metadata|}}
+                    <div style="margin-bottom: 8px;">
+                      <h3 class="p-title">
+                        {{titleize (humanize (dasherize confidence))}}
+                      </h3>
+                      <div class="confidence-metadata-indent">
+                        {{#each-in metadata as |key values|}}
+                          {{#if values.length}}
+                            <div class="metadata-field">
+                              <span class="p-key">
+                                {{titleize (humanize (dasherize key))}}:
+                              </span>
+                              <span class="p-value">
+                                {{join " | " values}}
+                              </span>
+                            </div>
+                          {{/if}}
+                        {{/each-in}}
+                      </div>
+                    </div>
+                  {{/each-in}}
+                </div>
+              {{/if}}
+            {{/if}}
+          </div>
+        </div>
+    {{/each}}
 {{else}}
   <div class="d-flex align-items-center justify-content-end copy-btn-container">
     <button class="btn copy-btn p-action" {{action "copyData"}}>
@@ -59,21 +1597,8 @@
                   cx="0"
                   cy="0"
                 ></circle>
-                {{#if
-                  (or
-                    details.positives
-                    details.total
-                    (eq details.positives 0)
-                    (eq details.total 0)
-                  )
-                }}
-                  <text
-                    text-anchor="middle"
-                    x="0"
-                    y="0"
-                    fill="{{elementColor}}"
-                    font-size="13"
-                  >
+                {{#if (or details.positives details.total (eq details.positives 0) (eq details.total 0))}}
+                  <text text-anchor="middle" x="0" y="0" fill="{{elementColor}}" font-size="13">
                     {{details.positives}}
                   </text>
                   <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
@@ -81,16 +1606,10 @@
                     {{details.total}}
                   </text>
                 {{else}}
-                  <text
-                    text-anchor="middle"
-                    x="0"
-                    y="0"
-                    fill="{{elementColor}}"
-                    font-size="13"
-                  >
+                  <text text-anchor="middle" x="0" y="0" fill="{{elementColor}}" font-size="10" font-weight="500">
                     No
                   </text>
-                  <text text-anchor="middle" x="-1" y="10" fill="gray" font-size="7">
+                  <text text-anchor="middle" x="0" y="10" fill="gray" font-size="7">
                     Scan
                   </text>
                 {{/if}}
@@ -102,20 +1621,11 @@
       <div class="right-column">
         <div class="score-container">
           <div class="score-marker" style="left: calc({{communityScoreWidth}}% - 16px)">
-            {{fa-icon
-              size="2x"
-              icon=communityScoreIcon
-              fixedWidth=true
-              class=communityScoreColorClass
-            }}
+            {{fa-icon size="2x" icon=communityScoreIcon fixedWidth=true class=communityScoreColorClass}}
           </div>
           <div class="score-line"></div>
           <div class="p-footnote score-footer">
-            Community Score ({{if
-              (or details.reputation (eq details.reputation 0))
-              details.reputation
-              "Unknown"
-            }})
+            Community Score ({{if (or details.reputation (eq details.reputation 0)) details.reputation "Unknown"}})
           </div>
         </div>
         {{#if details.tags.length}}
@@ -139,10 +1649,7 @@
       {{#if (or details.positiveScans details.scan_date details.reputation)}}
         <li class="nav-item">
           <a
-            class="nav-link {{
-              if (or (eq activeTab "detection") (not activeTab)) "active"
-            }}"
-            href="#"
+            class="nav-link {{if (or (eq activeTab "detection") (not activeTab)) "active"}}"
             {{action "changeTab" "detection"}}
           >
             Detection
@@ -153,7 +1660,6 @@
         <li class="nav-item">
           <a
             class="nav-link {{if (or (eq activeTab "details") (not activeTab)) "active"}}"
-            href="#"
             {{action "changeTab" "details"}}
           >
             Details
@@ -162,33 +1668,21 @@
       {{/if}}
       {{#if (or block.entity.isIP block.entity.isDomain)}}
         <li class="nav-item">
-          <a
-            class="nav-link {{if (eq activeTab "relations") "active"}}"
-            href="#"
-            {{action "changeTab" "relations"}}
-          >
+          <a class="nav-link {{if (eq activeTab "relations") "active"}}" {{action "changeTab" "relations"}}>
             Relations
           </a>
         </li>
       {{/if}}
       {{#if (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)}}
         <li class="nav-item">
-          <a
-            class="nav-link {{if (eq activeTab "behaviorSummary") "active"}}"
-            href="#"
-            {{action "changeTab" "behaviorSummary"}}
-          >
+          <a class="nav-link {{if (eq activeTab "behaviorSummary") "active"}}" {{action "changeTab" "behaviorSummary"}}>
             Behavior Summary
           </a>
         </li>
       {{/if}}
       {{#if (or threats.length reports.length)}}
         <li class="nav-item">
-          <a
-            class="nav-link {{if (eq activeTab "associations") "active"}}"
-            href="#"
-            {{action "changeTab" "associations"}}
-          >
+          <a class="nav-link {{if (eq activeTab "associations") "active"}}" {{action "changeTab" "associations"}}>
             Associations
           </a>
         </li>
@@ -232,7 +1726,7 @@
           {{! detections }}
           {{#if (and details.positives details.total)}}
             <div class="toggle-header">
-              <span class="p-action" {{action "toggleShowResults" "showScanResults"}}>
+              <span class="p-action" style="margin-top: 5px;" {{action "toggleShowResults" "showScanResults"}}>
                 {{fa-icon "laptop" fixedWidth=true}}
                 {{#unless block.userOptions.showNoDetections}}
                   Positive
@@ -245,7 +1739,7 @@
             </div>
           {{/if}}
           {{#if showScanResults}}
-            <div class="scan-results">
+            <div class="scan-results mt-1">
               {{#unless details.positiveScans}}
                 <span>
                   No security vendor flagged this indicator as malicious
@@ -262,8 +1756,7 @@
                       </td>
                       <td>
                         <span class="p-value" style="color: #FF3A59">
-                          {{fa-icon "exclamation" class="p-red table-icon" fixedWidth=true
-                          }}
+                          {{fa-icon "exclamation" class="p-red table-icon" fixedWidth=true}}
                           {{positiveScan.result}}
                         </span>
                       </td>
@@ -280,31 +1773,15 @@
                         <td>
                           <span class="p-value">
                             {{#if (eq negativeScan.result "Unrated")}}
-                              {{fa-icon
-                                "question"
-                                class="p-grey table-icon"
-                                fixedWidth=true
-                              }}
+                              {{fa-icon "question" class="p-grey table-icon" fixedWidth=true}}
                             {{else}}
                               {{#if (eq negativeScan.result "type-unsupported")}}
-                                {{fa-icon
-                                  "eye-slash"
-                                  class="p-grey table-icon"
-                                  fixedWidth=true
-                                }}
+                                {{fa-icon "eye-slash" class="p-grey table-icon" fixedWidth=true}}
                               {{else}}
                                 {{#if (eq negativeScan.result "Suspicious")}}
-                                  {{fa-icon
-                                    "info"
-                                    class="p-orange table-icon"
-                                    fixedWidth=true
-                                  }}
+                                  {{fa-icon "info" class="p-orange table-icon" fixedWidth=true}}
                                 {{else}}
-                                  {{fa-icon
-                                    "check"
-                                    class="p-green table-icon"
-                                    fixedWidth=true
-                                  }}
+                                  {{fa-icon "check" class="p-green table-icon" fixedWidth=true}}
                                 {{/if}}
                               {{/if}}
                             {{/if}}
@@ -396,11 +1873,7 @@
                     {{detailsField.key}}:
                   </span>
                   <span class="p-value">
-                    {{moment-format
-                      (unix detailsField.value)
-                      "YYYY-MM-DD HH:mm:ss z"
-                      timeZone=timezone
-                    }}
+                    {{moment-format (unix detailsField.value) "YYYY-MM-DD HH:mm:ss z" timeZone=timezone}}
                   </span>
                 </div>
               {{else}}
@@ -420,19 +1893,15 @@
 
           {{#if (or block.entity.isMD5 block.entity.isSHA1 block.entity.isSHA256)}}
             <div class="toggle-header">
-              <span
-                class="p-action"
-                {{action "toggleShowResults" "block._state.showNames"}}
-              >
+              <span class="p-action" {{action "toggleShowResults" "block._state.showNames"}}>
                 {{fa-icon icon="file" fixedWidth=true}}
                 Names ({{details.names.length}})
-                {{fa-icon (if showFilesReferring "caret-up" "caret-down") fixedWidth=true
-                }}
+                {{fa-icon (if showFilesReferring "caret-up" "caret-down") fixedWidth=true}}
               </span>
             </div>
             {{#if block._state.showNames}}
               {{#if (gt details.names.length 0)}}
-                <div class="scrollable-block">
+                <div class="scrollable-block mt-1">
                   <table>
                     <tbody>
                       {{#each details.names as |name index|}}
@@ -494,7 +1963,7 @@
 
           {{#if showRegistryKeys}}
             {{#if details.behaviorSummary.registry_keys_opened}}
-              <div class="scrollable-block">
+              <div class="scrollable-block mt-1">
                 <table>
                   <tbody>
                     {{#each details.behaviorSummary.registry_keys_opened as |key|}}
@@ -521,10 +1990,7 @@
                 {{fa-icon icon="spinner-third" spin=true fixedWidth=true}}
                 Loading opened files ...
               {{else}}
-                Opened Files ({{if
-                  details.behaviorSummary.files_opened
-                  details.behaviorSummary.files_opened.length
-                  "0"
+                Opened Files ({{if details.behaviorSummary.files_opened details.behaviorSummary.files_opened.length "0"
                 }})
               {{/if}}
               {{fa-icon (if showFilesOpened "caret-up" "caret-down") fixedWidth=true}}
@@ -533,7 +1999,7 @@
 
           {{#if showFilesOpened}}
             {{#if details.behaviorSummary.files_opened}}
-              <div class="scrollable-block">
+              <div class="scrollable-block mt-1">
                 <table>
                   <tbody>
                     {{#each details.behaviorSummary.files_opened as |file|}}
@@ -603,7 +2069,7 @@
                 No files referring available
               </span>
             {{else}}
-              <div class="scrollable-block">
+              <div class="scrollable-block mt-1">
                 <table>
                   <tbody>
                     {{#each details.referenceFiles as |referrenceFile|}}
@@ -618,10 +2084,7 @@
                                 {{#if referrenceFile.link}}
                                   <a href={{referrenceFile.link}}>
                                     {{referrenceFile.name}}
-                                    {{fa-icon
-                                      "external-link-square"
-                                      class="external-link-icon"
-                                    }}
+                                    {{fa-icon "external-link-square" class="external-link-icon"}}
                                   </a>
                                 {{else}}
                                   {{referrenceFile.name}}
@@ -658,10 +2121,7 @@
                                 {{#if (eq referrenceFile.scannedDate "-")}}
                                   -
                                 {{else}}
-                                  {{moment-format
-                                    referrenceFile.scannedDate
-                                    "YYYY-MM-DD HH:mm:ss UTC"
-                                  }}
+                                  {{moment-format referrenceFile.scannedDate "YYYY-MM-DD HH:mm:ss UTC"}}
                                 {{/if}}
                               </span>
                             </div>
@@ -689,7 +2149,7 @@
           </div>
 
           {{#if showHistoricalWhois}}
-            <div>
+            <div class="mt-1">
               {{#if (gt details.historicalWhoIs.length 0)}}
                 {{#if block.entity.isIP}}
                   <div class="scan-results">
@@ -714,10 +2174,7 @@
                         <tbody>
                           <tr {{action "expandWhoIsRow" index}}>
                             <td>
-                              {{fa-icon
-                                (if (get expandedWhoisMap index) "caret-up" "caret-down")
-                                fixedWidth=true
-                              }}
+                              {{fa-icon (if (get expandedWhoisMap index) "caret-up" "caret-down") fixedWidth=true}}
                             </td>
                             <td>
                               <span class="p-key">
@@ -755,10 +2212,7 @@
                                 </span>
                                 <span class="p-value">
                                   {{#if ipKey.isDate}}
-                                    {{moment-format
-                                      (get whoisRow ipKey.key)
-                                      "YYYY-MM-DD HH:mm:ss UTC"
-                                      timeZone=timezone
+                                    {{moment-format (get whoisRow ipKey.key) "YYYY-MM-DD HH:mm:ss UTC" timeZone=timezone
                                     }}
                                   {{else}}
                                     {{get whoisRow ipKey.key}}
@@ -794,10 +2248,7 @@
                         <tbody>
                           <tr {{action "expandWhoIsRow" index}}>
                             <td>
-                              {{fa-icon
-                                (if (get expandedWhoisMap index) "caret-up" "caret-down")
-                                fixedWidth=true
-                              }}
+                              {{fa-icon (if (get expandedWhoisMap index) "caret-up" "caret-down") fixedWidth=true}}
                             </td>
                             <td>
                               <span class="p-key">
@@ -835,10 +2286,7 @@
                                 </span>
                                 <span class="p-value">
                                   {{#if domainKey.isDate}}
-                                    {{moment-format
-                                      (get whoisRow domainKey.key)
-                                      "YYYY-MM-DD HH:mm:ss UTC"
-                                    }}
+                                    {{moment-format (get whoisRow domainKey.key) "YYYY-MM-DD HH:mm:ss UTC"}}
                                   {{else}}
                                     {{get whoisRow domainKey.key}}
                                   {{/if}}
@@ -877,7 +2325,7 @@
               {{/if}}
               {{#if reports.length}}
                 <button
-                  class="btn gti-button {{if (eq associationTab "reporting") "active"}}"
+                  class="btn gti-button {{if (or (eq associationTab "reporting")(not threats.length)) "active"}}"
                   {{action "switchAssociationsTab" "reporting"}}
                 >
                   Reporting - {{reports.length}} of {{reportsCount}}
@@ -888,23 +2336,17 @@
               {{#if associationLink}}
                 <div class="association-link">
                   <a
-                    class="full"
-                    href="{{associationLink}}/{{
-                      if (eq associationTab "threats") "threats"
-                    }}{{if (eq associationTab "reporting") "reporting"}}"
+                    class="full p-action"
+                    href="{{associationLink}}/{{if (eq associationTab "threats") "threats"}}{{
+                      if (eq associationTab "reporting") "reporting"
+                    }}"
                   >
                     {{#if (eq associationTab "threats")}}
                       View in Threats in GTI
                     {{else}}
                       View in Reports in GTI
                     {{/if}}
-                    <svg
-                      width="19"
-                      height="19"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
+                    <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path
                         d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
                         fill="#FBBC04"
@@ -933,15 +2375,41 @@
                   </a>
                   <a
                     class="narrow"
-                    href="{{associationLink}}/{{
-                      if (eq associationTab "threats") "threats"
-                    }}{{if (eq associationTab "reporting") "reporting"}}"
+                    href="{{associationLink}}/{{if (eq associationTab "threats") "threats"}}{{
+                      if (eq associationTab "reporting") "reporting"
+                    }}"
                   >
                     {{#if (eq associationTab "threats")}}
                       View Threats
                     {{else}}
                       View Reports
                     {{/if}}
+                    <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                              d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                              fill="#FBBC04"
+                      ></path>
+                      <path
+                              d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                              fill="#34A853"
+                      ></path>
+                      <path
+                              d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                              fill="#4285F4"
+                      ></path>
+                      <path
+                              d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                              fill="#4285F4"
+                      ></path>
+                      <path
+                              d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                              fill="#FBBC04"
+                      ></path>
+                      <path
+                              d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                              fill="#EA4335"
+                      ></path>
+                    </svg>
                   </a>
                 </div>
               {{/if}}
@@ -955,166 +2423,109 @@
                     <div class="association-summary">
                       <div class="title-section">
                         <div class="title-content">
-                          <div class="threat-type-icon">
-                            {{fa-icon
-                              icon=(or
-                                (get iconNamesByAssociationType threat.collection_type)
-                                "bug"
-                              )
-                              fixedWidth=true
-                              class="association-icon"
-                            }}
-                            {{bs-tooltip
-                              title=(titleize
-                                (humanize (dasherize threat.collection_type))
-                              )
-                            }}
-                          </div>
-                          <div class="name-info">
-                            <div class="name-updated">
-                              <div class="name">
+                          <div class="d-flex align-items-start justify-content-start">
+                            <div class="threat-type-icon">
+                              {{fa-icon
+                                icon=(or (get iconNamesByAssociationType threat.collection_type) "bug")
+                                fixedWidth=true
+                                class="association-icon"
+                              }}
+                              {{bs-tooltip title=(titleize (humanize (dasherize threat.collection_type)))}}
+                            </div>
+                            <div class="w-100">
+                              <h1 class="p-title my-0">
                                 {{threat.name}}
                                 {{bs-tooltip title=(concat "Threat ID: " threat.id)}}
-                              </div>
-                            </div>
-                            <div class="modified-date">
+                              </h1>
                               {{#if threat.last_modification_date}}
-                                <div class="updated">
-                                  Updated {{moment-from-now
-                                    threat.last_modification_date
-                                    hideAffix=true
-                                  }} ago
+                                <div class="d-flex align-items-center justify-content-between mt-_5">
+                                  <div>
+                                    <div class="p-footnote">
+                                      Updated {{moment-from-now threat.last_modification_date hideAffix=true}} ago
+                                    </div>
+                                    {{bs-tooltip
+                                            title=(concat
+                                                    "Last Activity: "
+                                                    (moment-format threat.last_modification_date "YYYY-MM-DD" timeZone=timezone)
+                                            )
+                                    }}
+                                  </div>
+                                  <div class="link mr-2 pr-1">
+                                    <a class="narrow" href="https://www.virustotal.com/gui/collection/{{threat.id}}">
+                                      View in GTI
+                                      <svg
+                                              class="gti-icon"
+                                              width="14"
+                                              height="14"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                              xmlns="http://www.w3.org/2000/svg"
+                                      >
+                                        <path
+                                                d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                                fill="#FBBC04"
+                                        ></path>
+                                        <path
+                                                d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                                fill="#34A853"
+                                        ></path>
+                                        <path
+                                                d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                                fill="#4285F4"
+                                        ></path>
+                                        <path
+                                                d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                                fill="#4285F4"
+                                        ></path>
+                                        <path
+                                                d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                                fill="#FBBC04"
+                                        ></path>
+                                        <path
+                                                d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                                fill="#EA4335"
+                                        ></path>
+                                      </svg>
+                                    </a>
+                                  </div>
                                 </div>
-                              {{/if}}
-                              {{bs-tooltip
-                                title=(concat
-                                  "Last Activity: "
-                                  (moment-format
-                                    threat.last_modification_date
-                                    "YYYY-MM-DD"
-                                    timeZone=timezone
-                                  )
-                                )
-                              }}
+                              {{/if}}                              
                             </div>
-                            {{#if threat.alt_names}}
-                              <div
-                                class="alt-names {{
-                                  if
-                                  (get
-                                    expandedAssociations (concat "threats" threatIndex)
-                                  )
-                                  "expanded"
-                                }}"
-                              >
-                                {{join ", " threat.alt_names}}
+                          </div>
+                          <div class="mt-1">
+                            {{#if (gt threat.alt_names.length 0)}}
+                              <div>
+                                {{#each threat.alt_names as | threat |}}
+                                  <span class="pill-tag">{{threat}}</span>
+                                {{/each}}
                               </div>
                             {{/if}}
-                            <div class="link">
-                              <a
-                                class="full"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  threat.id
-                                }}"
-                              >
-                                View in Google Threat Intelligence
-                                <svg
-                                  width="19"
-                                  height="19"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                    fill="#34A853"
-                                  ></path>
-                                  <path
-                                    d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                    fill="#EA4335"
-                                  ></path>
-                                </svg>
-                              </a>
-                              <a
-                                class="narrow"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  threat.id
-                                }}"
-                              >
-                                View in GTI
-                                <svg
-                                  width="19"
-                                  height="19"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                    fill="#34A853"
-                                  ></path>
-                                  <path
-                                    d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                    fill="#EA4335"
-                                  ></path>
-                                </svg>
-                              </a>
-                            </div>
                           </div>
                         </div>
                       </div>
-
+                      
+                      {{!-- Threat Expanding Description --}}
                       {{#if threat.htmlDescription}}
                         <div
-                          class="description {{
-                            if
-                            (get expandedAssociations (concat "threats" threatIndex))
-                            "expanded"
+                          class="description mt-1 {{
+                            if (get expandedAssociations (concat "threats" threatIndex)) "expanded"
                           }}"
                         >
                           {{{threat.htmlDescription}}}
+                          {{#unless (get expandedAssociations (concat "threats" threatIndex))}}
+                            <div class="transparent-gradient"></div>
+                          {{/unless}}
                         </div>
                       {{/if}}
-
-                      <div class="bottom">
+                      
+                      {{!-- Threat Stats --}}
+                      <div class="bottom mt-1">
                         <div class="related-info">
                           {{#if threat.malware_roles.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Role
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{threat.malware_roles.length}}
                               </div>
@@ -1125,21 +2536,20 @@
                           {{/if}}
                           {{#if threat.targetedIndustryNames.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Targeted Industries
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{threat.targetedIndustryNames.length}}
                               </div>
-                              {{bs-tooltip title=(join " | " threat.targetedIndustryNames)
-                              }}
+                              {{bs-tooltip title=(join " | " threat.targetedIndustryNames)}}
                             </div>
                           {{/if}}
                           {{#if threat.relationships.threat_actors.data.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Associated Actors
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{threat.relationships.threat_actors.data.length}}
                               </div>
@@ -1147,9 +2557,9 @@
                           {{/if}}
                           {{#if threat.targetedRegionNames.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Targeted Regions
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{threat.targetedRegionNames.length}}
                               </div>
@@ -1158,9 +2568,9 @@
                           {{/if}}
                           {{#if threat.motivationNames.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Motivations
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{threat.motivationNames.length}}
                               </div>
@@ -1169,29 +2579,29 @@
                           {{/if}}
                           {{#if threat.relationships.malware_families.data.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Associated Malware
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{threat.relationships.malware_families.data.length}}
                               </div>
                             </div>
                           {{/if}}
-                          {{#if threat.counters.iocs.length}}
+                          {{#if (gt threat.counters.iocs 0)}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 IoCs
-                              </div>
+                              </h2>
                               <div class="count">
-                                {{threat.counters.iocs.length}}
+                                {{threat.counters.iocs}}
                               </div>
                             </div>
                           {{/if}}
                         </div>
                       </div>
-
+                      
                       {{#if (get expandedAssociations (concat "threats" threatIndex))}}
-                        <div class="details">
+                        <div class="details mt-1">
                           {{#if threat.status}}
                             <div>
                               <span class="p-key">
@@ -1248,11 +2658,7 @@
                                 Last Modification Date:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  threat.last_modification_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format threat.last_modification_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -1262,11 +2668,7 @@
                                 Creation Date:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  threat.creation_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format threat.creation_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -1280,421 +2682,321 @@
                               </div>
                             </div>
                           {{/if}}
-                          {{#if threat.counters}}
-                            <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "threatCounter"
-                                  threatIndex
-                                }}
-                              >
-                                IOC Counters
-                                {{fa-icon
-                                  size="md"
-                                  icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "threatCounter" threatIndex)
+                          <div>
+                            {{#if threat.counters}}
+                              <div class="threat-data-group">
+                                <span class="p-action" {{action "toggleExpandableAssociations" "threatCounter" threatIndex}}>
+                                  IOC Counters
+                                  {{fa-icon
+                                    icon=(if
+                                      (get expandedAssociations (concat "threatCounter" threatIndex))
+                                      "chevron-up"
+                                      "chevron-down"
                                     )
-                                    "chevron-up"
-                                    "chevron-down"
-                                  )
-                                  fixedWidth=true
-                                  class="open-counters"
-                                }}
-                              </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "threatCounter" threatIndex)
-                                )
-                              }}
-                                <div class="values">
-                                  <div class="link">
-                                    <a
-                                      href="https://www.virustotal.com/gui/collection/{{
-                                        threat.id
-                                      }}/iocs"
-                                    >
-                                      View IOCs in GTI
-                                      <svg
-                                        width="19"
-                                        height="19"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                          fill="#FBBC04"
-                                        ></path>
-                                        <path
-                                          d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                          fill="#34A853"
-                                        ></path>
-                                        <path
-                                          d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                          fill="#4285F4"
-                                        ></path>
-                                        <path
-                                          d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                          fill="#4285F4"
-                                        ></path>
-                                        <path
-                                          d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                          fill="#FBBC04"
-                                        ></path>
-                                        <path
-                                          d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                          fill="#EA4335"
-                                        ></path>
-                                      </svg>
-                                    </a>
-                                  </div>
-                                  {{#each-in threat.counters as |key value|}}
+                                    fixedWidth=true
+                                  }}
+                                </span>
+                                {{#if (get expandedAssociations (concat "threatCounter" threatIndex))}}
+                                  <div class="mt-1">
                                     <div>
-                                      <span class="p-key">
-                                        {{titleize (humanize (dasherize key))}}:
-                                      </span>
-                                      <span class="p-value">
-                                        {{value}}
-                                      </span>
+                                      <a class="p-link" href="https://www.virustotal.com/gui/collection/{{threat.id}}/iocs">
+                                        View IOCs in GTI
+                                        <svg
+                                          class="gti-icon"      
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                          <path
+                                            d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                            fill="#FBBC04"
+                                          ></path>
+                                          <path
+                                            d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                            fill="#34A853"
+                                          ></path>
+                                          <path
+                                            d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                            fill="#4285F4"
+                                          ></path>
+                                          <path
+                                            d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                            fill="#4285F4"
+                                          ></path>
+                                          <path
+                                            d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                            fill="#FBBC04"
+                                          ></path>
+                                          <path
+                                            d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                            fill="#EA4335"
+                                          ></path>
+                                        </svg>
+                                      </a>
                                     </div>
-                                  {{/each-in}}
-                                </div>
-                              {{/if}}
-                            </div>
-                          {{/if}}
-                          {{#if threat.categorizedIocs}}
-                            <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "threatIocs"
-                                  threatIndex
-                                }}
-                              >
-                                Aggregations
-                                {{fa-icon
-                                  size="md"
-                                  icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "threatIocs" threatIndex)
-                                    )
-                                    "chevron-up"
-                                    "chevron-down"
-                                  )
-                                  fixedWidth=true
-                                  class="open-counters"
-                                }}
-                              </span>
-                              {{#if
-                                (get
-                                  expandedAssociations (concat "threatIocs" threatIndex)
-                                )
-                              }}
-                                <div class="values">
-                                  <div class="iocs">
-                                    {{#each-in
-                                      threat.categorizedIocs as |iocCategory iocs|
-                                    }}
+                                    {{#each-in threat.counters as |key value|}}
                                       <div>
                                         <span class="p-key">
-                                          {{iocCategory}}:
+                                          {{titleize (humanize (dasherize key))}}:
                                         </span>
                                         <span class="p-value">
-                                          {{#each iocs as |ioc iocIndex|}}
-                                            {{ioc.value}}{{#if
-                                              (not (eq (sub iocs.length 1) iocIndex))
-                                            }}
-                                              ,
-                                            {{/if}}
-                                          {{/each}}
+                                          {{value}}
                                         </span>
                                       </div>
                                     {{/each-in}}
                                   </div>
-                                </div>
-                              {{/if}}
-                            </div>
-                          {{/if}}
-                          {{#if threat.confidenceGroupedData}}
-                            <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "threatMetadata"
-                                  threatIndex
-                                }}
-                              >
-                                Telemetry and Metadata
-                                {{fa-icon
-                                  size="md"
-                                  icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "threatMetadata" threatIndex)
+                                {{/if}}
+                              </div>
+                            {{/if}}
+                            {{#if threat.categorizedIocs}}
+                              <div class="threat-data-group">
+                                <span class="p-action" {{action "toggleExpandableAssociations" "threatIocs" threatIndex}}>
+                                  Aggregations
+                                  {{fa-icon
+                                    icon=(if
+                                      (get expandedAssociations (concat "threatIocs" threatIndex))
+                                      "chevron-up"
+                                      "chevron-down"
                                     )
-                                    "chevron-up"
-                                    "chevron-down"
-                                  )
-                                  fixedWidth=true
-                                  class="open-counters"
-                                }}
-                              </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "threatMetadata" threatIndex)
-                                )
-                              }}
-                                <div class="values">
-                                  <div class="link">
-                                    <a
-                                      href="https://www.virustotal.com/gui/collection/{{
-                                        threat.id
-                                      }}/iocs/telemetry"
-                                    >
-                                      View Telemetry in GTI
-                                      <svg
-                                        width="19"
-                                        height="19"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                          fill="#FBBC04"
-                                        ></path>
-                                        <path
-                                          d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                          fill="#34A853"
-                                        ></path>
-                                        <path
-                                          d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                          fill="#4285F4"
-                                        ></path>
-                                        <path
-                                          d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                          fill="#4285F4"
-                                        ></path>
-                                        <path
-                                          d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                          fill="#FBBC04"
-                                        ></path>
-                                        <path
-                                          d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                          fill="#EA4335"
-                                        ></path>
-                                      </svg>
-                                    </a>
-                                  </div>
-                                  {{#each-in
-                                    threat.confidenceGroupedData as |confidence metadata|
+                                    fixedWidth=true
                                   }}
-                                    <span class="title">
-                                      {{titleize (humanize (dasherize confidence))}}
-                                    </span>
-                                    {{#each-in metadata as |key values|}}
-                                      {{#if values.length}}
-                                        <div class="metadata-field">
-                                          <span class="p-key">
-                                            {{titleize (humanize (dasherize key))}}:
-                                          </span>
-                                          <span class="p-value">
-                                            {{join ", " values}}
-                                          </span>
+                                </span>
+                                {{#if (get expandedAssociations (concat "threatIocs" threatIndex))}}
+                                  <div class="values mt-1">
+                                    <div class="scrollable-block bordered position-relative pt-0">
+                                      {{#each-in threat.categorizedIocs as |iocCategory iocs|}}
+                                        <div>
+                                          <h2 class="p-title sticky-title">
+                                            {{iocCategory}}
+                                          </h2>
+                                          <div class="p-value">
+                                            {{#if (gte iocs.averageLength 32)}}
+                                              <div class="my-1">
+                                                {{#each iocs.data as |ioc iocIndex|}}
+                                                  <div class="scrollable-block-list-item">
+                                                    {{ioc.value}}
+                                                  </div>
+                                                {{/each}}
+                                              </div>
+                                            {{else}}
+                                              <div class="pill-tag-container">
+                                                {{#each iocs.data as |ioc iocIndex|}}
+                                                  <span class="pill-tag">{{ioc.value}}</span>
+                                                {{/each}}  
+                                              </div>
+                                            {{/if}}
+                                          </div>
                                         </div>
-                                      {{/if}}
+                                      {{/each-in}}
+                                    </div>
+                                  </div>
+                                {{/if}}
+                              </div>
+                            {{/if}}
+                            {{#if threat.confidenceGroupedData}}
+                              <div class="threat-data-group">
+                                <span
+                                  class="p-action"
+                                  {{action "toggleExpandableAssociations" "threatMetadata" threatIndex}}
+                                >
+                                  Telemetry and Metadata
+                                  {{fa-icon
+                                    icon=(if
+                                      (get expandedAssociations (concat "threatMetadata" threatIndex))
+                                      "chevron-up"
+                                      "chevron-down"
+                                    )
+                                    fixedWidth=true
+                                    class="open-counters"
+                                  }}
+                                </span>
+                                {{#if (get expandedAssociations (concat "threatMetadata" threatIndex))}}
+                                  <div class="values mt-1">
+                                    <div class="link">
+                                      <a href="https://www.virustotal.com/gui/collection/{{threat.id}}/iocs/telemetry">
+                                        View Telemetry in GTI
+                                        <svg
+                                          class="gti-icon"
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          xmlns="http://www.w3.org/2000/svg"
+                                        >
+                                          <path
+                                            d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                            fill="#FBBC04"
+                                          ></path>
+                                          <path
+                                            d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                            fill="#34A853"
+                                          ></path>
+                                          <path
+                                            d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                            fill="#4285F4"
+                                          ></path>
+                                          <path
+                                            d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                            fill="#4285F4"
+                                          ></path>
+                                          <path
+                                            d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                            fill="#FBBC04"
+                                          ></path>
+                                          <path
+                                            d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                            fill="#EA4335"
+                                          ></path>
+                                        </svg>
+                                      </a>
+                                    </div>
+                                    {{#each-in threat.confidenceGroupedData as |confidence metadata|}}
+                                    {{#if metadata.length}}
+                                      <span class="title">
+                                        {{titleize (humanize (dasherize confidence))}}
+                                      </span>
+                                    {{/if}}
+                                      {{#each-in metadata as |key values|}}
+                                        {{#if values.length}}
+                                          <div class="metadata-field">
+                                            <span class="p-key">
+                                              {{titleize (humanize (dasherize key))}}:
+                                            </span>
+                                            <span class="p-value">
+                                              {{join ", " values}}
+                                            </span>
+                                          </div>
+                                        {{/if}}
+                                      {{/each-in}}
                                     {{/each-in}}
-                                  {{/each-in}}
-                                </div>
-                              {{/if}}
-                            </div>
-                          {{/if}}
+                                  </div>
+                                {{/if}}
+                              </div>
+                            {{/if}}
+                          </div>
                         </div>
                       {{/if}}
-
-                      <div
-                        class="open-details-icon"
-                        {{action "toggleExpandableAssociations" "threats" threatIndex}}
-                      >
+                      <div class="open-details-icon" {{action "toggleExpandableAssociations" "threats" threatIndex}}>
                         {{fa-icon
-                          size="lg"
                           icon=(if
-                            (get expandedAssociations (concat "threats" threatIndex))
-                            "chevron-up"
-                            "chevron-down"
+                            (get expandedAssociations (concat "threats" threatIndex)) "chevron-up" "chevron-down"
                           )
                           fixedWidth=true
                           class="open-details"
                         }}
+                        {{bs-tooltip title=(concat (if (get expandedAssociations (concat "threats" threatIndex)) "Close " "Open ") "Details View")}}
                       </div>
                     </div>
                   </div>
                 {{/each}}
               </div>
             {{/if}}
-            {{#if (eq associationTab "reporting")}}
+            {{#if (or (eq associationTab "reporting")(not threats.length))}}
               <div class="associations-tab reports">
                 {{#each reports as |report reportIndex|}}
                   <div class="association report">
                     <div class="association-summary">
                       <div class="title-section">
                         <div class="title-content">
-                          <div class="threat-type-icon">
-                            {{fa-icon
-                              icon="file-alt"
-                              fixedWidth=true
-                              class="association-icon"
-                            }}
-                            {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
-                          </div>
-                          <div class="name-info">
-                            <div class="name-updated">
-                              <div class="name">
+                          <div class="d-flex align-items-start justify-content-start">
+                            <div class="threat-type-icon">
+                              {{fa-icon icon="file-alt" fixedWidth=true class="association-icon"}}
+                              {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
+                            </div>
+                            <div class="w-100">
+                              <h1 class="p-title my-0">
                                 {{report.name}}
-                                {{bs-tooltip title=(concat "Report ID: " report.report_id)
-                                }}
+                                {{bs-tooltip title=(concat "Report ID: " report.report_id)}}
+                              </h1>
+                              <div class="d-flex align-items-center justify-content-between mt-_5">
+                                <div>
+                                  {{#if report.last_modification_date}}
+                                    <div class="p-footnote">
+                                      Updated {{moment-from-now report.last_modification_date hideAffix=true}} ago
+                                    </div>
+                                  {{else if report.creation_date}}
+                                    <div class="p-footnote">
+                                      Published {{moment-from-now report.creation_date hideAffix=true}} ago
+                                    </div>
+                                  {{/if}}
+                                  {{bs-tooltip
+                                          title=(concat
+                                                  "Last Activity: "
+                                                  (moment-format report.last_modification_date "YYYY-MM-DD" timeZone=timezone)
+                                          )
+                                  }}
+                                </div>
+                                <div class="link pr-1 mr-2">
+                                  <a class="p-link" href="https://www.virustotal.com/gui/collection/{{report.id}}">
+                                    View in GTI
+                                    <svg
+                                            class="gti-icon"
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                    >
+                                      <path
+                                              d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                              fill="#FBBC04"
+                                      ></path>
+                                      <path
+                                              d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                              fill="#34A853"
+                                      ></path>
+                                      <path
+                                              d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                              fill="#4285F4"
+                                      ></path>
+                                      <path
+                                              d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                              fill="#4285F4"
+                                      ></path>
+                                      <path
+                                              d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                              fill="#FBBC04"
+                                      ></path>
+                                      <path
+                                              d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                              fill="#EA4335"
+                                      ></path>
+                                    </svg>
+                                  </a>
+                                </div>
                               </div>
                             </div>
-                            <div class="modified-date">
-                              {{#if report.last_modification_date}}
-                                <div class="updated">
-                                  Updated {{moment-from-now
-                                    report.last_modification_date
-                                    hideAffix=true
-                                  }} ago
-                                </div>
-                              {{else if report.creation_date}}
-                                <div class="updated">
-                                  Published {{moment-from-now
-                                    report.creation_date
-                                    hideAffix=true
-                                  }} ago
-                                </div>
-                              {{/if}}
-                              {{bs-tooltip
-                                title=(concat
-                                  "Last Activity: "
-                                  (moment-format
-                                    report.last_modification_date
-                                    "YYYY-MM-DD"
-                                    timeZone=timezone
-                                  )
-                                )
-                              }}
-                            </div>
-                            {{#if (or report.report_type report.threat_scape)}}
-                              <div class="alt-names">
-                                {{report.report_type}}, {{join ", " report.threat_scape}}
-                              </div>
+                          </div>
+                          <div class="mt-1">
+                            {{#if report.report_type}}
+                              <span class="pill-tag">{{fa-icon "file-alt" fixedWidth=true}} {{report.report_type}}</span>
                             {{/if}}
-                            <div class="link">
-                              <a
-                                class="full"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  report.id
-                                }}"
-                              >
-                                View in Google Threat Intelligence
-                                <svg
-                                  width="19"
-                                  height="19"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                    fill="#34A853"
-                                  ></path>
-                                  <path
-                                    d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                    fill="#EA4335"
-                                  ></path>
-                                </svg>
-                              </a>
-                              <a
-                                class="narrow"
-                                href="https://www.virustotal.com/gui/collection/{{
-                                  report.id
-                                }}"
-                              >
-                                View in GTI
-                                <svg
-                                  width="19"
-                                  height="19"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                >
-                                  <path
-                                    d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                    fill="#34A853"
-                                  ></path>
-                                  <path
-                                    d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                    fill="#4285F4"
-                                  ></path>
-                                  <path
-                                    d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                    fill="#FBBC04"
-                                  ></path>
-                                  <path
-                                    d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                    fill="#EA4335"
-                                  ></path>
-                                </svg>
-                              </a>
-                            </div>
+                            {{#if  (gt report.threat_scape.length 0)}}
+                              {{#each report.threat_scape as | threat |}}
+                                <span class="pill-tag">{{threat}}</span>
+                              {{/each}}
+                            {{/if}}
                           </div>
                         </div>
                       </div>
 
+                      {{!-- Report Expanding Description --}}
                       {{#if report.executive_summary}}
                         <div
-                          class="description {{
-                            if
-                            (get expandedAssociations (concat "reports" reportIndex))
-                            "expanded"
+                          class="description mt-1 {{
+                            if (get expandedAssociations (concat "reports" reportIndex)) "expanded"
                           }}"
                         >
                           {{{report.executive_summary}}}
+                          {{#unless (get expandedAssociations (concat "reports" reportIndex))}}
+                            <div class="transparent-gradient"></div>
+                          {{/unless}}
                         </div>
                       {{/if}}
 
-                      <div class="bottom">
+                      <div class="bottom mt-1">
                         <div class="related-info">
                           {{#if report.malware_roles.length}}
                             <div class="info">
@@ -1715,15 +3017,14 @@
                               <div class="count">
                                 {{report.targetedIndustryNames.length}}
                               </div>
-                              {{bs-tooltip title=(join " | " report.targetedIndustryNames)
-                              }}
+                              {{bs-tooltip title=(join " | " report.targetedIndustryNames)}}
                             </div>
                           {{/if}}
                           {{#if report.relationships.threat_actors.data.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Associated Actors
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{report.relationships.threat_actors.data.length}}
                               </div>
@@ -1731,9 +3032,9 @@
                           {{/if}}
                           {{#if report.targetedRegionNames.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Targeted Regions
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{report.targetedRegionNames.length}}
                               </div>
@@ -1742,9 +3043,9 @@
                           {{/if}}
                           {{#if report.motivationNames.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Motivations
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{report.motivationNames.length}}
                               </div>
@@ -1753,9 +3054,9 @@
                           {{/if}}
                           {{#if report.relationships.malware_families.data.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 Associated Malware
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{report.relationships.malware_families.data.length}}
                               </div>
@@ -1763,9 +3064,9 @@
                           {{/if}}
                           {{#if report.counters.iocs.length}}
                             <div class="info">
-                              <div class="title">
+                              <h2 class="p-title my-0">
                                 IoCs
-                              </div>
+                              </h2>
                               <div class="count">
                                 {{report.counters.iocs.length}}
                               </div>
@@ -1775,7 +3076,7 @@
                       </div>
 
                       {{#if (get expandedAssociations (concat "reports" reportIndex))}}
-                        <div class="details">
+                        <div class="details mt-1">
                           {{#if report.risk_rating}}
                             <div>
                               <span class="p-key">
@@ -1842,11 +3143,7 @@
                                 Last Modification Date:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  report.last_modification_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format report.last_modification_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -1856,11 +3153,7 @@
                                 Published:
                               </span>
                               <span class="p-value">
-                                {{moment-format
-                                  report.creation_date
-                                  "YYYY-MM-DD"
-                                  timeZone=timezone
-                                }}
+                                {{moment-format report.creation_date "YYYY-MM-DD" timeZone=timezone}}
                               </span>
                             </div>
                           {{/if}}
@@ -1874,199 +3167,159 @@
                               </div>
                             </div>
                           {{/if}}
-                          {{#if report.counters}}
-                            <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "reportCounter"
-                                  reportIndex
-                                }}
-                              >
-                                IOC Counters
-                                {{fa-icon
-                                  size="md"
-                                  icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "reportCounter" reportIndex)
-                                    )
-                                    "chevron-up"
-                                    "chevron-down"
-                                  )
-                                  fixedWidth=true
-                                  class="open-counters"
-                                }}
-                              </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "reportCounter" reportIndex)
-                                )
-                              }}
-                                <div class="values">
-                                  <div class="link">
-                                    <a
-                                      href="https://www.virustotal.com/gui/collection/{{
-                                        report.id
-                                      }}/iocs"
-                                    >
-                                      View IOCs in GTI
-                                      <svg
-                                        width="19"
-                                        height="19"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                      >
-                                        <path
-                                          d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
-                                          fill="#FBBC04"
-                                        ></path>
-                                        <path
-                                          d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
-                                          fill="#34A853"
-                                        ></path>
-                                        <path
-                                          d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
-                                          fill="#4285F4"
-                                        ></path>
-                                        <path
-                                          d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
-                                          fill="#4285F4"
-                                        ></path>
-                                        <path
-                                          d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
-                                          fill="#FBBC04"
-                                        ></path>
-                                        <path
-                                          d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
-                                          fill="#EA4335"
-                                        ></path>
-                                      </svg>
-                                    </a>
-                                  </div>
-                                  {{#each-in report.counters as |key value|}}
-                                    <div>
-                                      <span class="p-key">
-                                        {{titleize (humanize (dasherize key))}}:
-                                      </span>
-                                      <span class="p-value">
-                                        {{value}}
-                                      </span>
-                                    </div>
-                                  {{/each-in}}
-                                </div>
-                              {{/if}}
-                            </div>
-                          {{/if}}
-                          {{#if report.categorizedIocs}}
-                            <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "reportIocs"
-                                  reportIndex
-                                }}
-                              >
-                                Aggregations
-                                {{fa-icon
-                                  size="md"
-                                  icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "reportIocs" reportIndex)
-                                    )
-                                    "chevron-up"
-                                    "chevron-down"
-                                  )
-                                  fixedWidth=true
-                                  class="open-counters"
-                                }}
-                              </span>
-                              {{#if
-                                (get
-                                  expandedAssociations (concat "reportIocs" reportIndex)
-                                )
-                              }}
-                                <div class="values">
-                                  <div class="iocs">
-                                    {{#each-in
-                                      report.categorizedIocs as |iocCategory iocs|
+                          {{#if (or report.counters report.categorizedIocs report.confidenceGroupedData)}}
+                            <div class="mt-1">
+                              {{#if report.counters}}
+                                <div class="threat-data-group">
+                                  <span class="p-action" {{action "toggleExpandableAssociations" "reportCounter" reportIndex}}>
+                                    IOC Counters
+                                    {{fa-icon
+                                      size="md"
+                                      icon=(if
+                                        (get expandedAssociations (concat "reportCounter" reportIndex))
+                                        "chevron-up"
+                                        "chevron-down"
+                                      )
+                                      fixedWidth=true
+                                      class="open-counters"
                                     }}
-                                      <div>
-                                        <span class="p-key">
-                                          {{iocCategory}}:
-                                        </span>
-                                        <span class="p-value">
-                                          {{#each iocs as |ioc iocIndex|}}
-                                            {{ioc.value}}{{#if
-                                              (not (eq (sub iocs.length 1) iocIndex))
-                                            }}
-                                              ,
-                                            {{/if}}
-                                          {{/each}}
-                                        </span>
+                                  </span>
+                                  {{#if (get expandedAssociations (concat "reportCounter" reportIndex))}}
+                                    <div class="values mt-1">
+                                      <div class="link">
+                                        <a href="https://www.virustotal.com/gui/collection/{{report.id}}/iocs">
+                                          View IOCs in GTI
+                                          <svg
+                                            class="gti-icon"      
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                          >
+                                            <path
+                                              d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                                              fill="#FBBC04"
+                                            ></path>
+                                            <path
+                                              d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                                              fill="#34A853"
+                                            ></path>
+                                            <path
+                                              d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                                              fill="#4285F4"
+                                            ></path>
+                                            <path
+                                              d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                                              fill="#4285F4"
+                                            ></path>
+                                            <path
+                                              d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                                              fill="#FBBC04"
+                                            ></path>
+                                            <path
+                                              d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                                              fill="#EA4335"
+                                            ></path>
+                                          </svg>
+                                        </a>
                                       </div>
-                                    {{/each-in}}
-                                  </div>
-                                </div>
-                              {{/if}}
-                            </div>
-                          {{/if}}
-                          {{#if report.confidenceGroupedData}}
-                            <div class="threat-data-group">
-                              <span
-                                class="title"
-                                {{action
-                                  "toggleExpandableAssociations"
-                                  "reportMetadata"
-                                  reportIndex
-                                }}
-                              >
-                                Metadata
-                                {{fa-icon
-                                  size="md"
-                                  icon=(if
-                                    (get
-                                      expandedAssociations
-                                      (concat "reportMetadata" reportIndex)
-                                    )
-                                    "chevron-up"
-                                    "chevron-down"
-                                  )
-                                  fixedWidth=true
-                                  class="open-counters"
-                                }}
-                              </span>
-                              {{#if
-                                (get
-                                  expandedAssociations
-                                  (concat "reportMetadata" reportIndex)
-                                )
-                              }}
-                                <div class="values">
-                                  {{#each-in
-                                    report.confidenceGroupedData as |confidence metadata|
-                                  }}
-                                    <span class="title">
-                                      {{titleize (humanize (dasherize confidence))}}
-                                    </span>
-                                    {{#each-in metadata as |key values|}}
-                                      {{#if values.length}}
-                                        <div class="metadata-field">
+                                      {{#each-in report.counters as |key value|}}
+                                        <div>
                                           <span class="p-key">
                                             {{titleize (humanize (dasherize key))}}:
                                           </span>
                                           <span class="p-value">
-                                            {{join ", " values}}
+                                            {{value}}
                                           </span>
                                         </div>
-                                      {{/if}}
-                                    {{/each-in}}
-                                  {{/each-in}}
+                                      {{/each-in}}
+                                    </div>
+                                  {{/if}}
+                                </div>
+                              {{/if}}
+                              {{#if report.categorizedIocs}}
+                                <div class="threat-data-group">
+                                  <span class="p-action" {{action "toggleExpandableAssociations" "reportIocs" reportIndex}}>
+                                    Aggregations
+                                    {{fa-icon
+                                      icon=(if
+                                        (get expandedAssociations (concat "reportIocs" reportIndex))
+                                        "chevron-up"
+                                        "chevron-down"
+                                      )
+                                      fixedWidth=true
+                                      class="open-counters"
+                                    }}
+                                  </span>
+                                  {{#if (get expandedAssociations (concat "reportIocs" reportIndex))}}
+                                    <div class="values mt-1">
+                                      <div class="scrollable-block bordered position-relative pt-0">
+                                        {{#each-in report.categorizedIocs as |iocCategory iocs|}}
+                                            <h2 class="p-title sticky-title">
+                                              {{iocCategory}}
+                                            </h2>
+                                            <div class="p-value">
+                                              {{#if (gte iocs.averageLength 32)}}
+                                                <div class="my-1">
+                                                  {{#each iocs.data as |ioc iocIndex|}}
+                                                    <div class="scrollable-block-list-item">
+                                                      {{ioc.value}}
+                                                    </div>
+                                                  {{/each}}
+                                                </div>
+                                              {{else}}
+                                                <div class="pill-tag-container">
+                                                  {{#each iocs.data as |ioc iocIndex|}}
+                                                    <span class="pill-tag">{{ioc.value}}</span>
+                                                  {{/each}}
+                                                </div>
+                                              {{/if}}
+                                            </div>                                          
+                                        {{/each-in}}
+                                      </div>
+                                    </div>
+                                  {{/if}}
+                                </div>
+                              {{/if}}
+                              {{#if report.confidenceGroupedData}}
+                                <div class="threat-data-group">
+                                  <span
+                                    class="p-action"
+                                    {{action "toggleExpandableAssociations" "reportMetadata" reportIndex}}
+                                  >
+                                    Metadata
+                                    {{fa-icon
+                                      icon=(if
+                                        (get expandedAssociations (concat "reportMetadata" reportIndex))
+                                        "chevron-up"
+                                        "chevron-down"
+                                      )
+                                      fixedWidth=true
+                                      class="open-counters"
+                                    }}
+                                  </span>
+                                  {{#if (get expandedAssociations (concat "reportMetadata" reportIndex))}}
+                                    <div class="values mt-1">
+                                      {{#each-in report.confidenceGroupedData as |confidence metadata|}}
+                                        <h2 class="p-title">
+                                          {{titleize (humanize (dasherize confidence))}}
+                                        </h2>
+                                        {{#each-in metadata as |key values|}}
+                                          {{#if values.length}}
+                                            <div class="metadata-field">
+                                              <span class="p-key">
+                                                {{titleize (humanize (dasherize key))}}:
+                                              </span>
+                                              <span class="p-value">
+                                                {{join ", " values}}
+                                              </span>
+                                            </div>
+                                          {{/if}}
+                                        {{/each-in}}
+                                      {{/each-in}}
+                                    </div>
+                                  {{/if}}
                                 </div>
                               {{/if}}
                             </div>
@@ -2074,21 +3327,16 @@
                         </div>
                       {{/if}}
 
-                      <div
-                        class="open-details-icon"
-                        {{action "toggleExpandableAssociations" "reports" reportIndex}}
-                      >
+                      <div class="open-details-icon" {{action "toggleExpandableAssociations" "reports" reportIndex}}>
                         {{fa-icon
                           size="lg"
                           icon=(if
-                            (get expandedAssociations (concat "reports" reportIndex))
-                            "chevron-up"
-                            "chevron-down"
+                            (get expandedAssociations (concat "reports" reportIndex)) "chevron-up" "chevron-down"
                           )
                           fixedWidth=true
                           class="open-details"
                         }}
-                        {{bs-tooltip title="Details View"}}
+                        {{bs-tooltip title=(concat (if (get expandedAssociations (concat "reports" reportIndex)) "Close " "Open ") "Details View")}}
                       </div>
                     </div>
                   </div>
@@ -2097,13 +3345,39 @@
             {{/if}}
             <div class="remaining-link">
               <a href="{{associationLink}}/{{associationTab}}">
-                ...View remaining
+                View remaining
                 {{#if (eq associationTab "threats")}}
-                  Threats
+                  threats
                 {{else}}
-                  Reports
+                  reports
                 {{/if}}
                 in GTI
+                <svg class="gti-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                          d="M12.0014 8.57257C11.4758 8.57257 10.9845 8.69824 10.5274 8.9153L12.7784 11.1659C12.9955 11.3715 13.1327 11.6686 13.1327 11.9999H15.418C15.418 10.1149 13.8754 8.57257 11.99 8.57257H12.0014Z"
+                          fill="#FBBC04"
+                  ></path>
+                  <path
+                          d="M12.0014 13.1423C11.373 13.1423 10.8588 12.6282 10.8588 11.9999H8.57347C8.57347 13.8849 10.1161 15.4271 12.0014 15.4271C13.8868 15.4271 15.4294 13.8849 15.4294 11.9999H13.1441C13.1441 12.6282 12.6299 13.1423 12.0014 13.1423Z"
+                          fill="#34A853"
+                  ></path>
+                  <path
+                          d="M14.4696 17.1408C13.3498 17.6777 12.0357 17.8719 10.6531 17.5521C8.5849 17.0722 6.92805 15.4043 6.44813 13.3479C6.3453 12.891 6.28816 12.4454 6.28816 11.9999H4.00286C4.00286 12.4911 4.04856 12.9938 4.13997 13.4964C4.73415 16.6952 7.30512 19.2657 10.5046 19.8598C12.2757 20.1911 13.9668 19.9169 15.4065 19.2314C16.1264 18.8887 16.3207 17.9405 15.7493 17.3807C15.4065 17.038 14.8923 16.9466 14.4696 17.1522V17.1408Z"
+                          fill="#4285F4"
+                  ></path>
+                  <path
+                          d="M19.223 15.4157C19.7143 14.3761 20 13.2223 20 11.9999H17.7147C17.7147 12.8795 17.509 13.7135 17.1548 14.4561C16.9491 14.8902 17.0291 15.4043 17.3719 15.747C17.9318 16.3068 18.8802 16.1355 19.223 15.4043V15.4157Z"
+                          fill="#4285F4"
+                  ></path>
+                  <path
+                          d="M13.3041 4.10567C12.6185 3.99143 12.0014 4.55122 12.0014 5.2481C12.0014 5.80789 12.4128 6.27629 12.9727 6.36768C15.6579 6.83608 17.7147 9.17806 17.7147 11.9999H20C20 8.03563 17.0977 4.73401 13.3041 4.10567Z"
+                          fill="#FBBC04"
+                  ></path>
+                  <path
+                          d="M10.5274 8.9153L5.95679 4.33416C5.51116 3.88861 4.77986 3.88861 4.33423 4.33416C3.88859 4.77971 3.88859 5.51086 4.33423 5.95641L5.60257 7.22451C4.60846 8.54972 4.00286 10.2062 4.00286 11.9999H6.28816C6.28816 10.8346 6.64239 9.7607 7.23656 8.85818L8.90484 10.5261C8.68773 10.9717 8.56204 11.4743 8.56204 11.9999H10.8473C10.8473 11.3715 11.3615 10.8574 11.99 10.8574C12.2871 10.8574 12.5728 10.9831 12.7784 11.1659L10.5274 8.9153Z"
+                          fill="#EA4335"
+                  ></path>
+                </svg>
               </a>
             </div>
           </div>
