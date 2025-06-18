@@ -34,7 +34,8 @@ const {
   omitBy,
   isUndefined,
   filter,
-  has
+  has,
+  mean
 } = fp;
 
 const showdown = require('showdown');
@@ -206,9 +207,7 @@ function doLookup(entities, options, cb) {
           )
         );
       }
-    } else if (
-      !entity.types.includes('cve')
-    ) {
+    } else if (!entity.types.includes('cve')) {
       nonCveOrThreatActorEntities.push(entity);
     }
 
@@ -409,7 +408,7 @@ function doLookup(entities, options, cb) {
           async.concat(
             nonCveOrThreatActorEntities,
             function (entity, concatDone) {
-              Logger.debug({ entity: entity.value }, 'Looking up Threats');
+              Logger.debug({ entity: entity.value }, 'Looking up Reports');
               _lookupReports(entity, options, concatDone);
             },
             function (err, results) {
@@ -805,217 +804,227 @@ const _lookupVulnerabilities = (entity, options, done) => {
 
       Logger.trace({ result }, 'Result of Vulnerabilities Lookup');
 
+      const details = {
+        vulnerabilities: flow(
+          get('data'),
+          map((vulnerability) => ({
+            ...vulnerability.attributes,
+            id: vulnerability.id,
+            relationships: vulnerability.relationships,
+            // Core description and metadata
+            htmlDescription: convertMarkdownToHtml(vulnerability.attributes.description),
+            htmlAnalysis: convertMarkdownToHtml(vulnerability.attributes.analysis),
+            htmlExecutiveSummary: convertMarkdownToHtml(
+              vulnerability.attributes.executive_summary
+            ),
+            confidenceGroupedData: groupByConfidence(vulnerability.attributes),
+
+            // Timeline information (dates in ms)
+            date_of_disclosure: vulnerability.attributes.date_of_disclosure
+              ? vulnerability.attributes.date_of_disclosure * 1000
+              : null,
+            exploitation: {
+              ...vulnerability.attributes.exploitation,
+              first_exploitation: vulnerability.attributes.exploitation
+                ?.first_exploitation
+                ? vulnerability.attributes.exploitation.first_exploitation * 1000
+                : null
+            },
+            cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
+              ? {
+                  ...vulnerability.attributes.cisa_known_exploited,
+                  added_date: vulnerability.attributes.cisa_known_exploited.added_date
+                    ? vulnerability.attributes.cisa_known_exploited.added_date * 1000
+                    : null,
+                  due_date: vulnerability.attributes.cisa_known_exploited.due_date
+                    ? vulnerability.attributes.cisa_known_exploited.due_date * 1000
+                    : null
+                }
+              : null,
+
+            // Identifiers and classification
+            cve_id: vulnerability.attributes.cve_id,
+            mve_id: vulnerability.attributes.mve_id,
+            cwe: vulnerability.attributes.cwe || {},
+
+            // Risk assessment
+            risk_rating: vulnerability.attributes.risk_rating,
+            predicted_risk_rating: vulnerability.attributes.predicted_risk_rating,
+            priority: vulnerability.attributes.priority,
+
+            // CVSS scoring (improved to handle different versions)
+            cvssScore: flow((attrs) => {
+              const cvss3Score =
+                get('cvss.cvssv3_1.base_score', attrs) ||
+                get('cvss.cvssv3_x.base_score', attrs);
+              const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
+              return cvss3Score || cvss2Score || null;
+            })(vulnerability.attributes),
+            cvssVector: flow((attrs) => {
+              const cvss3Vector =
+                get('cvss.cvssv3_1.vector', attrs) || get('cvss.cvssv3_x.vector', attrs);
+              const cvss2Vector = get('cvss.cvssv2_0.vector', attrs);
+              return cvss3Vector || cvss2Vector || null;
+            })(vulnerability.attributes),
+
+            // Enhanced severity calculation
+            severity: flow((attrs) => {
+              const cvss3Score =
+                get('cvss.cvssv3_1.base_score', attrs) ||
+                get('cvss.cvssv3_x.base_score', attrs);
+              const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
+              const score = cvss3Score || cvss2Score;
+
+              if (!score) return 'Unknown';
+              if (score >= 9.0) return 'Critical';
+              if (score >= 7.0) return 'High';
+              if (score >= 4.0) return 'Medium';
+              return 'Low';
+            })(vulnerability.attributes),
+
+            // Exploitation status and metrics
+            exploitation_state: vulnerability.attributes.exploitation_state,
+            exploit_availability: vulnerability.attributes.exploit_availability,
+            exploitabilityMetrics: flow((attrs) => ({
+              epssScore: get('epss.score', attrs)
+                ? parseFloat(get('epss.score', attrs).toFixed(5))
+                : 0,
+              epssPercentile: get('epss.percentile', attrs)
+                ? parseFloat(get('epss.percentile', attrs) * 100).toFixed(2)
+                : 0,
+              hasExploit: !!(
+                get('exploitation.exploit_release_date', attrs) ||
+                get('cisa_known_exploited', attrs) ||
+                get('exploitation_state', attrs) === 'exploited'
+              ),
+              daysToExploit: flow((attrs) => {
+                const firstExploit = get('exploitation.first_exploitation', attrs);
+                const techDetails = get('exploitation.tech_details_release_date', attrs);
+                const disclosure = get('date_of_disclosure', attrs);
+
+                if (firstExploit && techDetails) {
+                  return Math.floor((firstExploit - techDetails) / (24 * 60 * 60));
+                } else if (firstExploit && disclosure) {
+                  return Math.floor((firstExploit - disclosure) / (24 * 60 * 60));
+                }
+                return null;
+              })(attrs)
+            }))(vulnerability.attributes),
+
+            // Impact and consequences
+            exploitation_consequence: vulnerability.attributes.exploitation_consequence,
+            exploitation_vectors: vulnerability.attributes.exploitation_vectors || [],
+
+            // Affected systems and products
+            cpes: vulnerability.attributes.cpes || [],
+
+            // Targeting information
+            targetedIndustryNames: flow(
+              get('targeted_industries'),
+              uniq,
+              compact
+            )(vulnerability.attributes),
+
+            // Mitigation and remediation
+            available_mitigation: vulnerability.attributes.available_mitigation || [],
+            mitigationDetails: flow(
+              get('vendor_fix_references'),
+              map((fix) => ({
+                ...fix,
+                published_date: fix.published_date
+                  ? fix.published_date * 1000
+                  : fix.published_date
+              }))
+            )(vulnerability.attributes),
+            timeToMitigation: flow((attrs) => {
+              const exploitDate = get('exploitation.first_exploitation', attrs);
+              const fixDate = flow(get('vendor_fix_references'), (fixes) =>
+                fixes && fixes.length
+                  ? Math.min(
+                      ...fixes
+                        .map((f) => (get('published_date', f) ? f.published_date : null))
+                        .filter(Boolean)
+                    )
+                  : null
+              )(attrs);
+
+              if (exploitDate && fixDate) {
+                return Math.floor((exploitDate - fixDate) / (24 * 60 * 60));
+              }
+
+              return null;
+            })(vulnerability.attributes),
+
+            // Additional metadata
+            tags: vulnerability.attributes.tags || [],
+            sources: vulnerability.attributes.sources || [],
+
+            // Enhanced impact summary
+            impactSummary: flow(
+              (attrs) => ({
+                systems: get('affected_systems', attrs) || [],
+                consequence: get('exploitation_consequence', attrs),
+                priority: get('priority', attrs),
+                riskRating: get('risk_rating', attrs),
+                cvssScore:
+                  get('cvss.cvssv3_1.base_score', attrs) ||
+                  get('cvss.cvssv3_x.base_score', attrs) ||
+                  get('cvss.cvssv2_0.base_score', attrs),
+                hasPublicExploit: !!(
+                  get('exploitation.exploit_release_date', attrs) ||
+                  get('cisa_known_exploited', attrs)
+                ),
+                epssScore: get('epss.score', attrs)
+              }),
+              (impact) => ({
+                ...impact,
+                summary: compact([
+                  impact.riskRating ? `${impact.riskRating} Risk` : null,
+                  impact.priority,
+                  impact.cvssScore ? `CVSS ${impact.cvssScore}` : null,
+                  impact.hasPublicExploit ? 'Public Exploit' : null,
+                  impact.epssScore
+                    ? `EPSS ${(impact.epssScore * 100).toFixed(1)}%`
+                    : null,
+                  impact.consequence,
+                  impact.systems.length
+                    ? `Affects ${impact.systems.slice(0, 3).join(', ')}${
+                        impact.systems.length > 3 ? '...' : ''
+                      }`
+                    : null
+                ]).join(' • ')
+              })
+            )(vulnerability.attributes)
+          }))
+        )(result)
+      };
+
       const vulnerabilitiesLookupResult = {
         entity,
         data: {
-          summary: [`Vulns: ${result.data.length}`],
-          details: {
-            vulnerabilities: flow(
-              get('data'),
-              map((vulnerability) => ({
-                ...vulnerability.attributes,
-                id: vulnerability.id,
-                relationships: vulnerability.relationships,
-                // Core description and metadata
-                htmlDescription: convertMarkdownToHtml(
-                  vulnerability.attributes.description
-                ),
-                htmlExecutiveSummary:
-                  convertMarkdownToHtml(vulnerability.attributes.executive_summary),
-                confidenceGroupedData: groupByConfidence(vulnerability.attributes),
-
-                // Timeline information (dates in ms)
-                date_of_disclosure: vulnerability.attributes.date_of_disclosure
-                  ? vulnerability.attributes.date_of_disclosure * 1000
-                  : null,
-                exploitation: {
-                  ...vulnerability.attributes.exploitation,
-                  first_exploitation: vulnerability.attributes.exploitation
-                    ?.first_exploitation
-                    ? vulnerability.attributes.exploitation.first_exploitation * 1000
-                    : null
-                },
-                cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
-                  ? {
-                      ...vulnerability.attributes.cisa_known_exploited,
-                      added_date:
-                        vulnerability.attributes.cisa_known_exploited.added_date
-                          ? vulnerability.attributes.cisa_known_exploited.added_date * 1000
-                          : null,
-                      due_date:
-                        vulnerability.attributes.cisa_known_exploited.due_date
-                          ? vulnerability.attributes.cisa_known_exploited.due_date * 1000
-                          : null
-                    }
-                  : null,
-
-                // Identifiers and classification
-                cve_id: vulnerability.attributes.cve_id,
-                mve_id: vulnerability.attributes.mve_id,
-                cwe: vulnerability.attributes.cwe || {},
-
-                // Risk assessment
-                risk_rating: vulnerability.attributes.risk_rating,
-                predicted_risk_rating: vulnerability.attributes.predicted_risk_rating,
-                priority: vulnerability.attributes.priority,
-
-                // CVSS scoring (improved to handle different versions)
-                cvssScore: flow((attrs) => {
-                  const cvss3Score =
-                    get('cvss.cvssv3_1.base_score', attrs) ||
-                    get('cvss.cvssv3_x.base_score', attrs);
-                  const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
-                  return cvss3Score || cvss2Score || null;
-                })(vulnerability.attributes),
-                cvssVector: flow((attrs) => {
-                  const cvss3Vector =
-                    get('cvss.cvssv3_1.vector', attrs) ||
-                    get('cvss.cvssv3_x.vector', attrs);
-                  const cvss2Vector = get('cvss.cvssv2_0.vector', attrs);
-                  return cvss3Vector || cvss2Vector || null;
-                })(vulnerability.attributes),
-
-                // Enhanced severity calculation
-                severity: flow((attrs) => {
-                  const cvss3Score =
-                    get('cvss.cvssv3_1.base_score', attrs) ||
-                    get('cvss.cvssv3_x.base_score', attrs);
-                  const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
-                  const score = cvss3Score || cvss2Score;
-
-                  if (!score) return 'Unknown';
-                  if (score >= 9.0) return 'Critical';
-                  if (score >= 7.0) return 'High';
-                  if (score >= 4.0) return 'Medium';
-                  return 'Low';
-                })(vulnerability.attributes),
-
-                // Exploitation status and metrics
-                exploitation_state: vulnerability.attributes.exploitation_state,
-                exploit_availability: vulnerability.attributes.exploit_availability,
-                exploitabilityMetrics: flow((attrs) => ({
-                  epssScore: get('epss.score', attrs)
-                    ? parseFloat(get('epss.score', attrs).toFixed(5))
-                    : 0,
-                  epssPercentile: get('epss.percentile', attrs)
-                    ? parseFloat(get('epss.percentile', attrs).toFixed(3))
-                    : 0,
-                  hasExploit: !!(
-                    get('exploitation.exploit_release_date', attrs) ||
-                    get('cisa_known_exploited', attrs) ||
-                    get('exploitation_state', attrs) === 'exploited'
-                  ),
-                  daysToExploit: flow((attrs) => {
-                    const firstExploit = get('exploitation.first_exploitation', attrs);
-                    const techDetails = get(
-                      'exploitation.tech_details_release_date',
-                      attrs
-                    );
-                    const disclosure = get('date_of_disclosure', attrs);
-
-                    if (firstExploit && techDetails) {
-                      return Math.floor((firstExploit - techDetails) / (24 * 60 * 60));
-                    } else if (firstExploit && disclosure) {
-                      return Math.floor((firstExploit - disclosure) / (24 * 60 * 60));
-                    }
-                    return null;
-                  })(attrs)
-                }))(vulnerability.attributes),
-
-                // Impact and consequences
-                exploitation_consequence:
-                  vulnerability.attributes.exploitation_consequence,
-                exploitation_vectors: vulnerability.attributes.exploitation_vectors || [],
-
-                // Affected systems and products
-                cpes: vulnerability.attributes.cpes || [],
-
-                // Targeting information
-                targetedIndustryNames: flow(
-                  get('targeted_industries'),
-                  uniq,
-                  compact
-                )(vulnerability.attributes),
-
-                // Mitigation and remediation
-                available_mitigation: vulnerability.attributes.available_mitigation || [],
-                mitigationDetails: flow(
-                  get('vendor_fix_references'),
-                  map((fix) => ({
-                    ...fix,
-                    published_date: fix.published_date
-                      ? fix.published_date * 1000
-                      : fix.published_date
-                  }))
-                )(vulnerability.attributes),
-                timeToMitigation: flow((attrs) => {
-                  const exploitDate = get('exploitation.first_exploitation', attrs);
-                  const fixDate = flow(get('vendor_fix_references'), (fixes) =>
-                    fixes && fixes.length
-                      ? Math.min(
-                          ...fixes
-                            .map((f) => get('published_date', f)
-                              ? f.published_date * 1000
-                              : null)
-                            .filter(Boolean)
-                        )
-                      : null
-                  )(attrs);
-                  if (exploitDate && fixDate) {
-                    return Math.floor((fixDate - exploitDate) / (24 * 60 * 60));
-                  }
-                  return null;
-                })(vulnerability.attributes),
-
-                // Additional metadata
-                tags: vulnerability.attributes.tags || [],
-                sources: vulnerability.attributes.sources || [],
-
-                // Enhanced impact summary
-                impactSummary: flow(
-                  (attrs) => ({
-                    systems: get('affected_systems', attrs) || [],
-                    consequence: get('exploitation_consequence', attrs),
-                    priority: get('priority', attrs),
-                    riskRating: get('risk_rating', attrs),
-                    cvssScore:
-                      get('cvss.cvssv3_1.base_score', attrs) ||
-                      get('cvss.cvssv3_x.base_score', attrs) ||
-                      get('cvss.cvssv2_0.base_score', attrs),
-                    hasPublicExploit: !!(
-                      get('exploitation.exploit_release_date', attrs) ||
-                      get('cisa_known_exploited', attrs)
-                    ),
-                    epssScore: get('epss.score', attrs)
-                  }),
-                  (impact) => ({
-                    ...impact,
-                    summary: compact([
-                      impact.riskRating ? `${impact.riskRating} Risk` : null,
-                      impact.priority,
-                      impact.cvssScore ? `CVSS ${impact.cvssScore}` : null,
-                      impact.hasPublicExploit ? 'Public Exploit' : null,
-                      impact.epssScore
-                        ? `EPSS ${(impact.epssScore * 100).toFixed(1)}%`
-                        : null,
-                      impact.consequence,
-                      impact.systems.length
-                        ? `Affects ${impact.systems.slice(0, 3).join(', ')}${
-                            impact.systems.length > 3 ? '...' : ''
-                          }`
-                        : null
-                    ]).join(' • ')
-                  })
-                )(vulnerability.attributes)
-              }))
-            )(result)
-          }
+          summary: _getVulnSummaryTags(details),
+          details
         }
       };
 
       done(null, vulnerabilitiesLookupResult);
     });
   });
+};
+
+const _getVulnSummaryTags = (details) => {
+  if (details.vulnerabilities.length === 1 && details.vulnerabilities[0].risk_rating) {
+    return [`Risk: ${details.vulnerabilities[0].risk_rating}`];
+  }
+
+  if (
+    details.vulnerabilities.length === 1 &&
+    details.vulnerabilities[0].predicted_risk_rating
+  ) {
+    return [`Risk: ${details.vulnerabilities[0].predicted_risk_rating}`];
+  }
+
+  return [`Vulns: ${details.vulnerabilities.length}`];
 };
 
 const _lookupThreatActors = (entity, options, done) => {
@@ -1092,67 +1101,7 @@ const _lookupThreatActors = (entity, options, done) => {
                   : threatActor.attributes.last_seen,
                 last_modification_date: threatActor.attributes.last_modification_date
                   ? threatActor.attributes.last_modification_date * 1000
-                  : threatActor.attributes.last_modification_date,
-                activityTrend: flow(get('recent_activity_summary'), (activity) => {
-                  if (!activity || !activity.length) return null;
-                  const trend =
-                    activity.slice(-3).reduce((a, b) => a + b, 0) / 3 -
-                    activity.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-                  return {
-                    direction:
-                      trend > 0 ? 'increasing' : trend < 0 ? 'decreasing' : 'stable',
-                    recentAverage: activity.slice(-3).reduce((a, b) => a + b, 0) / 3,
-                    percentageChange:
-                      (Math.abs(trend) * 100) /
-                      (activity.slice(0, 3).reduce((a, b) => a + b, 0) / 3)
-                  };
-                })(threatActor.attributes),
-                riskScore: flow((attrs) => {
-                  const baseScore = 5; // Base score out of 10
-                  const modifiers = {
-                    recentActivityChange: get('recent_activity_relative_change', attrs)
-                      ? Math.min(get('recent_activity_relative_change', attrs), 2)
-                      : 0,
-                    targetedIndustriesCount:
-                      (get('targeted_industries', attrs) || []).length * 0.5,
-                    regionsCount: (get('targeted_regions', attrs) || []).length * 0.25,
-                    technologiesCount: (get('technologies', attrs) || []).length * 0.25
-                  };
-                  return Math.min(
-                    10,
-                    baseScore +
-                      modifiers.recentActivityChange +
-                      modifiers.targetedIndustriesCount +
-                      modifiers.regionsCount +
-                      modifiers.technologiesCount
-                  );
-                })(threatActor.attributes),
-                primaryTechniques: flow(
-                  (attrs) => ({
-                    technologies: get('technologies', attrs) || [],
-                    exploitationVectors: get('exploitation_vectors', attrs) || []
-                  }),
-                  ({ technologies, exploitationVectors }) => ({
-                    primary: technologies.slice(0, 3),
-                    secondary: exploitationVectors,
-                    combined: uniq([...technologies, ...exploitationVectors])
-                  })
-                )(threatActor.attributes),
-                activityMetrics: flow(get('summary_stats'), (stats) =>
-                  stats
-                    ? {
-                        averageDetections: get('files_detections.avg', stats) || 0,
-                        maxDetections: get('files_detections.max', stats) || 0,
-                        activityDuration: get('last_submission_date.max', stats)
-                          ? Math.floor(
-                              (get('last_submission_date.max', stats) -
-                                get('first_submission_date.min', stats)) /
-                                (24 * 60 * 60)
-                            )
-                          : 0
-                      }
-                    : null
-                )(threatActor.attributes)
+                  : threatActor.attributes.last_modification_date
               }))
             )(result)
           }
@@ -1191,42 +1140,49 @@ const _lookupThreats = (entity, options, done) => {
 
       const formattedThreats = flow(
         get('data'),
-        map((threat) => ({
-          ...threat.attributes,
-          id: threat.id,
-          relationships: threat.relationships,
-          motivationNames: map('value', threat.attributes.motivations),
-          targetedIndustryNames: map(
-            ({ industry_group, industry }) =>
-              size(industry_group) > size(industry) ? industry_group : industry,
-            threat.attributes.targeted_industries_tree
-          ),
-          targetedRegionNames: flow(
-            map((region) => {
-              const country = region.country || region.country_iso2 || '';
-              const subRegion = region.sub_region || region.region || '';
-              if (country && subRegion) {
-                return `${country}, ${subRegion}`;
-              } else if (country) {
-                return country;
-              } else if (subRegion) {
-                return subRegion;
-              } else {
-                return '';
-              }
-            }),
-            compact
-          )(threat.attributes.targeted_regions_hierarchy),
-          htmlDescription: convertMarkdownToHtml(threat.attributes.description),
-          confidenceGroupedData: groupByConfidence(threat.attributes),
-          categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
-          creation_date: threat.attributes.creation_date
-            ? threat.attributes.creation_date * 1000
-            : threat.attributes.creation_date,
-          last_modification_date: threat.attributes.last_modification_date
-            ? threat.attributes.last_modification_date * 1000
-            : threat.attributes.last_modification_date
-        }))
+        map((threat) => {
+          let formattedThreat = {
+            ...threat.attributes,
+            id: threat.id,
+            relationships: threat.relationships,
+            motivationNames: map('value', threat.attributes.motivations),
+            targetedIndustryNames: map(
+              ({ industry_group, industry }) =>
+                size(industry_group) > size(industry) ? industry_group : industry,
+              threat.attributes.targeted_industries_tree
+            ),
+            targetedRegionNames: flow(
+              map((region) => {
+                const country = region.country || region.country_iso2 || '';
+                const subRegion = region.sub_region || region.region || '';
+                if (country && subRegion) {
+                  return `${country}, ${subRegion}`;
+                } else if (country) {
+                  return country;
+                } else if (subRegion) {
+                  return subRegion;
+                } else {
+                  return '';
+                }
+              }),
+              compact
+            )(threat.attributes.targeted_regions_hierarchy),
+            htmlDescription: convertMarkdownToHtml(threat.attributes.description),
+            confidenceGroupedData: groupByConfidence(threat.attributes),
+            categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
+            creation_date: threat.attributes.creation_date
+              ? threat.attributes.creation_date * 1000
+              : threat.attributes.creation_date,
+            last_modification_date: threat.attributes.last_modification_date
+              ? threat.attributes.last_modification_date * 1000
+              : threat.attributes.last_modification_date
+          };
+          // The original `aggregations` property is not used in the template.  Instead, we use the
+          // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+          // original aggregations which can be an extremely large object.
+          delete formattedThreat.aggregations;
+          return formattedThreat;
+        })
       )(result);
 
       done(null, {
@@ -1266,41 +1222,49 @@ const _lookupReports = (entity, options, done) => {
 
       const reports = flow(
         get('data'),
-        map((report) => ({
-          ...report.attributes,
-          id: report.id,
-          relationships: report.relationships,
-          htmlDescription: convertMarkdownToHtml(report.attributes.description),
-          targetedIndustryNames: map(
-            ({ industry_group, industry }) =>
-              size(industry_group) > size(industry) ? industry_group : industry,
-            report.attributes.targeted_industries_tree
-          ),
-          targetedRegionNames: flow(
-            map((region) => {
-              const country = region.country || region.country_iso2 || '';
-              const subRegion = region.sub_region || region.region || '';
-              if (country && subRegion) {
-                return `${country}, ${subRegion}`;
-              } else if (country) {
-                return country;
-              } else if (subRegion) {
-                return subRegion;
-              } else {
-                return '';
-              }
-            }),
-            compact
-          )(report.attributes.targeted_regions_hierarchy),
-          confidenceGroupedData: groupByConfidence(report.attributes),
-          categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
-          creation_date: report.attributes.creation_date
-            ? report.attributes.creation_date * 1000
-            : report.attributes.creation_date,
-          last_modification_date: report.attributes.last_modification_date
-            ? report.attributes.last_modification_date * 1000
-            : report.attributes.last_modification_date
-        }))
+        map((report) => {
+          let formattedReport = {
+            ...report.attributes,
+            id: report.id,
+            relationships: report.relationships,
+            htmlDescription: convertMarkdownToHtml(report.attributes.description),
+            targetedIndustryNames: map(
+              ({ industry_group, industry }) =>
+                size(industry_group) > size(industry) ? industry_group : industry,
+              report.attributes.targeted_industries_tree
+            ),
+            targetedRegionNames: flow(
+              map((region) => {
+                const country = region.country || region.country_iso2 || '';
+                const subRegion = region.sub_region || region.region || '';
+                if (country && subRegion) {
+                  return `${country}, ${subRegion}`;
+                } else if (country) {
+                  return country;
+                } else if (subRegion) {
+                  return subRegion;
+                } else {
+                  return '';
+                }
+              }),
+              compact
+            )(report.attributes.targeted_regions_hierarchy),
+            confidenceGroupedData: groupByConfidence(report.attributes),
+            categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
+            creation_date: report.attributes.creation_date
+              ? report.attributes.creation_date * 1000
+              : report.attributes.creation_date,
+            last_modification_date: report.attributes.last_modification_date
+              ? report.attributes.last_modification_date * 1000
+              : report.attributes.last_modification_date
+          };
+
+          // The original `aggregations` property is not used in the template.  Instead, we use the
+          // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+          // original aggregations which can be an extremely large object.
+          delete formattedReport.aggregations;
+          return formattedReport;
+        })
       )(result);
 
       done(null, {
@@ -1318,25 +1282,35 @@ const queryParams = {
   relationships: 'subscription_preferences,owner,malware_families,threat_actors'
 };
 
-const getGtiRequestOptionsByType = (entity, relationship) =>
-  ({
-    IPv4: {
+const getGtiRequestOptionsByType = (entity, relationship) => {
+  if (entity.isIP) {
+    return {
       route: `ip_addresses/${entity.value}/${relationship}`,
       queryParams
-    },
-    domain: {
+    };
+  }
+
+  if (entity.isDomain) {
+    return {
       route: `domains/${entity.value}/${relationship}`,
       queryParams
-    },
-    url: {
+    };
+  }
+
+  if (entity.isURL) {
+    return {
       route: `urls/${entity.value}/${relationship}`,
       queryParams
-    },
-    hash: {
+    };
+  }
+
+  if (entity.isHash) {
+    return {
       route: `files/${entity.value}/${relationship}`,
       queryParams
-    }
-  }[entity.isHash ? 'hash' : entity.type]);
+    };
+  }
+};
 
 const getUiUrlByEntityType = (entity) =>
   ({
@@ -1353,7 +1327,10 @@ const groupByConfidence = (association) => {
     isArray(association[property]) &&
     size(association[property]) > 0 &&
     isPlainObject(association[property][0]) &&
-    some((obj) => obj && isPlainObject(obj) && has('confidence', obj), association[property]);
+    some(
+      (obj) => obj && isPlainObject(obj) && has('confidence', obj),
+      association[property]
+    );
 
   const confidenceFields = [
     'motivations',
@@ -1502,7 +1479,77 @@ const groupByConfidence = (association) => {
   return threatsGroupedByConfidence;
 };
 
+/**
+ * Recursively walks an arbitrarily-nested object/array, “lifts” every
+ * **leaf** node into a flat list while preserving its dot-notation path,
+ * then ranks and groups those leaves into a convenient, UI-ready shape.
+ *
+ * The final structure is an object whose **keys** are human-readable
+ * versions of each path (e.g. `"User Name"`), and whose **values** look
+ * like:
+ *
+ * ```ts
+ * {
+ *   data:            Array<FlattenedLeaf>,
+ *   averageLength:   number   // ⬆︎ ceil( mean( String(value).length ) )
+ * }
+ * ```
+ *
+ * where `FlattenedLeaf` may contain:
+ *
+ * * `value` or `values` — the original primitive / array / shallow object
+ * * `path`             — dot-notation path inside the source object
+ * * `readablePath`     — Pretty casing of `path`
+ * * `matchesSubstring` — `true` if `value` contains `entity.value`
+ * * `prevalence`       — optional business metric used for sorting
+ *
+ * @param {Object} entity
+ *        Arbitrary object that at least has a **`value`** property.
+ *        Its `value` is used to highlight / prioritise matching leaves.
+ * @param {(Object|Array)} obj
+ *        The data structure you want to flatten.
+ * @returns {Object.<string, {data:Array<Object>, averageLength:number}>}
+ *
+ * @example
+ * const entity = { value: 'email' };
+ * const src = {
+ *   user: {
+ *     name: 'Alice',
+ *     contacts: [
+ *       { type: 'email',  value: 'a@example.com' },
+ *       { type: 'phone',  value: '555-0101' }
+ *     ]
+ *   }
+ * };
+ *
+ * flattenWithPaths(entity, src);
+ * // → {
+ * //   'User Name': {
+ * //     data: [{
+ * //       value: 'Alice',
+ * //       path: 'user.name',
+ * //       readablePath: 'User Name',
+ * //       matchesSubstring: false
+ * //     }],
+ * //     averageLength: 5
+ * //   },
+ * //   'User Contacts': {
+ * //     data: [
+ * //       { type:'email', value:'a@example.com', path:'user.contacts',
+ * //         readablePath:'User Contacts', matchesSubstring:true },
+ * //       { type:'phone', value:'555-0101',      path:'user.contacts',
+ * //         readablePath:'User Contacts', matchesSubstring:false }
+ * //     ],
+ * //     averageLength: 11
+ * //   }
+ * // }
+ */
 const flattenWithPaths = (entity, obj) => {
+  // Convert empty object to a null value to make it easier to skip in the template
+  if (Object.keys(obj).length === 0) {
+    return null;
+  }
+
   const traverse = curry((path, val) => {
     const isPlainObjectWithNoNested =
       isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val));
@@ -1548,23 +1595,91 @@ const flattenWithPaths = (entity, obj) => {
   return sortedListOfValues;
 };
 
+/**
+ * Takes the flat list produced by `traverse`, decorates each record with
+ * extra metadata, removes duplicates, sorts by *entity relevance* and
+ * *prevalence*, then groups by a prettified path.
+ * It also calculates **`averageLength`** for every group and wraps the
+ * records under a `data` key.
+ *
+ * @private
+ * @param {Object} entity
+ *        Same `entity` object passed to `flattenWithPaths`.
+ * @param {Array<Object>} arrayOfObjects
+ *        Flat list of leaf records created by `traverse`.
+ * @returns {Object.<string, {data:Array<Object>, averageLength:number}>}
+ *
+ * @example
+ * // Given `entity = { value: 'email' }` and a list containing
+ * //   { value:'Bob',   path:'user.name' }
+ * //   { value:'Alice', path:'user.name' }
+ * //   { value:'bob@example.com', path:'user.email' }
+ * // sortByEntityPresenceAndPrevalence(entity, list) →
+ * //   {
+ * //     'User Name':   { data:[{…Bob},{…Alice}], averageLength:4 },
+ * //     'User Email':  { data:[{…bob@example.com}], averageLength:15 }
+ * //   }
+ */
 const sortByEntityPresenceAndPrevalence = (entity, arrayOfObjects) =>
   flow(
-    compact,
-    uniqBy('value'),
+    compact, // 1) remove falsey
+    uniqBy('value'), // 2) de-dupe on value
     map((obj) => ({
+      // 3) decorate each record
       ...obj,
       readablePath: makeHumanReadable(obj.path),
       matchesSubstring: hasSubstringInValue(obj, entity.value)
     })),
-    sortBy((obj) => -(obj.prevalence || 0)),
-    sortBy((obj) => (obj.matchesSubstring ? 0 : 1)),
-    groupBy('readablePath')
+    sortBy((o) => -(o.prevalence || 0)), // 4) high prevalence first
+    sortBy((o) => (o.matchesSubstring ? 0 : 1)), // 5) hits on entity first
+    groupBy('readablePath'), // 6) → { key: [records] }
+    mapValues((records) => {
+      /* 7) wrap each group:
+                                     {
+                                       data: [ …records ],
+                                       averageLength: <rounded-up mean length of record.value>
+                                     }
+                              */
+      const lengths = records
+        .filter(has('value')) // only items with a `value` field
+        .map((r) => String(r.value).length); // length in characters
+
+      const avg = lengths.length
+        ? Math.ceil(mean(lengths)) // round -> nearest higher int
+        : 0; // empty group → 0
+
+      return { data: records, averageLength: avg };
+    })
   )(arrayOfObjects);
 
+/**
+ * Case-insensitive substring test that gracefully handles non-string
+ * values.
+ *
+ * @param {{value:*}} leaf      – A flattened leaf record.
+ * @param {string}    substring – Text to search for.
+ * @returns {boolean}           – `true` if `substring` occurs in
+ *                                `String(leaf.value)`.
+ *
+ * @example
+ * hasSubstringInValue({ value: 'Hello World' }, 'world'); // → true
+ * hasSubstringInValue({ value: 12345 },        '234');   // → true
+ */
 const hasSubstringInValue = ({ value: val }, substring) =>
   includes(substring.toLowerCase(), (isString(val) ? val : String(val)).toLowerCase());
 
+/**
+ * Converts a dot-separated / snake-cased path such as
+ * `"user.contacts_0.email"` into a nicely capitalised string
+ * `"User Contacts 0 Email"`.
+ *
+ * @param {string} path – Original dot-notation path.
+ * @returns {string}    – Human-readable version.
+ *
+ * @example
+ * makeHumanReadable('user.name');          // → 'User Name'
+ * makeHumanReadable('system.cpu_load_1');  // → 'System Cpu Load 1'
+ */
 const makeHumanReadable = flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase);
 // End Google Threat Intelligence
 
