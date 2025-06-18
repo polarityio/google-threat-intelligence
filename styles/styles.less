@@ -5,17 +5,15 @@
 @polarity-green: #7bc942;
 
 @dark-background: #121212;
-@medium-background: #ECEEF4;
-@light-background: #F9FAFB;
+@medium-background: #eceef4;
+@light-background: #f9fafb;
 @normal-text: #000;
 @link-blue: #1ba8ed;
 @selected-text: #789cea;
 @dimmed-text: #686d79;
-@muted-text: #626C84;
+@muted-text: #626c84;
 @description-shadow: rgba(110, 110, 110, 0.05);
 @association-border: #ededed;
-;
-
 * {
   overflow-wrap: break-word !important;
   word-break: break-word !important;
@@ -104,20 +102,24 @@ span.summary-threshold-message {
 
   .stripe-bg-danger {
     color: white;
-    background: repeating-linear-gradient(45deg,
-    @danger-color,
-    @danger-color 5px,
-    lighten(@danger-color, 5%) 5px,
-    lighten(@danger-color, 5%) 10px) !important;
+    background: repeating-linear-gradient(
+      45deg,
+      @danger-color,
+      @danger-color 5px,
+      lighten(@danger-color, 5%) 5px,
+      lighten(@danger-color, 5%) 10px
+    ) !important;
   }
 
   .stripe-bg-warning {
     color: white;
-    background: repeating-linear-gradient(45deg,
-    @warning-color,
-    @warning-color 5px,
-    lighten(@warning-color, 5%) 5px,
-    lighten(@warning-color, 5%) 10px) !important;
+    background: repeating-linear-gradient(
+      45deg,
+      @warning-color,
+      @warning-color 5px,
+      lighten(@warning-color, 5%) 5px,
+      lighten(@warning-color, 5%) 10px
+    ) !important;
   }
 }
 
@@ -208,7 +210,7 @@ td.positives {
     max-height: 150px;
   }
 
-  &[style*="height"] {
+  &[style*='height'] {
     max-height: unset;
   }
 
@@ -234,7 +236,7 @@ td.positives {
     position: sticky;
     top: 0;
     background-color: #eee;
-    background: #F9FAFB;
+    background: #f9fafb;
     //border-bottom: 1px solid #ddd;
     margin: 0;
     padding: 5px 5px 5px 5px;
@@ -248,7 +250,6 @@ td.positives {
     margin-bottom: 5px;
   }
 }
-
 
 .toggle-header {
   margin-top: 8px;
@@ -317,7 +318,6 @@ td.positives {
     }
   }
 
-
   .right-column {
     flex: 1 1 0;
     flex-direction: column;
@@ -381,6 +381,7 @@ td.positives {
         font-size: 12px;
         line-height: 12px;
         border: 1px solid @association-border;
+        cursor: pointer;
 
         &.active {
           border: 2px solid #7bc942;
@@ -403,7 +404,7 @@ td.positives {
       }
     }
   }
-  
+
   .associations-tabs {
     display: flex;
     flex-direction: column;
@@ -583,15 +584,18 @@ td.positives {
 
             &:hover {
               background-color: #eee;
+              cursor: pointer;
             }
 
             .open-details {
               font-size: 12px;
               color: @dimmed-text;
+              cursor: pointer;
             }
 
             &:active {
               background-color: lighten(#fdfdfd75, 10%);
+              cursor: pointer;
             }
           }
         }
@@ -624,6 +628,8 @@ td.positives {
               .title-content {
                 .name-info {
                   .link {
+                    cursor: pointer;
+
                     .narrow {
                       display: block;
                     }
@@ -712,4 +718,32 @@ h3.p-title {
   ul {
     padding-left: 20px;
   }
+}
+
+.skeleton-loader {
+  background: linear-gradient(55deg, #f8f8f8 25%, #f3f3f3 50%, #f8f8f8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 2s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.no-results-found {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0;
+  background-color: @light-background;
+  border-radius: 4px;
+  border: 1px solid @border-color;
+  color: @dimmed-text;
+  font-size: 14px;
 }

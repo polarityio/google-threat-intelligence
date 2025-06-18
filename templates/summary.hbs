@@ -17,4 +17,29 @@
     <span class="integration-text-color">{{tag}}</span>
   </span>
 {{/each}}
-
+{{#if threatsCount}}
+  <span
+    class="integration-summary-tag integration-background-color integration-border-color"
+    {{on "click" (optional this.scrollToIntegration)}}
+  >
+    <span class="acronym integration-text-bold-color">
+      {{block.acronym}}
+    </span>
+    <span class="integration-text-color">
+      Threats: {{threatsCount}}
+    </span>
+  </span>
+{{/if}}
+{{#if reportsCount}}
+  <span
+    class="integration-summary-tag integration-background-color integration-border-color"
+    {{on "click" (optional this.scrollToIntegration)}}
+  >
+    <span class="acronym integration-text-bold-color">
+      {{block.acronym}}
+    </span>
+    <span class="integration-text-color">
+      Reports: {{reportsCount}}
+    </span>
+  </span>
+{{/if}}
