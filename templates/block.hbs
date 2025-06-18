@@ -2325,7 +2325,7 @@
               {{/if}}
               {{#if reports.length}}
                 <button
-                  class="btn gti-button {{if (eq associationTab "reporting") "active"}}"
+                  class="btn gti-button {{if (or (eq associationTab "reporting")(not threats.length)) "active"}}"
                   {{action "switchAssociationsTab" "reporting"}}
                 >
                   Reporting - {{reports.length}} of {{reportsCount}}
@@ -2893,7 +2893,7 @@
                 {{/each}}
               </div>
             {{/if}}
-            {{#if (eq associationTab "reporting")}}
+            {{#if (or (eq associationTab "reporting")(not threats.length))}}
               <div class="associations-tab reports">
                 {{#each reports as |report reportIndex|}}
                   <div class="association report">
