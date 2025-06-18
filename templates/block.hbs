@@ -2376,26 +2376,26 @@
             <div class="tab-buttons">
               {{#if (or threats.length block.userOptions.showNoResultsAssociations)}}
                 <button
-                  class="btn gti-button {{if (eq associationTab "threats") "active"}}"
+                  class="btn gti-button {{if block._state.loadingThreats "skeleton-loader"}} {{
+                    if (eq associationTab "threats") "active"
+                  }}"
                   {{action "switchAssociationsTab" "threats"}}
                 >
                   Threats
-                  {{#if block._state.loadingThreats}}
-                    - {{fa-icon "spinner-third" spin=true fixedWidth=true}}
-                  {{else if block._state.loadedThreats}}
+                  {{#if block._state.loadedThreats}}
                     - {{threats.length}} of {{threatsCount}}
                   {{/if}}
                 </button>
               {{/if}}
               {{#if (or reports.length block.userOptions.showNoResultsAssociations)}}
                 <button
-                  class="btn gti-button {{if (eq associationTab "reporting") "active"}}"
+                  class="btn gti-button {{if block._state.loadingReports "skeleton-loader"}} {{
+                    if (eq associationTab "reporting") "active"
+                  }}"
                   {{action "switchAssociationsTab" "reporting"}}
                 >
                   Reporting
-                  {{#if block._state.loadingReports}}
-                    - {{fa-icon "spinner-third" spin=true fixedWidth=true}}
-                  {{else if block._state.loadedReports}}
+                  {{#if block._state.loadedReports}}
                     - {{reports.length}} of {{reportsCount}}
                   {{/if}}
                 </button>
@@ -2409,7 +2409,8 @@
                 )
               }}
                 <div class="association-link">
-                  {{fa-icon "spinner-third" spin=true fixedWidth=true}}
+                  <a class="full skeleton-loader" style="width: 100px; height: 14px;"></a>
+                  <a class="narrow skeleton-loader" style="width: 100px; height: 14px;"></a>
                 </div>
               {{else if associationLink}}
                 <div class="association-link">
@@ -2468,16 +2469,90 @@
             </div>
           </div>
           <div class="associations-tabs">
-            {{#if
-              (or
+            {{#if true
+            }}
+              {{!-- (or
                 (and block._state.loadingThreats (eq associationTab "threats"))
                 (and block._state.loadingReports (eq associationTab "reporting"))
-              )
-            }}
-              <div class="association-link">
-                <span class="full">
-                  {{fa-icon "spinner-third" spin=true fixedWidth=true}}
-                </span>
+              ) --}}
+              <div class="associations-tab">
+                <div class="association">
+                  <div class="association-summary">
+                    <div class="title-section">
+                      <div class="title-content">
+                        <div class="threat-type-icon skeleton-loader" style="width: 16px; height: 16px;"></div>
+                        <div class="name-info">
+                          <div class="name-updated">
+                            <div class="name skeleton-loader" style="width: 200px; height: 18px;"></div>
+                          </div>
+                          <div class="modified-date">
+                            <div class="updated skeleton-loader" style="width: 150px; height: 14px;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="association threat">
+                  <div class="association-summary">
+                    <div class="title-section">
+                      <div class="title-content">
+                        <div class="threat-type-icon">
+                          <div class="association-icon skeleton-loader" style="width: 16px; height: 16px;"></div>
+                        </div>
+                        <div class="name-info">
+                          <div class="name-updated">
+                            <div class="name">
+                              <div class="name skeleton-loader" style="width: 200px; height: 18px;"></div>
+                            </div>
+                          </div>
+                          <div class="modified-date">
+                            <div class="updated">
+                              <div class="updated skeleton-loader" style="width: 150px; height: 14px;"></div>
+                            </div>
+                          </div>
+                          <div class="alt-names skeleton-loader" style="width: 200px; height: 18px;"></div>
+                          <div class="link">
+                            <a class="full skeleton-loader" style="width: 100px; height: 14px;"></a>
+                            <a class="narrow skeleton-loader" style="width: 100px; height: 14px;"></a>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="description skeleton-loader" style="width: 100%; height: 100px;"></div>
+
+                    <div class="bottom">
+                      <div class="related-info">
+                        <div class="info">
+                          <div class="title skeleton-loader" style="width: 100px; height: 18px;"></div>
+                          <div class="count skeleton-loader" style="width: 100px; height: 18px;"></div>
+                        </div>
+                        <div class="info">
+                          <div class="title skeleton-loader" style="width: 100px; height: 18px;"></div>
+                          <div class="count skeleton-loader" style="width: 100px; height: 18px;"></div>
+                        </div>
+                        <div class="info">
+                          <div class="title skeleton-loader" style="width: 100px; height: 18px;"></div>
+                          <div class="count skeleton-loader" style="width: 100px; height: 18px;"></div>
+                        </div>
+                        <div class="info">
+                          <div class="title skeleton-loader" style="width: 100px; height: 18px;"></div>
+                          <div class="count skeleton-loader" style="width: 100px; height: 18px;"></div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="open-details-icon">
+                      {{fa-icon
+                        size="lg"
+                        icon="chevron-down"
+                        fixedWidth=true
+                        class="open-details skeleton-loader"
+                      }}
+                    </div>
+                  </div>
+                </div>
               </div>
             {{else if (and block._state.errorThreats (eq associationTab "threats"))}}
               <div class="alert alert-danger mt-2">
@@ -2491,13 +2566,13 @@
                   {{block._state.errorReports}}
                 </pre>
               </div>
-            {{else if (and block._state.loadedThreats (eq threatsCount 0))}}
+            {{else if (and block._state.loadedThreats (eq threats.length 0))}}
               <div class="no-results-found">
-                No Threats found
+                No Threats Found
               </div>
-            {{else if (and block._state.loadedReports (eq reportsCount 0))}}
+            {{else if (and block._state.loadedReports (eq reports.length 0))}}
               <div class="no-results-found">
-                No Reports found
+                No Reports Found
               </div>
             {{else}}
               {{#if (eq associationTab "threats")}}
