@@ -192,6 +192,14 @@ polarity.export = PolarityComponent.extend({
       this.set('block._state', {});
       this.set('block._state.expandedAssociations', {});
       this.set('block._state.expandedVulnerabilities', {});
+      this.set(
+        'block._state.loadedThreats',
+        !this.get('block.userOptions.showNoResultsAssociations')
+      );
+      this.set(
+        'block._state.loadedReports',
+        !this.get('block.userOptions.showNoResultsAssociations')
+      );
     }
 
     if (this.get('details.names.length') <= 10) {
@@ -204,6 +212,50 @@ polarity.export = PolarityComponent.extend({
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));
 
     this._super(...arguments);
+  },
+  getThreats: function () {
+    const payload = {
+      action: 'GET_THREATS',
+      entity: this.get('block.entity')
+    };
+    this.set('block._state.errorThreats', '');
+    this.set('block._state.loadingThreats', true);
+    this.sendIntegrationMessage(payload)
+      .then(({ threatResults }) => {
+        this.set('block.data.details.threats', threatResults.threats);
+        this.set('block.data.details.threatsCount', threatResults.threatsCount);
+
+        this.set('block._state.loadedThreats', true);
+        this.get('block').notifyPropertyChange('data');
+      })
+      .catch((err) => {
+        this.set('block._state.errorThreats', JSON.stringify(err, null, 4));
+      })
+      .finally(() => {
+        this.set('block._state.loadingThreats', false);
+      });
+  },
+  getReports: function () {
+    const payload = {
+      action: 'GET_REPORTS',
+      entity: this.get('block.entity')
+    };
+    this.set('block._state.errorReports', '');
+    this.set('block._state.loadingReports', true);
+    this.sendIntegrationMessage(payload)
+      .then(({ reportResults }) => {
+        this.set('block.data.details.reports', reportResults.reports);
+        this.set('block.data.details.reportsCount', reportResults.reportsCount);
+
+        this.set('block._state.loadedReports', true);
+        this.get('block').notifyPropertyChange('data');
+      })
+      .catch((err) => {
+        this.set('block._state.errorReports', JSON.stringify(err, null, 4));
+      })
+      .finally(() => {
+        this.set('block._state.loadingReports', false);
+      });
   },
   getBehaviors: function () {
     const payload = {
@@ -280,8 +332,16 @@ polarity.export = PolarityComponent.extend({
       });
   },
   actions: {
-    switchAssociationsTab: function (associationType) {
-      this.set('associationTab', associationType);
+    switchAssociationsTab: function (associationTypeName) {
+      this.set('associationTab', associationTypeName);
+
+      if (
+        associationTypeName === 'reporting' &&
+        !this.get('block._state.loadedReports') &&
+        !this.get('block._state.loadingReports')
+      ) {
+        this.getReports();
+      }
     },
     toggleExpandableAssociations: function (associationType, index) {
       this.set(
@@ -347,6 +407,14 @@ polarity.export = PolarityComponent.extend({
         case 'behaviorSummary':
           if (!this.get('block._state.loadedBehaviors')) {
             this.getBehaviors();
+          }
+          break;
+        case 'associations':
+          if (
+            !this.get('block._state.loadedThreats') &&
+            !this.get('block._state.loadingThreats')
+          ) {
+            this.getThreats();
           }
           break;
       }
