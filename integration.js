@@ -33,7 +33,9 @@ const {
   isEmpty,
   omitBy,
   isUndefined,
-  filter
+  filter,
+  has,
+  mean
 } = fp;
 
 const showdown = require('showdown');
@@ -159,10 +161,10 @@ function doLookup(entities, options, cb) {
   let entityLookup = {};
   let hashGroups = [];
   let hashGroup = [];
-  let nonCveOrThreatActorEntities = entities; // [];
+  let nonCveOrThreatActorEntities = [];
   let threatActorsEntities = [];
 
-  Logger.trace(entities);
+  Logger.trace({ entities }, 'Entities');
   const MAX_HASHES_PER_GROUP = options.maxHashesPerGroup;
 
   entities.forEach(function (entity) {
@@ -173,13 +175,41 @@ function doLookup(entities, options, cb) {
       return;
     }
 
-    // if (entity.type === 'custom') {
-    //   if (threatActorNames.includes(entity.value)) {
-    //     threatActorsEntities.push(entity);
-    //   }
-    // } else if (entity.type !== 'cve') {
-    //   nonCveOrThreatActorEntities.push(entity);
-    // }
+    if (
+      entity.types.includes('custom.allText') &&
+      !(
+        entity.isMD5 ||
+        entity.isSHA1 ||
+        entity.isSHA256 ||
+        (entity.isIPv4 && !entity.isPrivateIP && !IGNORED_IPS.has(entity.value)) ||
+        entity.isDomain ||
+        entity.isURL ||
+        entity.types.includes('cve')
+      )
+    ) {
+      // Improved threat actor matching: match full name, case-insensitive, including spaces and symbols, not as substring
+      const threatActorNamesForThisEntity = filter(
+        (threatActorName) =>
+          new RegExp(threatActorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').test(
+            entity.value
+          ),
+        threatActorNames
+      );
+      if (size(threatActorNamesForThisEntity)) {
+        threatActorsEntities.push(
+          ...map(
+            (threatActorNameForThisEntity) => ({
+              ...entity,
+              value: threatActorNameForThisEntity,
+              displayValue: threatActorNameForThisEntity
+            }),
+            threatActorNamesForThisEntity
+          )
+        );
+      }
+    } else if (!entity.types.includes('cve')) {
+      nonCveOrThreatActorEntities.push(entity);
+    }
 
     if (entity.isMD5 || entity.isSHA1 || entity.isSHA256) {
       // VT can only look up 4 or 25 hashes at a time depending on the key type
@@ -316,52 +346,13 @@ function doLookup(entities, options, cb) {
           callback(null, []);
         }
       },
-      // cveLookups: function (callback) {
-      //   if (cveEntities.length > 0) {
-      //     async.concat(
-      //       cveEntities,
-      //       function (entity, concatDone) {
-      //         Logger.debug({ cve: entity.value }, 'Looking up CVE');
-      //         _lookupVulnerabilities(entity, options, concatDone);
-      //       },
-      //       function (err, results) {
-      //         if (err) return callback(err);
-
-      //         callback(null, results);
-      //       }
-      //     );
-      //   } else {
-      //     callback(null, []);
-      //   }
-      // },
-      // threatActorLookups: function (callback) {
-      //   if (threatActorsEntities.length > 0) {
-      //     async.concat(
-      //       threatActorsEntities,
-      //       function (entity, concatDone) {
-      //         Logger.debug(
-      //           { threatActor: entity.value },
-      //           'Looking up Threat Actors by Name'
-      //         );
-      //         _lookupThreatActors(entity, options, concatDone);
-      //       },
-      //       function (err, results) {
-      //         if (err) return callback(err);
-
-      //         callback(null, results);
-      //       }
-      //     );
-      //   } else {
-      //     callback(null, []);
-      //   }
-      // },
-      threatLookups: function (callback) {
-        if (nonCveOrThreatActorEntities.length > 0) {
+      cveLookups: function (callback) {
+        if (cveEntities.length > 0) {
           async.concat(
-            nonCveOrThreatActorEntities,
+            cveEntities,
             function (entity, concatDone) {
-              Logger.debug({ entity: entity.value }, 'Looking up Threats');
-              _lookupThreats(entity, options, concatDone);
+              Logger.debug({ cve: entity.value }, 'Looking up CVE');
+              _lookupVulnerabilities(entity, options, concatDone);
             },
             function (err, results) {
               if (err) return callback(err);
@@ -373,13 +364,16 @@ function doLookup(entities, options, cb) {
           callback(null, []);
         }
       },
-      reportLookups: function (callback) {
-        if (nonCveOrThreatActorEntities.length > 0) {
+      threatActorLookups: function (callback) {
+        if (threatActorsEntities.length > 0) {
           async.concat(
-            nonCveOrThreatActorEntities,
+            threatActorsEntities,
             function (entity, concatDone) {
-              Logger.debug({ entity: entity.value }, 'Looking up Threats');
-              _lookupReports(entity, options, concatDone);
+              Logger.debug(
+                { threatActor: entity.value },
+                'Looking up Threat Actors by Name'
+              );
+              _lookupThreatActors(entity, options, concatDone);
             },
             function (err, results) {
               if (err) return callback(err);
@@ -404,9 +398,9 @@ function doLookup(entities, options, cb) {
         'hashLookups',
         'ipLookups',
         'domainLookups',
-        'urlLookups'
-        // 'cveLookups',
-        // 'threatActorLookups'
+        'urlLookups',
+        'cveLookups',
+        'threatActorLookups'
       ].forEach((key) =>
         lookupResults[key].forEach(function (lookupResult) {
           if (lookupResult && lookupResult.data && lookupResult.data.details) {
@@ -421,16 +415,10 @@ function doLookup(entities, options, cb) {
         })
       );
 
-      const finalLookupResults = flow(
-        mapValues((lookupResult) =>
-          addThreatsAndReportsToLookupResult(lookupResult, lookupResults)
-        ),
-        values
-      )(combinedResults);
 
       pendingLookupCache.logStats();
 
-      cb(null, finalLookupResults);
+      cb(null, combinedResults);
     }
   );
 }
@@ -455,9 +443,6 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
         details: {}
       };
     }
-    lookupResult.data.summary = lookupResult.data.summary.concat(
-      `Threats: ${threatsCount}`
-    );
     lookupResult.data.details.threats = threats;
     lookupResult.data.details.threatsCount = threatsCount;
     lookupResult.data.details.threatsCursor = threatsCursor;
@@ -490,9 +475,10 @@ const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
     lookupResult.data.details.reportsCursor = reportsCursor;
   }
 
-  lookupResult.data.details.associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
-    lookupResult.entity
-  )}`;
+  if (lookupResult.data && lookupResult.data.details)
+    lookupResult.data.details.associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
+      lookupResult.entity
+    )}`;
 
   if (
     get('data.summary', lookupResult) &&
@@ -764,28 +750,236 @@ const _lookupVulnerabilities = (entity, options, done) => {
   Logger.trace({ requestOptions }, 'Request Options');
 
   requestWithDefaults(requestOptions, function (err, response, body) {
-    _handleRequestError(err, response, body, options, function (err, result) {
+    _handleRequestError(err, response, body, options, function (err, responseBody) {
       if (err) {
         Logger.error(err, 'Error Searching Vulnerabilities');
         return done(err);
       }
-      if (!get('data.length', result)) return done(null, { entity, data: null });
+      if (!get('data.length', responseBody)) return done(null, { entity, data: null });
 
-      Logger.trace({ result }, 'Result of Vulnerabilities Lookup');
+      Logger.trace({ responseBody }, 'Response Body of Vulnerabilities Lookup');
+
+      const details = {
+        vulnerabilities: formatVulnerabilities(responseBody)
+      };
 
       const vulnerabilitiesLookupResult = {
         entity,
         data: {
-          summary: [`Vulns: ${result.data.length}`],
-          details: {
-            vulnerabilities: flow(get('data'), map('attributes'))(result)
-          }
+          summary: _getVulnSummaryTags(details),
+          details
         }
       };
 
       done(null, vulnerabilitiesLookupResult);
     });
   });
+};
+
+const formatVulnerabilities = (vulnerabilitiesResponseBody) =>
+  flow(
+    get('data'),
+    map((vulnerability) => ({
+      ...vulnerability.attributes,
+      id: vulnerability.id,
+      relationships: vulnerability.relationships,
+      // Core description and metadata
+      htmlDescription: convertMarkdownToHtml(vulnerability.attributes.description),
+      htmlAnalysis: convertMarkdownToHtml(vulnerability.attributes.analysis),
+      htmlExecutiveSummary: convertMarkdownToHtml(
+        vulnerability.attributes.executive_summary
+      ),
+      confidenceGroupedData: groupByConfidence(vulnerability.attributes),
+
+      // Timeline information (dates in ms)
+      date_of_disclosure: vulnerability.attributes.date_of_disclosure
+        ? vulnerability.attributes.date_of_disclosure * 1000
+        : null,
+      exploitation: {
+        ...vulnerability.attributes.exploitation,
+        first_exploitation: vulnerability.attributes.exploitation?.first_exploitation
+          ? vulnerability.attributes.exploitation.first_exploitation * 1000
+          : null
+      },
+      cisa_known_exploited: vulnerability.attributes.cisa_known_exploited
+        ? {
+            ...vulnerability.attributes.cisa_known_exploited,
+            added_date: vulnerability.attributes.cisa_known_exploited.added_date
+              ? vulnerability.attributes.cisa_known_exploited.added_date * 1000
+              : null,
+            due_date: vulnerability.attributes.cisa_known_exploited.due_date
+              ? vulnerability.attributes.cisa_known_exploited.due_date * 1000
+              : null
+          }
+        : null,
+
+      // Identifiers and classification
+      cve_id: vulnerability.attributes.cve_id,
+      mve_id: vulnerability.attributes.mve_id,
+      cwe: vulnerability.attributes.cwe || {},
+
+      // Risk assessment
+      risk_rating: vulnerability.attributes.risk_rating,
+      predicted_risk_rating: vulnerability.attributes.predicted_risk_rating,
+      priority: vulnerability.attributes.priority,
+
+      // CVSS scoring (improved to handle different versions)
+      cvssScore: flow((attrs) => {
+        const cvss3Score =
+          get('cvss.cvssv3_1.base_score', attrs) ||
+          get('cvss.cvssv3_x.base_score', attrs);
+        const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
+        return cvss3Score || cvss2Score || null;
+      })(vulnerability.attributes),
+      cvssVector: flow((attrs) => {
+        const cvss3Vector =
+          get('cvss.cvssv3_1.vector', attrs) || get('cvss.cvssv3_x.vector', attrs);
+        const cvss2Vector = get('cvss.cvssv2_0.vector', attrs);
+        return cvss3Vector || cvss2Vector || null;
+      })(vulnerability.attributes),
+
+      // Enhanced severity calculation
+      severity: flow((attrs) => {
+        const cvss3Score =
+          get('cvss.cvssv3_1.base_score', attrs) ||
+          get('cvss.cvssv3_x.base_score', attrs);
+        const cvss2Score = get('cvss.cvssv2_0.base_score', attrs);
+        const score = cvss3Score || cvss2Score;
+
+        if (!score) return 'Unknown';
+        if (score >= 9.0) return 'Critical';
+        if (score >= 7.0) return 'High';
+        if (score >= 4.0) return 'Medium';
+        return 'Low';
+      })(vulnerability.attributes),
+
+      // Exploitation status and metrics
+      exploitation_state: vulnerability.attributes.exploitation_state,
+      exploit_availability: vulnerability.attributes.exploit_availability,
+      exploitabilityMetrics: flow((attrs) => ({
+        epssScore: get('epss.score', attrs)
+          ? parseFloat(get('epss.score', attrs).toFixed(5))
+          : 0,
+        epssPercentile: get('epss.percentile', attrs)
+          ? parseFloat(get('epss.percentile', attrs) * 100).toFixed(2)
+          : 0,
+        hasExploit: !!(
+          get('exploitation.exploit_release_date', attrs) ||
+          get('cisa_known_exploited', attrs) ||
+          get('exploitation_state', attrs) === 'exploited'
+        ),
+        daysToExploit: flow((attrs) => {
+          const firstExploit = get('exploitation.first_exploitation', attrs);
+          const techDetails = get('exploitation.tech_details_release_date', attrs);
+          const disclosure = get('date_of_disclosure', attrs);
+
+          if (firstExploit && techDetails) {
+            return Math.floor((firstExploit - techDetails) / (24 * 60 * 60));
+          } else if (firstExploit && disclosure) {
+            return Math.floor((firstExploit - disclosure) / (24 * 60 * 60));
+          }
+          return null;
+        })(attrs)
+      }))(vulnerability.attributes),
+
+      // Impact and consequences
+      exploitation_consequence: vulnerability.attributes.exploitation_consequence,
+      exploitation_vectors: vulnerability.attributes.exploitation_vectors || [],
+
+      // Affected systems and products
+      cpes: vulnerability.attributes.cpes || [],
+
+      // Targeting information
+      targetedIndustryNames: flow(
+        get('targeted_industries'),
+        uniq,
+        compact
+      )(vulnerability.attributes),
+
+      // Mitigation and remediation
+      available_mitigation: vulnerability.attributes.available_mitigation || [],
+      mitigationDetails: flow(
+        get('vendor_fix_references'),
+        map((fix) => ({
+          ...fix,
+          published_date: fix.published_date
+            ? fix.published_date * 1000
+            : fix.published_date
+        }))
+      )(vulnerability.attributes),
+      timeToMitigation: flow((attrs) => {
+        const exploitDate = get('exploitation.first_exploitation', attrs);
+        const fixDate = flow(get('vendor_fix_references'), (fixes) =>
+          fixes && fixes.length
+            ? Math.min(
+                ...fixes
+                  .map((f) => (get('published_date', f) ? f.published_date : null))
+                  .filter(Boolean)
+              )
+            : null
+        )(attrs);
+
+        if (exploitDate && fixDate) {
+          return Math.floor((exploitDate - fixDate) / (24 * 60 * 60));
+        }
+
+        return null;
+      })(vulnerability.attributes),
+
+      // Additional metadata
+      tags: vulnerability.attributes.tags || [],
+      sources: vulnerability.attributes.sources || [],
+
+      // Enhanced impact summary
+      impactSummary: flow(
+        (attrs) => ({
+          systems: get('affected_systems', attrs) || [],
+          consequence: get('exploitation_consequence', attrs),
+          priority: get('priority', attrs),
+          riskRating: get('risk_rating', attrs),
+          cvssScore:
+            get('cvss.cvssv3_1.base_score', attrs) ||
+            get('cvss.cvssv3_x.base_score', attrs) ||
+            get('cvss.cvssv2_0.base_score', attrs),
+          hasPublicExploit: !!(
+            get('exploitation.exploit_release_date', attrs) ||
+            get('cisa_known_exploited', attrs)
+          ),
+          epssScore: get('epss.score', attrs)
+        }),
+        (impact) => ({
+          ...impact,
+          summary: compact([
+            impact.riskRating ? `${impact.riskRating} Risk` : null,
+            impact.priority,
+            impact.cvssScore ? `CVSS ${impact.cvssScore}` : null,
+            impact.hasPublicExploit ? 'Public Exploit' : null,
+            impact.epssScore ? `EPSS ${(impact.epssScore * 100).toFixed(1)}%` : null,
+            impact.consequence,
+            impact.systems.length
+              ? `Affects ${impact.systems.slice(0, 3).join(', ')}${
+                  impact.systems.length > 3 ? '...' : ''
+                }`
+              : null
+          ]).join(' • ')
+        })
+      )(vulnerability.attributes)
+    }))
+  )(vulnerabilitiesResponseBody);
+
+const _getVulnSummaryTags = (details) => {
+  if (details.vulnerabilities.length === 1 && details.vulnerabilities[0].risk_rating) {
+    return [`Risk: ${details.vulnerabilities[0].risk_rating}`];
+  }
+
+  if (
+    details.vulnerabilities.length === 1 &&
+    details.vulnerabilities[0].predicted_risk_rating
+  ) {
+    return [`Risk: ${details.vulnerabilities[0].predicted_risk_rating}`];
+  }
+
+  return [`Vulns: ${details.vulnerabilities.length}`];
 };
 
 const _lookupThreatActors = (entity, options, done) => {
@@ -805,21 +999,21 @@ const _lookupThreatActors = (entity, options, done) => {
   Logger.trace({ requestOptions }, 'Request Options');
 
   requestWithDefaults(requestOptions, function (err, response, body) {
-    _handleRequestError(err, response, body, options, function (err, result) {
+    _handleRequestError(err, response, body, options, function (err, responseBody) {
       if (err) {
         Logger.error(err, 'Error Searching Threat Actors');
         return done(err);
       }
-      if (!get('data.length', result)) return done(null, { entity, data: null });
+      if (!get('data.length', responseBody)) return done(null, { entity, data: null });
 
-      Logger.trace({ result }, 'Result of Threat Actors Lookup');
+      Logger.trace({ responseBody }, 'Result of Threat Actors Lookup');
 
       const threatActorsLookupResult = {
         entity,
         data: {
-          summary: [`Threat Actors: ${get('data.length', result)}`],
+          summary: [`Threat Actors: ${get('data.length', responseBody)}`],
           details: {
-            threatActors: flow(get('data'), map('attributes'))(result)
+            threatActors: formatThreatActors(responseBody)
           }
         }
       };
@@ -829,212 +1023,319 @@ const _lookupThreatActors = (entity, options, done) => {
   });
 };
 
-const _lookupThreats = (entity, options, done) => {
-  Logger.trace({ entity }, 'Searching Threats');
+const formatThreatActors = (threatActorsResponseBody) =>
+  flow(
+    get('data'),
+    map((threatActor) => ({
+      ...threatActor.attributes,
+      id: threatActor.id,
+      relationships: threatActor.relationships,
+      targetedIndustryNames: flow(
+        get('targeted_industries_tree'),
+        map(({ industry_group, industry }) =>
+          size(industry_group) > size(industry) ? industry_group : industry
+        ),
+        uniq,
+        compact
+      )(threatActor.attributes),
+      targetedRegionNames: flow(
+        get('targeted_regions_hierarchy'),
+        map((region) => {
+          const country = region.country || region.country_iso2 || '';
+          const subRegion = region.sub_region || region.region || '';
+          if (country && subRegion) {
+            return `${country}, ${subRegion}`;
+          } else if (country) {
+            return country;
+          } else if (subRegion) {
+            return subRegion;
+          } else {
+            return '';
+          }
+        }),
+        compact
+      )(threatActor.attributes),
+      htmlDescription: convertMarkdownToHtml(threatActor.attributes.description),
+      confidenceGroupedData: groupByConfidence(threatActor.attributes),
+      first_seen: threatActor.attributes.first_seen
+        ? threatActor.attributes.first_seen * 1000
+        : threatActor.attributes.first_seen,
+      last_seen: threatActor.attributes.last_seen
+        ? threatActor.attributes.last_seen * 1000
+        : threatActor.attributes.last_seen,
+      last_modification_date: threatActor.attributes.last_modification_date
+        ? threatActor.attributes.last_modification_date * 1000
+        : threatActor.attributes.last_modification_date
+    }))
+  )(threatActorsResponseBody);
 
-  const { route, queryParams } = getGtiRequestOptionsByType(entity, 'associations');
+const lookupThreatsAsync = async (entity, options) =>
+  new Promise((resolve, reject) => {
+    Logger.trace({ entity }, 'Searching Threats');
 
-  const requestOptions = {
-    url: `https://www.virustotal.com/api/v3/${route}`,
-    ...(queryParams && { qs: queryParams }),
-    headers: { 'x-apikey': options.apiKey },
-    json: true
-  };
+    const { route, queryParams } = getGtiRequestOptionsByType(entity, 'associations');
 
-  Logger.trace({ requestOptions }, 'Request Options');
+    const requestOptions = {
+      url: `https://www.virustotal.com/api/v3/${route}`,
+      ...(queryParams && { qs: queryParams }),
+      headers: { 'x-apikey': options.apiKey },
+      json: true
+    };
 
-  requestWithDefaults(requestOptions, function (err, response, body) {
-    _handleRequestError(err, response, body, options, function (err, result) {
-      if (err) {
-        Logger.error(err, 'Error Searching Threats');
-        return done(err);
-      }
-      if (!get('data.length', result))
-        return done(null, { entity, threats: [], threatsCount: 0, threatsCursor: '' });
+    Logger.trace({ requestOptions }, 'Request Options');
 
-      Logger.trace({ result }, 'Result of Threats Lookup');
+    requestWithDefaults(requestOptions, function (err, response, body) {
+      _handleRequestError(err, response, body, options, function (err, responseBody) {
+        if (err) {
+          Logger.error(err, 'Error Searching Threats');
+          reject(err);
+        }
+        if (!get('data.length', responseBody)) {
+          resolve({ threats: [], threatsCount: 0, threatsCursor: '' });
+        }
 
-      const formattedThreats = flow(
-        get('data'),
-        map((threat) => ({
-          ...threat.attributes,
-          id: threat.id,
-          relationships: threat.relationships,
-          motivationNames: map('value', threat.attributes.motivations),
-          targetedIndustryNames: map(
-            ({ industry_group, industry }) =>
-              size(industry_group) > size(industry) ? industry_group : industry,
-            threat.attributes.targeted_industries_tree
-          ),
-          targetedRegionNames: flow(
-            map((region) =>
-              region.country || region.country_iso2 || region.sub_region || region.region
-                ? `${region.country || region.country_iso2}${
-                    (region.country || region.country_iso2) &&
-                    (region.sub_region || region.region)
-                      ? ', '
-                      : ''
-                  }${region.sub_region || region.region}`
-                : null
-            ),
-            compact
-          )(threat.attributes.targeted_regions_hierarchy),
-          htmlDescription: convertMarkdownToHtml(threat.attributes.description),
-          confidenceGroupedData: groupByConfidence(threat.attributes),
-          categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
-          creation_date: threat.attributes.creation_date
-            ? threat.attributes.creation_date * 1000
-            : threat.attributes.creation_date,
-          last_modification_date: threat.attributes.last_modification_date
-            ? threat.attributes.last_modification_date * 1000
-            : threat.attributes.last_modification_date
-        }))
-      )(result);
+        Logger.trace({ responseBody }, 'Response Body of Threats Lookup');
 
-      done(null, {
-        entity,
-        threats: formattedThreats,
-        threatsCount: get('meta.count', result),
-        threatsCursor: get('meta.cursor', result)
+        const formattedThreats = formatThreats(entity, responseBody);
+
+        resolve({
+          threats: formattedThreats,
+          threatsCount: get('meta.count', responseBody),
+          threatsCursor: get('meta.cursor', responseBody)
+        });
       });
     });
   });
-};
 
-const _lookupReports = (entity, options, done) => {
-  Logger.trace({ entity }, 'Searching Reports');
+const formatThreats = (entity, threatsResponseBody) =>
+  flow(
+    get('data'),
+    map((threat) => {
+      let formattedThreat = {
+        ...threat.attributes,
+        id: threat.id,
+        relationships: threat.relationships,
+        motivationNames: map('value', threat.attributes.motivations),
+        targetedIndustryNames: map(
+          ({ industry_group, industry }) =>
+            size(industry_group) > size(industry) ? industry_group : industry,
+          threat.attributes.targeted_industries_tree
+        ),
+        targetedRegionNames: flow(
+          map((region) => {
+            const country = region.country || region.country_iso2 || '';
+            const subRegion = region.sub_region || region.region || '';
+            if (country && subRegion) {
+              return `${country}, ${subRegion}`;
+            } else if (country) {
+              return country;
+            } else if (subRegion) {
+              return subRegion;
+            } else {
+              return '';
+            }
+          }),
+          compact
+        )(threat.attributes.targeted_regions_hierarchy),
+        htmlDescription: convertMarkdownToHtml(threat.attributes.description),
+        confidenceGroupedData: groupByConfidence(threat.attributes),
+        categorizedIocs: flattenWithPaths(entity, threat.attributes.aggregations),
+        creation_date: threat.attributes.creation_date
+          ? threat.attributes.creation_date * 1000
+          : threat.attributes.creation_date,
+        last_modification_date: threat.attributes.last_modification_date
+          ? threat.attributes.last_modification_date * 1000
+          : threat.attributes.last_modification_date
+      };
+      // The original `aggregations` property is not used in the template.  Instead, we use the
+      // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+      // original aggregations which can be an extremely large object.
+      delete formattedThreat.aggregations;
+      return formattedThreat;
+    })
+  )(threatsResponseBody);
 
-  const { route, queryParams } = getGtiRequestOptionsByType(entity, 'reports');
+const lookupReportsAsync = async (entity, options) =>
+  new Promise((resolve, reject) => {
+    Logger.trace({ entity }, 'Searching Reports');
 
-  const requestOptions = {
-    url: `https://www.virustotal.com/api/v3/${route}`,
-    ...(queryParams && { qs: queryParams }),
-    headers: { 'x-apikey': options.apiKey },
-    json: true
-  };
+    const { route, queryParams } = getGtiRequestOptionsByType(entity, 'reports');
 
-  Logger.trace({ requestOptions }, 'Request Options');
+    const requestOptions = {
+      url: `https://www.virustotal.com/api/v3/${route}`,
+      ...(queryParams && { qs: queryParams }),
+      headers: { 'x-apikey': options.apiKey },
+      json: true
+    };
 
-  requestWithDefaults(requestOptions, function (err, response, body) {
-    _handleRequestError(err, response, body, options, function (err, result) {
-      if (err) {
-        Logger.error(err, 'Error Searching Reports');
-        return done(err);
-      }
-      if (!get('data.length', result))
-        return done(null, { entity, reports: [], reportsCount: 0, reportsCursor: '' });
+    Logger.trace({ requestOptions }, 'Request Options');
 
-      Logger.trace({ result }, 'Result of Reports Lookup');
+    requestWithDefaults(requestOptions, function (err, response, body) {
+      _handleRequestError(
+        err,
+        response,
+        body,
+        options,
+        function (err, responseBody) {
+          if (err) {
+            Logger.error(err, 'Error Searching Reports');
+            reject(err);
+          }
+          if (!get('data.length', responseBody))
+            resolve({ reports: [], reportsCount: 0, reportsCursor: '' });
 
-      const reports = flow(
-        get('data'),
-        map((report) => ({
-          ...report.attributes,
-          id: report.id,
-          relationships: report.relationships,
-          htmlDescription: convertMarkdownToHtml(report.attributes.description),
-          targetedIndustryNames: map(
-            ({ industry_group, industry }) =>
-              size(industry_group) > size(industry) ? industry_group : industry,
-            report.attributes.targeted_industries_tree
-          ),
-          targetedRegionNames: flow(
-            map((region) =>
-              region.country || region.country_iso2 || region.sub_region || region.region
-                ? `${region.country || region.country_iso2}${
-                    (region.country || region.country_iso2) &&
-                    (region.sub_region || region.region)
-                      ? ', '
-                      : ''
-                  } ${region.sub_region || region.region}`
-                : null
-            ),
-            compact
-          )(report.attributes.targeted_regions_hierarchy),
-          confidenceGroupedData: groupByConfidence(report.attributes),
-          categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
-          creation_date: report.attributes.creation_date
-            ? report.attributes.creation_date * 1000
-            : report.attributes.creation_date,
-          last_modification_date: report.attributes.last_modification_date
-            ? report.attributes.last_modification_date * 1000
-            : report.attributes.last_modification_date
-        }))
-      )(result);
+          Logger.trace({ responseBody }, 'ResponseBody of Reports Lookup');
 
-      done(null, {
-        entity,
-        reports,
-        reportsCount: get('meta.count', result),
-        reportsCursor: get('meta.cursor', result)
-      });
+          const formattedReports = formatReports(entity, responseBody);
+
+          resolve({
+            reports: formattedReports,
+            reportsCount: get('meta.count', responseBody),
+            reportsCursor: get('meta.cursor', responseBody)
+          });
+        }
+      );
     });
   });
-};
+
+const formatReports = (entity, reportsResponseBody) =>
+  flow(
+    get('data'),
+    map((report) => {
+      let formattedReport = {
+        ...report.attributes,
+        id: report.id,
+        relationships: report.relationships,
+        htmlDescription: convertMarkdownToHtml(report.attributes.description),
+        targetedIndustryNames: map(
+          ({ industry_group, industry }) =>
+            size(industry_group) > size(industry) ? industry_group : industry,
+          report.attributes.targeted_industries_tree
+        ),
+        targetedRegionNames: flow(
+          map((region) => {
+            const country = region.country || region.country_iso2 || '';
+            const subRegion = region.sub_region || region.region || '';
+            if (country && subRegion) {
+              return `${country}, ${subRegion}`;
+            } else if (country) {
+              return country;
+            } else if (subRegion) {
+              return subRegion;
+            } else {
+              return '';
+            }
+          }),
+          compact
+        )(report.attributes.targeted_regions_hierarchy),
+        confidenceGroupedData: groupByConfidence(report.attributes),
+        categorizedIocs: flattenWithPaths(entity, report.attributes.aggregations),
+        creation_date: report.attributes.creation_date
+          ? report.attributes.creation_date * 1000
+          : report.attributes.creation_date,
+        last_modification_date: report.attributes.last_modification_date
+          ? report.attributes.last_modification_date * 1000
+          : report.attributes.last_modification_date
+      };
+
+      // The original `aggregations` property is not used in the template.  Instead, we use the
+      // flattened `categorizedIocs` property.  To reduce the amount of data returned we remove the
+      // original aggregations which can be an extremely large object.
+      delete formattedReport.aggregations;
+      return formattedReport;
+    })
+  )(reportsResponseBody);
 
 const queryParams = {
   limit: GTI_LOOKUP_LIMIT,
   relationships: 'subscription_preferences,owner,malware_families,threat_actors'
 };
 
-const getGtiRequestOptionsByType = (entity, relationship) =>
-  ({
-    IPv4: {
+const getGtiRequestOptionsByType = (entity, relationship) => {
+  if (entity.isIP) {
+    return {
       route: `ip_addresses/${entity.value}/${relationship}`,
       queryParams
-    },
-    domain: {
+    };
+  }
+
+  if (entity.isDomain) {
+    return {
       route: `domains/${entity.value}/${relationship}`,
       queryParams
-    },
-    url: {
+    };
+  }
+
+  if (entity.isURL) {
+    return {
       route: `urls/${entity.value}/${relationship}`,
       queryParams
-    },
-    hash: {
+    };
+  }
+
+  if (entity.isHash) {
+    return {
       route: `files/${entity.value}/${relationship}`,
       queryParams
-    }
-  }[entity.isHash ? 'hash' : entity.type]);
+    };
+  }
+};
 
 const getUiUrlByEntityType = (entity) =>
   ({
     IPv4: `ip-address/${entity.value}/associations`,
     domain: `domain/${entity.value}/associations`,
     url: `url/${entity.value}/associations`,
-    hash: `file/${entity.value}/associations`
+    hash: `file/${entity.value}/associations`,
+    cve: `file/${entity.value}/associations`,
+    custom: `collection/${entity.value}/associations`
   }[entity.isHash ? 'hash' : entity.type]);
 
-const groupByConfidence = (threat) => {
-  const groupedMotivations = groupBy('confidence', threat.motivations);
-  const groupedTags = groupBy('confidence', threat.tags_details);
-  const groupedMalwareRoles = groupBy('confidence', threat.malware_roles);
-  const groupedAvailableMitigation = groupBy('confidence', threat.available_mitigation);
-  const groupedVendorFixReferences = groupBy('confidence', threat.vendor_fix_references);
-  const groupedSourceRegions = groupBy('confidence', threat.source_regions_hierarchy);
-  const groupedTargetedRegions = groupBy('confidence', threat.targeted_regions_hierarchy);
-  const groupedTargetedIndustries = groupBy(
-    'confidence',
-    threat.targeted_industries_tree
+const groupByConfidence = (association) => {
+  const hasConfidenceArray = (association, property) =>
+    isArray(association[property]) &&
+    size(association[property]) > 0 &&
+    isPlainObject(association[property][0]) &&
+    some(
+      (obj) => obj && isPlainObject(obj) && has('confidence', obj),
+      association[property]
+    );
+
+  const confidenceFields = [
+    'motivations',
+    'tags_details',
+    'malware_roles',
+    'available_mitigation',
+    'vendor_fix_references',
+    'source_regions_hierarchy',
+    'targeted_regions_hierarchy',
+    'targeted_industries_tree',
+    'merged_actors'
+  ];
+
+  const groupedConfidenceData = reduce(
+    (agg, field) => ({
+      ...agg,
+      ...(hasConfidenceArray(association, field) && {
+        [field]: groupBy('confidence', association[field])
+      })
+    }),
+    {},
+    confidenceFields
   );
 
+  // Collect all unique confidence values across all groupings
   const uniqueConfidences = flow(
-    assign(groupedMotivations),
-    assign(groupedTags),
-    assign(groupedMalwareRoles),
-    assign(groupedAvailableMitigation),
-    assign(groupedVendorFixReferences),
-    assign(groupedSourceRegions),
-    assign(groupedTargetedRegions),
-    assign(groupedTargetedIndustries),
+    reduce((acc, field) => assign(acc, groupedConfidenceData[field]), {}),
     mapValues((val) => (isEmpty(val) ? undefined : val)),
     omitBy(isUndefined),
     keys,
     uniq
-  )({});
+  )(confidenceFields);
 
   if (!size(uniqueConfidences)) return;
 
+  // For each confidence, collect values from each field in the specified order
   const threatsGroupedByConfidence = reduce(
     (agg, confidence) => {
       const getUniqueValuesInGroup = flow(
@@ -1047,6 +1348,13 @@ const groupByConfidence = (threat) => {
 
       const formatRegion = flow(
         get(confidence),
+        filter(
+          (x) =>
+            !['null', null, 'undefined', undefined].includes(x.country) &&
+            !['null', null, 'undefined', undefined].includes(x.country_iso2) &&
+            !['null', null, 'undefined', undefined].includes(x.sub_region) &&
+            !['null', null, 'undefined', undefined].includes(x.region)
+        ),
         map(
           (region) =>
             `${region.country || region.country_iso2}${
@@ -1057,51 +1365,65 @@ const groupByConfidence = (threat) => {
             } ${region.sub_region || region.region}`
         ),
         uniq,
-        filter((x) => !['null', null, 'undefined', undefined].includes(x)),
         compact
       );
 
-      const motivationsContent = getUniqueValuesInGroup(groupedMotivations);
+      const motivationsContent = getUniqueValuesInGroup(
+        groupedConfidenceData.motivations
+      );
       const motivations = size(motivationsContent) && {
         motivations: motivationsContent
       };
 
-      const tags = size(groupedTags) && { tags: getUniqueValuesInGroup(groupedTags) };
+      const tags = size(groupedConfidenceData.tags_details) && {
+        tags: getUniqueValuesInGroup(groupedConfidenceData.tags_details)
+      };
 
-      const malwareRolesContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const malwareRolesContent = getUniqueValuesInGroup(
+        groupedConfidenceData.malware_roles
+      );
       const malwareRoles = size(malwareRolesContent) && {
         malwareRoles: malwareRolesContent
       };
-      const availableMitigationContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const availableMitigationContent = getUniqueValuesInGroup(
+        groupedConfidenceData.available_mitigation
+      );
       const availableMitigation = size(availableMitigationContent) && {
         availableMitigation: availableMitigationContent
       };
-      const vendorFixReferencesContent = getUniqueValuesInGroup(groupedMalwareRoles);
+      const vendorFixReferencesContent = getUniqueValuesInGroup(
+        groupedConfidenceData.vendor_fix_references
+      );
       const vendorFixReferences = size(vendorFixReferencesContent) && {
         vendorFixReferences: vendorFixReferencesContent
       };
 
-      const sourceRegionsContent = formatRegion(groupedSourceRegions);
+      const sourceRegionsContent = formatRegion(
+        groupedConfidenceData.source_regions_hierarchy
+      );
       const sourceRegions = size(sourceRegionsContent) && {
         sourceRegions: sourceRegionsContent
       };
 
-      const targetedRegionsContent = formatRegion(groupedTargetedRegions);
+      const targetedRegionsContent = formatRegion(
+        groupedConfidenceData.targeted_regions_hierarchy
+      );
       const targetedRegions = size(targetedRegionsContent) && {
         targetedRegions: targetedRegionsContent
       };
 
-      const targetedIndustriesContent = flow(
-        get(confidence),
-        map(({ industry_group, industry }) =>
-          size(industry_group) > size(industry) ? industry_group : industry
-        ),
-        uniq,
-        compact
-      )(groupedTargetedIndustries);
-
-      const targetedIndustries = size(targetedIndustriesContent) && {
+      const targetedIndustriesContent = getUniqueValuesInGroup(
+        groupedConfidenceData.targeted_industries_tree
+      );
+      const targetedIndustries = size(groupedConfidenceData.targeted_industries_tree) && {
         targetedIndustries: targetedIndustriesContent
+      };
+
+      const mergedActorsContent = getUniqueValuesInGroup(
+        groupedConfidenceData.merged_actors
+      );
+      const mergedActors = size(mergedActorsContent) && {
+        mergedActors: mergedActorsContent
       };
 
       return {
@@ -1114,7 +1436,8 @@ const groupByConfidence = (threat) => {
           ...vendorFixReferences,
           ...sourceRegions,
           ...targetedRegions,
-          ...targetedIndustries
+          ...targetedIndustries,
+          ...mergedActors
         }
       };
     },
@@ -1125,7 +1448,77 @@ const groupByConfidence = (threat) => {
   return threatsGroupedByConfidence;
 };
 
+/**
+ * Recursively walks an arbitrarily-nested object/array, “lifts” every
+ * **leaf** node into a flat list while preserving its dot-notation path,
+ * then ranks and groups those leaves into a convenient, UI-ready shape.
+ *
+ * The final structure is an object whose **keys** are human-readable
+ * versions of each path (e.g. `"User Name"`), and whose **values** look
+ * like:
+ *
+ * ```ts
+ * {
+ *   data:            Array<FlattenedLeaf>,
+ *   averageLength:   number   // ⬆︎ ceil( mean( String(value).length ) )
+ * }
+ * ```
+ *
+ * where `FlattenedLeaf` may contain:
+ *
+ * * `value` or `values` — the original primitive / array / shallow object
+ * * `path`             — dot-notation path inside the source object
+ * * `readablePath`     — Pretty casing of `path`
+ * * `matchesSubstring` — `true` if `value` contains `entity.value`
+ * * `prevalence`       — optional business metric used for sorting
+ *
+ * @param {Object} entity
+ *        Arbitrary object that at least has a **`value`** property.
+ *        Its `value` is used to highlight / prioritise matching leaves.
+ * @param {(Object|Array)} obj
+ *        The data structure you want to flatten.
+ * @returns {Object.<string, {data:Array<Object>, averageLength:number}>}
+ *
+ * @example
+ * const entity = { value: 'email' };
+ * const src = {
+ *   user: {
+ *     name: 'Alice',
+ *     contacts: [
+ *       { type: 'email',  value: 'a@example.com' },
+ *       { type: 'phone',  value: '555-0101' }
+ *     ]
+ *   }
+ * };
+ *
+ * flattenWithPaths(entity, src);
+ * // → {
+ * //   'User Name': {
+ * //     data: [{
+ * //       value: 'Alice',
+ * //       path: 'user.name',
+ * //       readablePath: 'User Name',
+ * //       matchesSubstring: false
+ * //     }],
+ * //     averageLength: 5
+ * //   },
+ * //   'User Contacts': {
+ * //     data: [
+ * //       { type:'email', value:'a@example.com', path:'user.contacts',
+ * //         readablePath:'User Contacts', matchesSubstring:true },
+ * //       { type:'phone', value:'555-0101',      path:'user.contacts',
+ * //         readablePath:'User Contacts', matchesSubstring:false }
+ * //     ],
+ * //     averageLength: 11
+ * //   }
+ * // }
+ */
 const flattenWithPaths = (entity, obj) => {
+  // Convert empty object to a null value to make it easier to skip in the template
+  if (Object.keys(obj).length === 0) {
+    return null;
+  }
+
   const traverse = curry((path, val) => {
     const isPlainObjectWithNoNested =
       isPlainObject(val) && !some((v) => isPlainObject(v) || isArray(v), values(val));
@@ -1171,23 +1564,91 @@ const flattenWithPaths = (entity, obj) => {
   return sortedListOfValues;
 };
 
+/**
+ * Takes the flat list produced by `traverse`, decorates each record with
+ * extra metadata, removes duplicates, sorts by *entity relevance* and
+ * *prevalence*, then groups by a prettified path.
+ * It also calculates **`averageLength`** for every group and wraps the
+ * records under a `data` key.
+ *
+ * @private
+ * @param {Object} entity
+ *        Same `entity` object passed to `flattenWithPaths`.
+ * @param {Array<Object>} arrayOfObjects
+ *        Flat list of leaf records created by `traverse`.
+ * @returns {Object.<string, {data:Array<Object>, averageLength:number}>}
+ *
+ * @example
+ * // Given `entity = { value: 'email' }` and a list containing
+ * //   { value:'Bob',   path:'user.name' }
+ * //   { value:'Alice', path:'user.name' }
+ * //   { value:'bob@example.com', path:'user.email' }
+ * // sortByEntityPresenceAndPrevalence(entity, list) →
+ * //   {
+ * //     'User Name':   { data:[{…Bob},{…Alice}], averageLength:4 },
+ * //     'User Email':  { data:[{…bob@example.com}], averageLength:15 }
+ * //   }
+ */
 const sortByEntityPresenceAndPrevalence = (entity, arrayOfObjects) =>
   flow(
-    compact,
-    uniqBy('value'),
+    compact, // 1) remove falsey
+    uniqBy('value'), // 2) de-dupe on value
     map((obj) => ({
+      // 3) decorate each record
       ...obj,
       readablePath: makeHumanReadable(obj.path),
       matchesSubstring: hasSubstringInValue(obj, entity.value)
     })),
-    sortBy((obj) => -(obj.prevalence || 0)),
-    sortBy((obj) => (obj.matchesSubstring ? 0 : 1)),
-    groupBy('readablePath')
+    sortBy((o) => -(o.prevalence || 0)), // 4) high prevalence first
+    sortBy((o) => (o.matchesSubstring ? 0 : 1)), // 5) hits on entity first
+    groupBy('readablePath'), // 6) → { key: [records] }
+    mapValues((records) => {
+      /* 7) wrap each group:
+                                     {
+                                       data: [ …records ],
+                                       averageLength: <rounded-up mean length of record.value>
+                                     }
+                              */
+      const lengths = records
+        .filter(has('value')) // only items with a `value` field
+        .map((r) => String(r.value).length); // length in characters
+
+      const avg = lengths.length
+        ? Math.ceil(mean(lengths)) // round -> nearest higher int
+        : 0; // empty group → 0
+
+      return { data: records, averageLength: avg };
+    })
   )(arrayOfObjects);
 
+/**
+ * Case-insensitive substring test that gracefully handles non-string
+ * values.
+ *
+ * @param {{value:*}} leaf      – A flattened leaf record.
+ * @param {string}    substring – Text to search for.
+ * @returns {boolean}           – `true` if `substring` occurs in
+ *                                `String(leaf.value)`.
+ *
+ * @example
+ * hasSubstringInValue({ value: 'Hello World' }, 'world'); // → true
+ * hasSubstringInValue({ value: 12345 },        '234');   // → true
+ */
 const hasSubstringInValue = ({ value: val }, substring) =>
   includes(substring.toLowerCase(), (isString(val) ? val : String(val)).toLowerCase());
 
+/**
+ * Converts a dot-separated / snake-cased path such as
+ * `"user.contacts_0.email"` into a nicely capitalised string
+ * `"User Contacts 0 Email"`.
+ *
+ * @param {string} path – Original dot-notation path.
+ * @returns {string}    – Human-readable version.
+ *
+ * @example
+ * makeHumanReadable('user.name');          // → 'User Name'
+ * makeHumanReadable('system.cpu_load_1');  // → 'System Cpu Load 1'
+ */
 const makeHumanReadable = flow(replace(/\./g, ' '), replace(/_/g, ' '), startCase);
 // End Google Threat Intelligence
 
@@ -1846,6 +2307,26 @@ async function onMessage(payload, options, cb) {
         cb(error);
       }
       break;
+    case 'GET_THREATS':
+      try {
+        const threatResults = await lookupThreatsAsync(entity, options);
+
+        Logger.trace({ threatResults }, 'GET_THREATS');
+        cb(null, { threatResults });
+      } catch (error) {
+        cb(error);
+      }
+      break;
+    case 'GET_REPORTS':
+      try {
+        const reportResults = await lookupReportsAsync(entity, options);
+
+        Logger.trace({ reportResults }, 'GET_REPORTS');
+        cb(null, { reportResults });
+      } catch (error) {
+        cb(error);
+      }
+      break;
   }
 }
 
@@ -1880,13 +2361,13 @@ async function validateOptions(userOptions, cb) {
     });
   }
 
-  // if (!errors.length) {
-  //   try {
-  //     if (job) job.cancel();
+  if (!errors.length) {
+    try {
+      if (job) job.cancel();
 
-  //     job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
-  //   } catch (_) {}
-  // }
+      job = schedule.scheduleJob(`0 */24 * * *`, getAndCacheAllThreatActorNames(options));
+    } catch (_) {}
+  }
 
   cb(null, errors);
 }
