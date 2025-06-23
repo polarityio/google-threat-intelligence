@@ -415,16 +415,10 @@ function doLookup(entities, options, cb) {
         })
       );
 
-      const finalLookupResults = flow(
-        mapValues((lookupResult) =>
-          addThreatsAndReportsToLookupResult(lookupResult, lookupResults)
-        ),
-        values
-      )(combinedResults);
 
       pendingLookupCache.logStats();
 
-      cb(null, finalLookupResults);
+      cb(null, combinedResults);
     }
   );
 }
@@ -1075,43 +1069,6 @@ const formatThreatActors = (threatActorsResponseBody) =>
     }))
   )(threatActorsResponseBody);
 
-const _lookupThreats = (entity, options, done) => {
-  Logger.trace({ entity }, 'Searching Threats');
-
-  const { route, queryParams } = getGtiRequestOptionsByType(entity, 'associations');
-
-  const requestOptions = {
-    url: `https://www.virustotal.com/api/v3/${route}`,
-    ...(queryParams && { qs: queryParams }),
-    headers: { 'x-apikey': options.apiKey },
-    json: true
-  };
-
-  Logger.trace({ requestOptions }, 'Request Options');
-
-  requestWithDefaults(requestOptions, function (err, response, body) {
-    _handleRequestError(err, response, body, options, function (err, responseBody) {
-      if (err) {
-        Logger.error(err, 'Error Searching Threats');
-        return done(err);
-      }
-      if (!get('data.length', responseBody))
-        return done(null, { entity, threats: [], threatsCount: 0, threatsCursor: '' });
-
-      Logger.trace({ responseBody }, 'ResponseBody of Threats Lookup');
-
-      const formattedThreats = formatThreats(entity, responseBody);
-
-      done(null, {
-        entity,
-        threats: formattedThreats,
-        threatsCount: get('meta.count', responseBody),
-        threatsCursor: get('meta.cursor', responseBody)
-      });
-    });
-  });
-};
-
 const lookupThreatsAsync = async (entity, options) =>
   new Promise((resolve, reject) => {
     Logger.trace({ entity }, 'Searching Threats');
@@ -1197,49 +1154,6 @@ const formatThreats = (entity, threatsResponseBody) =>
       return formattedThreat;
     })
   )(threatsResponseBody);
-
-const _lookupReports = (entity, options, done) => {
-  Logger.trace({ entity }, 'Searching Reports');
-
-  const { route, queryParams } = getGtiRequestOptionsByType(entity, 'reports');
-
-  const requestOptions = {
-    url: `https://www.virustotal.com/api/v3/${route}`,
-    ...(queryParams && { qs: queryParams }),
-    headers: { 'x-apikey': options.apiKey },
-    json: true
-  };
-
-  Logger.trace({ requestOptions }, 'Request Options');
-
-  requestWithDefaults(requestOptions, function (err, response, body) {
-    _handleRequestError(
-      err,
-      response,
-      body,
-      options,
-      function (err, responseBody) {
-        if (err) {
-          Logger.error(err, 'Error Searching Reports');
-          return done(err);
-        }
-        if (!get('data.length', responseBody))
-          return done(null, { entity, reports: [], reportsCount: 0, reportsCursor: '' });
-
-        Logger.trace({ responseBody }, 'ResponseBody of Reports Lookup');
-
-        const formattedReports = formatReports(entity, responseBody);
-
-        done(null, {
-          entity,
-          reports: formattedReports,
-          reportsCount: get('meta.count', responseBody),
-          reportsCursor: get('meta.cursor', responseBody)
-        });
-      }
-    );
-  });
-};
 
 const lookupReportsAsync = async (entity, options) =>
   new Promise((resolve, reject) => {
