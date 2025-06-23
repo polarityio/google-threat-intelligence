@@ -16,6 +16,7 @@ Google Threat Intelligence is a service that analyzes suspicious files and URLs 
 
 Your Google Threat Intelligence Premium API Key
 
+
 ### Return Unscanned or Unseen Results
 
 Default: true

@@ -5,11 +5,12 @@
 'use strict';
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
+  threatsCount: Ember.computed.alias('details.threatsCount'),
+  reportsCount: Ember.computed.alias('details.reportsCount'),
   baselineInvestigationThreshold: Ember.computed(
     'block.data.details.positives',
     function () {
       const rules = this.get('details.compiledBaselineInvestigationRules');
-
 
       const positives = this.get('details.positives');
       for (let i = 0; i < rules.length; i++) {

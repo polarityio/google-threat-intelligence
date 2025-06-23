@@ -10,7 +10,7 @@ module.exports = {
   description:
     'Search for File and IP Address and get Associated Threats & Reports via the GTI API along with CVE & Threat Actor GTI Lookups',
   defaultColor: 'light-pink',
-  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256','cve'],
+  entityTypes: ['url', 'domain', 'IPv4', 'MD5', 'SHA1', 'SHA256', 'cve'],
   customTypes: [
     {
       key: 'allText',
