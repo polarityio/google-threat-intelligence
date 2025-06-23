@@ -384,48 +384,6 @@ function doLookup(entities, options, cb) {
         } else {
           callback(null, []);
         }
-      },
-      threatLookups: function (callback) {
-        if (
-          nonCveOrThreatActorEntities.length > 0 &&
-          !options.showNoResultsAssociations
-        ) {
-          async.concat(
-            nonCveOrThreatActorEntities,
-            function (entity, concatDone) {
-              Logger.debug({ entity: entity.value }, 'Looking up Threats');
-              _lookupThreats(entity, options, concatDone);
-            },
-            function (err, results) {
-              if (err) return callback(err);
-
-              callback(null, results);
-            }
-          );
-        } else {
-          callback(null, []);
-        }
-      },
-      reportLookups: function (callback) {
-        if (
-          nonCveOrThreatActorEntities.length > 0 &&
-          !options.showNoResultsAssociations
-        ) {
-          async.concat(
-            nonCveOrThreatActorEntities,
-            function (entity, concatDone) {
-              Logger.debug({ entity: entity.value }, 'Looking up Reports');
-              _lookupReports(entity, options, concatDone);
-            },
-            function (err, results) {
-              if (err) return callback(err);
-
-              callback(null, results);
-            }
-          );
-        } else {
-          callback(null, []);
-        }
       }
     },
     function (err, lookupResults) {

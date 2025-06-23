@@ -100,16 +100,6 @@ module.exports = {
       adminOnly: false
     },
     {
-      key: 'showNoResultsAssociations',
-      name: 'Show Association Tab w/ No Results',
-      description:
-        "If checked, the integration will speed up in it's search speed, but will show an Associations Tab, even if there are no Associations Results.  Default is Checked.  Uncheck will query slower, but only show the Associations Tab if there are Associations Results.",
-      default: true,
-      type: 'boolean',
-      userCanEdit: true,
-      adminOnly: false
-    },
-    {
       key: 'showNoDetections',
       name: 'Show All File Scanner AV Results',
       description:

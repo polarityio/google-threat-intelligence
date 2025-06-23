@@ -16,11 +16,6 @@ Google Threat Intelligence is a service that analyzes suspicious files and URLs 
 
 Your Google Threat Intelligence Premium API Key
 
-### Show Association Tab w/ No Results
-
-Default: true
-
-If checked, the integration will speed up in it's search speed, but will show an Associations Tab, even if there are no Associations Results.  Default is Checked.  Uncheck will query slower, but only show the Associations Tab if there are Associations Results.
 
 ### Return Unscanned or Unseen Results
 

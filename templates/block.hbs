@@ -1705,13 +1705,11 @@
           </a>
         </li>
       {{/if}}
-      {{#if (or threats.length reports.length block.userOptions.showNoResultsAssociations)}}
-        <li class="nav-item">
-          <a class="nav-link {{if (eq activeTab "associations") "active"}}" {{action "changeTab" "associations"}}>
-            Associations
-          </a>
-        </li>
-      {{/if}}
+      <li class="nav-item">
+        <a class="nav-link {{if (eq activeTab "associations") "active"}}" {{action "changeTab" "associations"}}>
+          Associations
+        </a>
+      </li>
     </ul>
     <div id="{{concat "virustotal-container-" uniqueIdPrefix}}" class="export-node">
       {{#if (eq activeTab "detection")}}
@@ -2340,37 +2338,29 @@
         <div class="associations">
           <div class="control-results">
             <div class="tab-buttons">
-              {{#if (or threats.length block.userOptions.showNoResultsAssociations)}}
-                <button
-                  class="btn gti-button {{if (eq associationTab "threats") "active"}} {{
-                    if block._state.loadingThreats "skeleton-loader"
-                  }}"
-                  {{action "switchAssociationsTab" "threats"}}
-                >
-                  Threats
-                  {{#if block._state.loadedThreats}}
-                    - {{threats.length}} of {{threatsCount}}
-                  {{/if}}
-                </button>
-              {{/if}}
-              {{#if (or reports.length block.userOptions.showNoResultsAssociations)}}
-                <button
-                  class="btn gti-button {{
-                    if
-                    (or
-                      (eq associationTab "reporting")
-                      (and (not threats.length) (not block.userOptions.showNoResultsAssociations))
-                    )
-                    "active"
-                  }} {{if block._state.loadingReports "skeleton-loader"}}"
-                  {{action "switchAssociationsTab" "reporting"}}
-                >
-                  Reporting
-                  {{#if block._state.loadedReports}}
-                    - {{reports.length}} of {{reportsCount}}
-                  {{/if}}
-                </button>
-              {{/if}}
+              <button
+                class="btn gti-button {{if (eq associationTab "threats") "active"}} {{
+                  if block._state.loadingThreats "skeleton-loader"
+                }}"
+                {{action "switchAssociationsTab" "threats"}}
+              >
+                Threats
+                {{#if block._state.loadedThreats}}
+                  - {{threats.length}} of {{threatsCount}}
+                {{/if}}
+              </button>
+
+              <button
+                class="btn gti-button {{if (eq associationTab "reporting") "active"}} {{
+                  if block._state.loadingReports "skeleton-loader"
+                }}"
+                {{action "switchAssociationsTab" "reporting"}}
+              >
+                Reporting
+                {{#if block._state.loadedReports}}
+                  - {{reports.length}} of {{reportsCount}}
+                {{/if}}
+              </button>
             </div>
             <div class="right">
               {{#if

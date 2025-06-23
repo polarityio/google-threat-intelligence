@@ -46,15 +46,6 @@
       "adminOnly": false
     },
     {
-      "key": "showNoResultsAssociations",
-      "name": "Show Association Tab w/ No Results",
-      "description": "If checked, the integration will speed up in it's search speed, but will show an Associations Tab, even if there are no Associations Results.  Default is Checked.  Uncheck will query slower, but only show the Associations Tab if there are Associations Results.",
-      "default": true,
-      "type": "boolean",
-      "userCanEdit": true,
-      "adminOnly": false
-    },
-    {
       "key": "showNoDetections",
       "name": "Show All File Scanner AV Results",
       "description": "If checked, the integration will show all AV scanner results for files (hashes) even if the AV scanner did not detect the sample as a positive detection.  Default is to show all results.  Uncheck to only show positive AV detections in the scanner results table.",

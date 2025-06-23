@@ -11,7 +11,7 @@ polarity.export = PolarityComponent.extend({
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
   }),
   maxResolutionsToShow: 20,
-  associationTab: '',
+  associationTab: 'threats',
   expandedAssociations: Ember.computed.alias('block._state.expandedAssociations'),
   expandedVulnerabilities: Ember.computed.alias('block._state.expandedVulnerabilities'),
   iconNamesByAssociationType: {
@@ -192,27 +192,15 @@ polarity.export = PolarityComponent.extend({
       this.set('block._state', {});
       this.set('block._state.expandedAssociations', {});
       this.set('block._state.expandedVulnerabilities', {});
-      this.set(
-        'block._state.loadedThreats',
-        !this.get('block.userOptions.showNoResultsAssociations')
-      );
-      this.set(
-        'block._state.loadedReports',
-        !this.get('block.userOptions.showNoResultsAssociations')
-      );
+      this.set('block._state.loadedThreats', false);
+      this.set('block._state.loadedReports', false);
     }
 
     if (this.get('details.names.length') <= 10) {
       this.set('block._state.showNames', true);
     }
 
-    this.set(
-      'associationTab',
-      this.get('block.userOptions.showNoResultsAssociations') ||
-        this.get('threats.length') > 0
-        ? 'threats'
-        : 'reports'
-    );
+    this.set('associationTab', 'threats');
 
     let array = new Uint32Array(5);
     this.set('uniqueIdPrefix', window.crypto.getRandomValues(array).join(''));
