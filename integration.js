@@ -415,83 +415,12 @@ function doLookup(entities, options, cb) {
         })
       );
 
-
       pendingLookupCache.logStats();
 
       cb(null, combinedResults);
     }
   );
 }
-
-const addThreatsAndReportsToLookupResult = (lookupResult, lookupResults) => {
-  // Threats
-  const { threats, threatsCount, threatsCursor } = flow(
-    get('threatLookups'),
-    find(({ entity }) => entity.value === lookupResult.entity.value),
-    (threatData) => ({
-      ...threatData,
-      threats: get('threats', threatData),
-      threatsCount: get('threatsCount', threatData),
-      threatsCursor: get('threatsCursor', threatData)
-    })
-  )(lookupResults);
-
-  if (threatsCount) {
-    if (lookupResult.data === null) {
-      lookupResult.data = {
-        summary: [],
-        details: {}
-      };
-    }
-    lookupResult.data.details.threats = threats;
-    lookupResult.data.details.threatsCount = threatsCount;
-    lookupResult.data.details.threatsCursor = threatsCursor;
-  }
-
-  // Reports
-  const { reports, reportsCount, reportsCursor } = flow(
-    get('reportLookups'),
-    find(({ entity }) => entity.value === lookupResult.entity.value),
-    (reportData) => ({
-      ...reportData,
-      reports: get('reports', reportData),
-      reportsCount: get('reportsCount', reportData),
-      reportsCursor: get('reportsCursor', reportData)
-    })
-  )(lookupResults);
-
-  if (reportsCount) {
-    if (lookupResult.data === null) {
-      lookupResult.data = {
-        summary: [],
-        details: {}
-      };
-    }
-    lookupResult.data.summary = lookupResult.data.summary.concat(
-      `Reports: ${reportsCount}`
-    );
-    lookupResult.data.details.reports = reports;
-    lookupResult.data.details.reportsCount = reportsCount;
-    lookupResult.data.details.reportsCursor = reportsCursor;
-  }
-
-  if (lookupResult.data && lookupResult.data.details)
-    lookupResult.data.details.associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
-      lookupResult.entity
-    )}`;
-
-  if (
-    get('data.summary', lookupResult) &&
-    lookupResult.data.summary.includes('has not seen or scanned') &&
-    lookupResult.data.summary.length > 1
-  ) {
-    lookupResult.data.summary = lookupResult.data.summary.filter(
-      (summary) => !summary.includes('has not seen or scanned')
-    );
-  }
-
-  return lookupResult;
-};
 
 function _isEntityBlocked(entity, options) {
   const blocklist = options.blocklist;
@@ -1171,30 +1100,24 @@ const lookupReportsAsync = async (entity, options) =>
     Logger.trace({ requestOptions }, 'Request Options');
 
     requestWithDefaults(requestOptions, function (err, response, body) {
-      _handleRequestError(
-        err,
-        response,
-        body,
-        options,
-        function (err, responseBody) {
-          if (err) {
-            Logger.error(err, 'Error Searching Reports');
-            reject(err);
-          }
-          if (!get('data.length', responseBody))
-            resolve({ reports: [], reportsCount: 0, reportsCursor: '' });
-
-          Logger.trace({ responseBody }, 'ResponseBody of Reports Lookup');
-
-          const formattedReports = formatReports(entity, responseBody);
-
-          resolve({
-            reports: formattedReports,
-            reportsCount: get('meta.count', responseBody),
-            reportsCursor: get('meta.cursor', responseBody)
-          });
+      _handleRequestError(err, response, body, options, function (err, responseBody) {
+        if (err) {
+          Logger.error(err, 'Error Searching Reports');
+          reject(err);
         }
-      );
+        if (!get('data.length', responseBody))
+          resolve({ reports: [], reportsCount: 0, reportsCursor: '' });
+
+        Logger.trace({ responseBody }, 'ResponseBody of Reports Lookup');
+
+        const formattedReports = formatReports(entity, responseBody);
+
+        resolve({
+          reports: formattedReports,
+          reportsCount: get('meta.count', responseBody),
+          reportsCursor: get('meta.cursor', responseBody)
+        });
+      });
     });
   });
 
@@ -1281,15 +1204,30 @@ const getGtiRequestOptionsByType = (entity, relationship) => {
   }
 };
 
-const getUiUrlByEntityType = (entity) =>
-  ({
-    IPv4: `ip-address/${entity.value}/associations`,
-    domain: `domain/${entity.value}/associations`,
-    url: `url/${entity.value}/associations`,
-    hash: `file/${entity.value}/associations`,
-    cve: `file/${entity.value}/associations`,
-    custom: `collection/${entity.value}/associations`
-  }[entity.isHash ? 'hash' : entity.type]);
+const getUiUrlByEntityType = (entity) => {
+  if (entity.isIP) {
+    return `ip-address/${entity.value}/associations`;
+  }
+
+  if (entity.isDomain) {
+    return `domain/${entity.value}/associations`;
+  }
+
+  if (entity.isHash) {
+    return `file/${entity.value.toLowerCase()}/associations`;
+  }
+
+  if (entity.isURL) {
+    return `url/${entity.value}/associations`;
+  }
+
+  if (entity.types.includes('cve')) {
+    return `file/${entity.value}/associations`;
+  }
+
+  // APT Actor
+  return `collection/${entity.value}/associations`;
+};
 
 const groupByConfidence = (association) => {
   const hasConfidenceArray = (association, property) =>
@@ -1604,11 +1542,11 @@ const sortByEntityPresenceAndPrevalence = (entity, arrayOfObjects) =>
     groupBy('readablePath'), // 6) → { key: [records] }
     mapValues((records) => {
       /* 7) wrap each group:
-                                     {
-                                       data: [ …records ],
-                                       averageLength: <rounded-up mean length of record.value>
-                                     }
-                              */
+                                                             {
+                                                               data: [ …records ],
+                                                               averageLength: <rounded-up mean length of record.value>
+                                                             }
+                                                      */
       const lengths = records
         .filter(has('value')) // only items with a `value` field
         .map((r) => String(r.value).length); // length in characters
@@ -2311,8 +2249,12 @@ async function onMessage(payload, options, cb) {
       try {
         const threatResults = await lookupThreatsAsync(entity, options);
 
+        const associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
+          entity
+        )}`;
+
         Logger.trace({ threatResults }, 'GET_THREATS');
-        cb(null, { threatResults });
+        cb(null, { threatResults, associationLink });
       } catch (error) {
         cb(error);
       }
@@ -2321,8 +2263,12 @@ async function onMessage(payload, options, cb) {
       try {
         const reportResults = await lookupReportsAsync(entity, options);
 
+        const associationLink = `https://www.virustotal.com/gui/${getUiUrlByEntityType(
+          entity
+        )}`;
+
         Logger.trace({ reportResults }, 'GET_REPORTS');
-        cb(null, { reportResults });
+        cb(null, { reportResults, associationLink });
       } catch (error) {
         cb(error);
       }
