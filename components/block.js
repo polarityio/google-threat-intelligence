@@ -215,10 +215,11 @@ polarity.export = PolarityComponent.extend({
     this.set('block._state.errorThreats', '');
     this.set('block._state.loadingThreats', true);
     this.sendIntegrationMessage(payload)
-      .then(({ threatResults }) => {
+      .then(({ threatResults, associationLink }) => {
         this.set('block.data.details.threats', threatResults.threats);
         this.set('block.data.details.threatsCount', threatResults.threatsCount);
-
+        this.set('block.data.details.associationLink', associationLink);
+        
         this.set('block._state.loadedThreats', true);
         this.get('block').notifyPropertyChange('data');
       })
@@ -237,9 +238,10 @@ polarity.export = PolarityComponent.extend({
     this.set('block._state.errorReports', '');
     this.set('block._state.loadingReports', true);
     this.sendIntegrationMessage(payload)
-      .then(({ reportResults }) => {
+      .then(({ reportResults, associationLink }) => {
         this.set('block.data.details.reports', reportResults.reports);
         this.set('block.data.details.reportsCount', reportResults.reportsCount);
+        this.set('block.data.details.associationLink', associationLink);
 
         this.set('block._state.loadedReports', true);
         this.get('block').notifyPropertyChange('data');
