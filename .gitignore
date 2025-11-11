@@ -37,3 +37,7 @@ test-runner.js
 .vscode
 asdf.js
 assets/Screenshot*.png
+
+#Other
+legacy_wrapper.js
+.DS_Store
