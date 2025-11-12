@@ -67,8 +67,6 @@ let Logger = {
 };
 let domainUrlBlocklistRegex = null;
 let ipBlocklistRegex = null;
-let compiledThresholdRules = [];
-let previousBaselineInvestigationThreshold = null;
 let job;
 
 const defaultRequestOptions = {
@@ -107,25 +105,6 @@ const GTI_LOOKUP_LIMIT = 5;
  * @param cb
  */
 function doLookup(entities, options, cb) {
-  // if the threshold rules are disabled then we want an empty rule set (empty array)
-  if (options.baselineInvestigationThresholdEnabled === false) {
-    compiledThresholdRules = [];
-    previousBaselineInvestigationThreshold = null;
-  }
-
-  // We only want to compile our threshold rules if the option has changed
-  // The option is intended to be admin-only
-  if (
-    options.baselineInvestigationThresholdEnabled &&
-    (options.baselineInvestigationThreshold !== previousBaselineInvestigationThreshold ||
-      previousBaselineInvestigationThreshold === null)
-  ) {
-    compiledThresholdRules = parseBaselineInvestigationThreshold(
-      options.baselineInvestigationThreshold
-    );
-    previousBaselineInvestigationThreshold = options.baselineInvestigationThreshold;
-  }
-
   if (throttleCache.has(options.apiKey)) {
     // the throttleCache stores whether or not we've shown the throttle warning message for this throttle duration
     // We only want to show the message once per throttleDuration (defaults to 1 minute).
@@ -361,16 +340,7 @@ function doLookup(entities, options, cb) {
         'urlLookups',
         'cveLookups',
         'threatActorLookups'
-      ].forEach((key) =>
-        lookupResults[key].forEach(function (lookupResult) {
-          if (lookupResult && lookupResult.data && lookupResult.data.details) {
-            lookupResult.data.details.compiledBaselineInvestigationRules =
-              compiledThresholdRules;
-          }
-
-          combinedResults.push(lookupResult);
-        })
-      );
+      ].forEach((key) => combinedResults.push(...lookupResults[key]));
 
       cb(null, combinedResults);
     }
@@ -1612,6 +1582,12 @@ const _processLookupItem = (
     }))
   )(attributes);
 
+  const verdict = fp.flow(
+    fp.get('gti_assessment.verdict.value'),
+    fp.replace('VERDICT_', ''),
+    fp.capitalize
+  )(attributes);
+
   const coreLink = `https://www.virustotal.com/gui/${fp.replace('_', '-', data.type)}/${
     data.id
   }`;
@@ -1621,14 +1597,7 @@ const _processLookupItem = (
   return {
     entity,
     data: {
-      summary: [
-        ...fp.flow(
-          fp.filter(fp.get('detected')),
-          fp.map(fp.get('result')),
-          fp.uniq,
-          fp.slice(0, 3)
-        )(scans)
-      ],
+      summary: [`Verdict: ${verdict}`],
       details: {
         type,
         detectionsLink: `${coreLink}/detection`,
@@ -1650,7 +1619,8 @@ const _processLookupItem = (
           fp.orderBy('result', 'desc')
         )(scans),
         detailsTab,
-        tags: attributes.tags
+        tags: attributes.tags,
+        gtiAssessment: fp.get('gti_assessment', attributes)
       }
     }
   };
@@ -1784,38 +1754,6 @@ function _lookupEntityType(type, entity, options, done) {
       done(null, lookupResults);
     });
   });
-}
-
-function parseBaselineInvestigationThreshold(bti) {
-  const rules = bti.split(',');
-  const compiledRules = [];
-  rules.forEach((rule) => {
-    const parts = rule.split(':');
-    if (parts.length !== 2 && parts.length !== 3) {
-      throw `Invalid rule [${rule}]. Rule must be of the format <range>:<message> or <range>:<level>:<message>`;
-    }
-    let range, level, message;
-    range = splitBtiRange(rule, parts[0]);
-
-    if (parts.length === 3) {
-      level = parts[1].trim();
-      message = parts[2].trim();
-    } else {
-      level = 'none';
-      message = parts[1].trim();
-    }
-
-    if (level !== 'warn' && level !== 'danger' && level !== 'none') {
-      throw `Invalid rule [${rule}]. Level [${level}] must be either "warn" or "danger".`;
-    }
-
-    compiledRules.push({
-      message,
-      level,
-      ...range
-    });
-  });
-  return compiledRules;
 }
 
 /**
@@ -2148,16 +2086,6 @@ async function validateOptions(userOptions, cb) {
     errors.push({
       key: 'maxHashesPerGroup',
       message: 'Maximum number of hashes per lookup request must be greater than 0'
-    });
-  }
-
-  try {
-    parseBaselineInvestigationThreshold(userOptions.baselineInvestigationThreshold.value);
-  } catch (e) {
-    Logger.error(e);
-    errors.push({
-      key: 'baselineInvestigationThreshold',
-      message: e.toString()
     });
   }
 
