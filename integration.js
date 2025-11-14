@@ -1620,7 +1620,8 @@ const _processLookupItem = (
         )(scans),
         detailsTab,
         tags: attributes.tags,
-        gtiAssessment: fp.get('gti_assessment', attributes)
+        gtiAssessment: fp.get('gti_assessment', attributes),
+        verdict,
       }
     }
   };

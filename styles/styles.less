@@ -1,8 +1,9 @@
 @border-color: #dee2e6;
-@danger-color: #ff4559;
-@success-color: #5cb85c;
-@warning-color: #ff8f00;
+@danger-color: #f57370;
+@success-color: #53dfcd;
+@warning-color: #f9b637;
 @polarity-green: #7bc942;
+@dm-color-font-inverse: #070e1e;
 
 @dark-background: #121212;
 @medium-background: #eceef4;
@@ -293,11 +294,84 @@ td.positives {
 .top-section {
   display: flex;
   padding-bottom: 5px;
+  gap: 10px;
 
-  .indicator {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+  .left-column {
+    width: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    .icon-danger {
+      color: @danger-color;
+    }
+
+    .icon-warning {
+      color: @warning-color;
+    }
+
+    .icon-success {
+      color: @success-color;
+    }
+
+    .icon-unknown {
+      color: @dimmed-text;
+    }
+
+    .gti-label {
+      font-size: 11px;
+      margin: 10px 0;
+      text-align: center;
+    }
+
+    .gti-verdict {
+      padding: 5px 9px;
+      border-radius: 15px;
+      font-weight: 600;
+      line-height: 15px;
+    }
+
+    .gti-score {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-top: 10px;
+      gap: 5px;
+      font-size: 11px;
+    }
+    
+    .gti-score-graphic {
+      display: flex;
+      flex-direction: row;
+      width: 100%;
+      align-items: center;
+
+      span {
+        word-break: keep-all !important;
+      }
+    }
+
+    .bg-danger {
+      color: @dm-color-font-inverse;
+      background: @danger-color !important;
+    }
+
+    .bg-warning {
+      color: @dm-color-font-inverse;
+      background: @warning-color !important;
+    }
+
+    .bg-success {
+      color: @dm-color-font-inverse;
+      background: @success-color !important;
+    }
+
+    .bg-unknown {
+      color: @dm-color-font-inverse;
+      background: @border-color !important;
+    }
   }
 
   .tags-container {
@@ -309,7 +383,6 @@ td.positives {
 
       .tag {
         padding: 2px 7px 2px 7px;
-        //background-color: #eee;
         border: 1px solid #e4e9f2;
         border-radius: 8px;
         margin-bottom: 4px;
@@ -321,39 +394,6 @@ td.positives {
   .right-column {
     flex: 1 1 0;
     flex-direction: column;
-  }
-
-  .score-container {
-    width: 100%;
-    padding: 0px 5px;
-
-    .score-marker {
-      display: inline-block;
-      position: relative;
-      text-align: left;
-      transition: transform 1s ease-in-out 0s;
-      z-index: 1;
-      top: 5px;
-      height: 25px;
-      width: 20px;
-      top: -1px;
-
-      .score-marker-icon {
-        size: 20px;
-      }
-    }
-
-    .score-footer {
-      margin-top: 5px;
-      text-align: center;
-    }
-
-    .score-line {
-      height: 2px;
-      background: linear-gradient(to right, @danger-color 50%, @success-color 50%);
-      border-radius: 10px;
-      width: 100%;
-    }
   }
 }
 
