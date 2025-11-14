@@ -300,7 +300,6 @@ td.positives {
     width: 130px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
 
     .icon-danger {
@@ -374,6 +373,14 @@ td.positives {
     }
   }
 
+  .description-container {
+    padding-left: 5px;
+
+    .p-title {
+      margin-top: 0px;
+    }
+  }
+
   .tags-container {
     padding-left: 5px;
 
@@ -394,6 +401,17 @@ td.positives {
   .right-column {
     flex: 1 1 0;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 460px) {
+  .top-section {
+    align-items: center;
+    flex-direction: column;
+
+    .left-column {
+      justify-content: center;
+    }
   }
 }
 

@@ -1643,6 +1643,17 @@
         </div>
       </div>
       <div class="right-column">
+        <div class="description-container">
+          <h1 class="p-title">
+            {{fa-icon "clipboard" fixedWidth=true}}
+            Description
+          </h1>
+          <div>
+            <span>
+              {{details.gtiAssessment.description}}
+            </span>
+          </div>
+        </div>
         {{#if details.tags.length}}
           <div class="tags-container">
             <h1 class="p-title">
@@ -1711,16 +1722,13 @@
             </a>
           </div>
           <h1 class="p-title">
-            {{fa-icon "clipboard" fixedWidth=true}} Summary
+            {{fa-icon "clipboard" fixedWidth=true}} Scanner Summary
           </h1>
           <div>
             <strong>
               {{details.positiveScans.length}}
             </strong>
-            security vendor
-            {{#if (not-eq details.positiveScans.length 1)}}
-              s
-            {{/if}}
+            security vendor{{#if (not-eq details.positiveScans.length 1)}}s{{/if}}
             flagged this indicator as malicious. The indicator has a community score of
             <strong>
               {{details.reputation}}
