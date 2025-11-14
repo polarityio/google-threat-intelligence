@@ -5,7 +5,7 @@
 'use strict';
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
-  severity: Ember.computed.alias('details.gtiAssessment.severity.value'),
+  verdict: Ember.computed.alias('details.verdict'),
   threatScore: Ember.computed.alias('details.gtiAssessment.threat_score.value'),
   threatsCount: Ember.computed.alias('details.threatsCount'),
   reportsCount: Ember.computed.alias('details.reportsCount'),
