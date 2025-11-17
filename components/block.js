@@ -79,32 +79,21 @@ polarity.export = PolarityComponent.extend({
     { key: 'Registry Expiry Date', isDate: true }
   ],
   activeTab: 'detection',
-  redThreat: '#ed2e4d',
-  greenThreat: '#7dd21b',
-  yellowThreat: '#ffc15d',
-  noThreat: '#999',
-  /**
-   * Radius of the ticScore circle
-   */
-  threatRadius: 15,
-  /**
-   * StrokeWidth of the ticScore circle
-   */
-  threatStrokeWidth: 2,
-  threatCircumference: Ember.computed('threatRadius', function () {
-    return 2 * Math.PI * this.get('threatRadius');
+  scoreGraphicHorizontalOffset: 5,
+  scoreGraphicWidth: 100,
+  scoreGraphicLineEnd: Ember.computed('scoreGraphicHorizontalOffset', 'scoreGraphicWidth', function () {
+    return this.get('scoreGraphicHorizontalOffset') + this.get('scoreGraphicWidth');
   }),
-  _getStrokeOffset(ticScore, circumference) {
-    let progress = ticScore / this.details.total;
-    return circumference * (1 - progress);
-  },
-  _getThreatColor(ticScore) {
-    if (ticScore > 0) {
-      return this.get('redThreat');
-    } else {
-      return this.get('greenThreat');
-    }
-  },
+  scoreGraphicTotalWidth: Ember.computed('scoreGraphicWidth', 'scoreGraphicHorizontalOffset', function () {
+    return this.get('scoreGraphicWidth') + this.get('scoreGraphicHorizontalOffset') * 2;
+  }),
+  scoreGraphicValue: Ember.computed('threatScore', 'scoreGraphicHorizontalOffset', 'scoreGraphicWidth', function () {
+    const threatScore = this.get('threatScore') || 0;
+    const scoreGraphicHorizontalOffset = this.get('scoreGraphicHorizontalOffset') || 0;
+    const scoreGraphicWidth = this.get('scoreGraphicWidth') || 0;
+    
+    return (threatScore / 100) * scoreGraphicWidth + scoreGraphicHorizontalOffset;
+  }),
   init() {
     this.set(
       'activeTab',
@@ -382,13 +371,6 @@ polarity.export = PolarityComponent.extend({
     window.getSelection().addRange(range);
     document.execCommand('copy');
     window.getSelection().removeAllRanges();
-  },
-  getElementRange(element) {
-    let range = document.createRange();
-    range.selectNode(
-      typeof element === 'string' ? document.getElementById(element) : element
-    );
-    return range;
   },
   restoreCopyState(savedSettings) {
     const {
