@@ -89,42 +89,6 @@ Domains or URLs that match the given regex will not be looked up (if blank, all 
 
 IPs that match the given regex will not be looked up (if blank, all IPs will be looked up). Do not wrap your regex in forward slashes. This option must be set to "Only Admins Can View and Edit".
 
-### Enable Baseline Investigation Threshold
-
-If checked, the "Baseline Investigation Threshold Configuration" will be enabled. Defaults to unchecked. 
-
-**This option must be set to "Only admins can view and edit".**
-
-### Baseline Investigation Threshold Configuration
-
-Comma delimited list of positive detection rules which can be used to customize the appearance of the positive detection summary tag.  Each rule consists of a number range (e.g., 5-10), followed by a colon and then the message to display.  Rules can optionally include a level of either "warn" or "danger" after the range. If the number of positive detections for an indicator falls within a specified range, the configured message is shown in a summary tag.  Default value is "0:No Detections,  1-3:warn:Suspicious - Review,  4-999:danger:Likely Malicious". 
-
-**This option must be set to "Only admins can view and edit".**
-
-#### Examples
-
-Add the message "Possibly Benign" to any indicator with 0 detections:
-```
-0:Possibly Benign
-```
-
-Additionally, add the message "Suspicious" to any indicator with 1 to 4 positive detections: 
-```
-0:Possibly Benign, 1-4:Suspicious
-```
-
-Additionally, include a warning icon for "Suspicious" indicators:
-
-```
-0:Possibly Benign, 1-4:warn:Suspicious
-```
-
-Additionally, add the message "Likely Malicious" to any indicator with more than 5 positive detections and include a "danger" icon:
-
-```
-0:Possibly Benign, 1-4:warn:Suspicious, 5-999:danger:Likely Malicious
-```
-
 
 ## Installation Instructions
 
