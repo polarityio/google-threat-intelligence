@@ -1,5 +1,7 @@
 polarity.export = PolarityComponent.extend({
   details: Ember.computed.alias('block.data.details'),
+  verdict: Ember.computed.alias('details.verdict'),
+  threatScore: Ember.computed.alias('details.gtiAssessment.threat_score.value'),
   threats: Ember.computed.alias('details.threats'),
   threatsCount: Ember.computed.alias('details.threatsCount'),
   reports: Ember.computed.alias('details.reports'),
@@ -29,41 +31,6 @@ polarity.export = PolarityComponent.extend({
   showCopyMessage: false,
   showHistoricalWhois: false,
   expandedWhoisMap: Ember.computed.alias('block.data.details.expandedWhoisMap'),
-  communityScoreWidth: Ember.computed('details.reputation', function () {
-    let reputation = this.get('details.reputation');
-    if (!reputation) return 50;
-    // clamp reputation to between -100 and 100
-    if (reputation > 100) {
-      reputation = 100;
-    }
-    if (reputation <= -100) {
-      reputation = -100;
-    }
-
-    // scale reputation which goes from -100 to 100 into the range 0 to 100
-    return 100 * ((reputation + 100) / 200);
-  }),
-  communityScoreIcon: Ember.computed('details.reputation', function () {
-    let reputation = this.get('details.reputation');
-    if (reputation === 0) {
-      return 'map-marker-question';
-    }
-    if (reputation > 0) {
-      return 'map-marker-check';
-    }
-
-    return 'map-marker-times';
-  }),
-  communityScoreColorClass: Ember.computed('details.reputation', function () {
-    let reputation = this.get('details.reputation') || 0;
-    if (reputation === 0) {
-      return 'score-marker-icon p-grey';
-    }
-    if (reputation < 0) {
-      return 'score-marker-icon p-red';
-    }
-    return 'score-marker-icon p-green';
-  }),
   domainVirusTotalLink: '',
   numUrlsShown: 0,
   numResolutionsShown: 0,
@@ -112,58 +79,21 @@ polarity.export = PolarityComponent.extend({
     { key: 'Registry Expiry Date', isDate: true }
   ],
   activeTab: 'detection',
-  redThreat: '#ed2e4d',
-  greenThreat: '#7dd21b',
-  yellowThreat: '#ffc15d',
-  noThreat: '#999',
-  /**
-   * Radius of the ticScore circle
-   */
-  threatRadius: 15,
-  /**
-   * StrokeWidth of the ticScore circle
-   */
-  threatStrokeWidth: 2,
-  elementRadius: 20,
-  elementStrokeWidth: 4,
-
-  elementColor: Ember.computed('result.domain_risk.risk_score', function () {
-    if (
-      typeof this.get('details.positives') === 'undefined' &&
-      typeof this.get('details.total') === 'undefined'
-    ) {
-      return this.get('noThreat');
-    }
-    return this._getThreatColor((this.details.positives / this.details.total) * 100 || 0);
+  scoreGraphicHorizontalOffset: 5,
+  scoreGraphicWidth: 100,
+  scoreGraphicLineEnd: Ember.computed('scoreGraphicHorizontalOffset', 'scoreGraphicWidth', function () {
+    return this.get('scoreGraphicHorizontalOffset') + this.get('scoreGraphicWidth');
   }),
-
-  elementStrokeOffset: Ember.computed(
-    'result.domain_risk.risk_score',
-    'elementCircumference',
-    function () {
-      return this._getStrokeOffset(
-        this.details.positives || 0,
-        this.elementCircumference
-      );
-    }
-  ),
-  threatCircumference: Ember.computed('threatRadius', function () {
-    return 2 * Math.PI * this.get('threatRadius');
+  scoreGraphicTotalWidth: Ember.computed('scoreGraphicWidth', 'scoreGraphicHorizontalOffset', function () {
+    return this.get('scoreGraphicWidth') + this.get('scoreGraphicHorizontalOffset') * 2;
   }),
-  elementCircumference: Ember.computed('elementRadius', function () {
-    return 2 * Math.PI * this.get('elementRadius');
+  scoreGraphicValue: Ember.computed('threatScore', 'scoreGraphicHorizontalOffset', 'scoreGraphicWidth', function () {
+    const threatScore = this.get('threatScore') || 0;
+    const scoreGraphicHorizontalOffset = this.get('scoreGraphicHorizontalOffset') || 0;
+    const scoreGraphicWidth = this.get('scoreGraphicWidth') || 0;
+    
+    return (threatScore / 100) * scoreGraphicWidth + scoreGraphicHorizontalOffset;
   }),
-  _getStrokeOffset(ticScore, circumference) {
-    let progress = ticScore / this.details.total;
-    return circumference * (1 - progress);
-  },
-  _getThreatColor(ticScore) {
-    if (ticScore > 0) {
-      return this.get('redThreat');
-    } else {
-      return this.get('greenThreat');
-    }
-  },
   init() {
     this.set(
       'activeTab',
@@ -441,13 +371,6 @@ polarity.export = PolarityComponent.extend({
     window.getSelection().addRange(range);
     document.execCommand('copy');
     window.getSelection().removeAllRanges();
-  },
-  getElementRange(element) {
-    let range = document.createRange();
-    range.selectNode(
-      typeof element === 'string' ? document.getElementById(element) : element
-    );
-    return range;
   },
   restoreCopyState(savedSettings) {
     const {

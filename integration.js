@@ -26,7 +26,6 @@ const {
   keys,
   isArray,
   curry,
-  find,
   assign,
   mapValues,
   forEach,
@@ -44,10 +43,7 @@ const showdownConverter = new showdown.Converter();
 const convertMarkdownToHtml = (text) => showdownConverter.makeHtml(text);
 
 const map = require('lodash/fp/map').convert({ cap: false });
-const config = require('./config/config');
 const async = require('async');
-const PendingLookupCache = require('./lib/pending-lookup-cache');
-const fs = require('fs');
 let schedule = require('node-schedule');
 
 const { knownThreatActors } = require('./lib/constants');
@@ -69,33 +65,18 @@ let Logger = {
     console.info(msg, args);
   }
 };
-let pendingLookupCache = new PendingLookupCache(Logger);
 let domainUrlBlocklistRegex = null;
 let ipBlocklistRegex = null;
-let compiledThresholdRules = [];
-let previousBaselineInvestigationThreshold = null;
-let doLookupLogging;
-let lookupHashSet;
-let lookupIpSet;
-let lookupDomainSet;
-let lookupUrlSet;
-let lookupCveSet;
 let job;
 
-let requestWithDefaults = request.defaults({ json: true });
-
-const debugLookupStats = {
-  hourCount: 0,
-  dayCount: 0,
-  hashCount: 0,
-  ipCount: 0,
-  ipLookups: 0,
-  domainCount: 0,
-  domainLookups: 0,
-  urlCount: 0,
-  urlLookups: 0,
-  hashLookups: 0
+const defaultRequestOptions = {
+  json: true,
+  headers: {
+    'x-tool': 'dataminr.polarity.3.0',
+  },
 };
+
+let requestWithDefaults = request.defaults(defaultRequestOptions);
 
 const threatActorNames = knownThreatActors;
 const throttleCache = new Map();
@@ -124,25 +105,6 @@ const GTI_LOOKUP_LIMIT = 5;
  * @param cb
  */
 function doLookup(entities, options, cb) {
-  // if the threshold rules are disabled then we want an empty rule set (empty array)
-  if (options.baselineInvestigationThresholdEnabled === false) {
-    compiledThresholdRules = [];
-    previousBaselineInvestigationThreshold = null;
-  }
-
-  // We only want to compile our threshold rules if the option has changed
-  // The option is intended to be admin-only
-  if (
-    options.baselineInvestigationThresholdEnabled &&
-    (options.baselineInvestigationThreshold !== previousBaselineInvestigationThreshold ||
-      previousBaselineInvestigationThreshold === null)
-  ) {
-    compiledThresholdRules = parseBaselineInvestigationThreshold(
-      options.baselineInvestigationThreshold
-    );
-    previousBaselineInvestigationThreshold = options.baselineInvestigationThreshold;
-  }
-
   if (throttleCache.has(options.apiKey)) {
     // the throttleCache stores whether or not we've shown the throttle warning message for this throttle duration
     // We only want to show the message once per throttleDuration (defaults to 1 minute).
@@ -168,9 +130,6 @@ function doLookup(entities, options, cb) {
   const MAX_HASHES_PER_GROUP = options.maxHashesPerGroup;
 
   entities.forEach(function (entity) {
-    if (pendingLookupCache.isRunning(entity.value))
-      return pendingLookupCache.addPendingLookup(entity.value, cb);
-
     if (_isEntityBlocked(entity, options)) {
       return;
     }
@@ -223,33 +182,14 @@ function doLookup(entities, options, cb) {
         // entity isn't already added
         hashGroup.push(entity.value);
         entityLookup[entity.value.toLowerCase()] = entity;
-        pendingLookupCache.addRunningLookup(entity.value);
-
-        if (doLookupLogging) lookupHashSet.add(entity.value);
       }
     } else if (entity.isIPv4 && !entity.isPrivateIP && !IGNORED_IPS.has(entity.value)) {
-      if (doLookupLogging) lookupIpSet.add(entity.value);
-
-      pendingLookupCache.addRunningLookup(entity.value);
-
       ipv4Entities.push(entity);
     } else if (entity.isDomain) {
-      if (doLookupLogging) lookupDomainSet.add(entity.value);
-
-      pendingLookupCache.addRunningLookup(entity.value);
-
       domainEntities.push(entity);
     } else if (entity.isURL) {
-      if (doLookupLogging) lookupUrlSet.add(entity.value);
-
-      pendingLookupCache.addRunningLookup(entity.value);
-
       urlEntities.push(entity);
     } else if (entity.types.includes('cve')) {
-      if (doLookupLogging) lookupCveSet.add(entity.value);
-
-      pendingLookupCache.addRunningLookup(entity.value);
-
       cveEntities.push(entity);
     }
   });
@@ -388,7 +328,6 @@ function doLookup(entities, options, cb) {
     },
     function (err, lookupResults) {
       if (err) {
-        pendingLookupCache.reset();
         return cb(err);
       }
 
@@ -401,21 +340,7 @@ function doLookup(entities, options, cb) {
         'urlLookups',
         'cveLookups',
         'threatActorLookups'
-      ].forEach((key) =>
-        lookupResults[key].forEach(function (lookupResult) {
-          if (lookupResult && lookupResult.data && lookupResult.data.details) {
-            lookupResult.data.details.compiledBaselineInvestigationRules =
-              compiledThresholdRules;
-          }
-
-          pendingLookupCache.removeRunningLookup(fp.get('entity.value', lookupResult));
-          pendingLookupCache.executePendingLookups(lookupResult);
-
-          combinedResults.push(lookupResult);
-        })
-      );
-
-      pendingLookupCache.logStats();
+      ].forEach((key) => combinedResults.push(...lookupResults[key]));
 
       cb(null, combinedResults);
     }
@@ -586,10 +511,6 @@ function _handleRequestError(err, response, body, options, cb) {
 }
 
 function _lookupHash(hashesArray, entityLookup, options, done) {
-  if (doLookupLogging) {
-    debugLookupStats.hashLookups++;
-  }
-
   async.mapLimit(
     hashesArray,
     10,
@@ -627,8 +548,6 @@ function _lookupHash(hashesArray, entityLookup, options, done) {
 }
 
 function _lookupUrl(entity, options, done) {
-  if (doLookupLogging) debugLookupStats.urlLookups++;
-
   const urlAsBase64WithoutPadding = Buffer.from(entity.value)
     .toString('base64')
     .replace(/=+$/, '');
@@ -1663,6 +1582,12 @@ const _processLookupItem = (
     }))
   )(attributes);
 
+  const verdict = fp.flow(
+    fp.get('gti_assessment.verdict.value'),
+    fp.replace('VERDICT_', ''),
+    fp.capitalize
+  )(attributes);
+
   const coreLink = `https://www.virustotal.com/gui/${fp.replace('_', '-', data.type)}/${
     data.id
   }`;
@@ -1672,14 +1597,7 @@ const _processLookupItem = (
   return {
     entity,
     data: {
-      summary: [
-        ...fp.flow(
-          fp.filter(fp.get('detected')),
-          fp.map(fp.get('result')),
-          fp.uniq,
-          fp.slice(0, 3)
-        )(scans)
-      ],
+      summary: [`Verdict: ${verdict}`],
       details: {
         type,
         detectionsLink: `${coreLink}/detection`,
@@ -1701,7 +1619,9 @@ const _processLookupItem = (
           fp.orderBy('result', 'desc')
         )(scans),
         detailsTab,
-        tags: attributes.tags
+        tags: attributes.tags,
+        gtiAssessment: fp.get('gti_assessment', attributes),
+        verdict,
       }
     }
   };
@@ -1805,8 +1725,6 @@ const getDetailFields = (detailFields, attributes) =>
   }, detailFields);
 
 function _lookupEntityType(type, entity, options, done) {
-  if (doLookupLogging) debugLookupStats[`${type}Lookups`]++;
-
   let requestOptions = {
     uri: `${LOOKUP_URI_BY_TYPE[type]}/${entity.value}`,
     method: 'GET',
@@ -1837,38 +1755,6 @@ function _lookupEntityType(type, entity, options, done) {
       done(null, lookupResults);
     });
   });
-}
-
-function parseBaselineInvestigationThreshold(bti) {
-  const rules = bti.split(',');
-  const compiledRules = [];
-  rules.forEach((rule) => {
-    const parts = rule.split(':');
-    if (parts.length !== 2 && parts.length !== 3) {
-      throw `Invalid rule [${rule}]. Rule must be of the format <range>:<message> or <range>:<level>:<message>`;
-    }
-    let range, level, message;
-    range = splitBtiRange(rule, parts[0]);
-
-    if (parts.length === 3) {
-      level = parts[1].trim();
-      message = parts[2].trim();
-    } else {
-      level = 'none';
-      message = parts[1].trim();
-    }
-
-    if (level !== 'warn' && level !== 'danger' && level !== 'none') {
-      throw `Invalid rule [${rule}]. Level [${level}] must be either "warn" or "danger".`;
-    }
-
-    compiledRules.push({
-      message,
-      level,
-      ...range
-    });
-  });
-  return compiledRules;
 }
 
 /**
@@ -2119,100 +2005,7 @@ function getBehaviors(entity, options) {
 function startup(logger) {
   Logger = logger;
 
-  if (config && config.logging && config.logging.logLookupStats) {
-    Logger.info({ loggerLevel: Logger._level }, 'Will do Lookup Logging');
-    doLookupLogging = true;
-    lookupHashSet = new Set();
-    lookupIpSet = new Set();
-    lookupDomainSet = new Set();
-    lookupUrlSet = new Set();
-    lookupCveSet = new Set();
-    // Print log every hour
-    setInterval(_logLookupStats, 60 * 60 * 1000);
-  } else {
-    doLookupLogging = false;
-    Logger.info({ loggerLevel: Logger._level }, 'Will not do Lookup Logging');
-  }
-
-  pendingLookupCache = new PendingLookupCache(logger);
-  if (config && config.settings && config.settings.trackPendingLookups) {
-    pendingLookupCache.setEnabled(true);
-  }
-
-  let defaults = {};
-
-  if (typeof config.request.cert === 'string' && config.request.cert.length > 0) {
-    defaults.cert = fs.readFileSync(config.request.cert);
-  }
-
-  if (typeof config.request.key === 'string' && config.request.key.length > 0) {
-    defaults.key = fs.readFileSync(config.request.key);
-  }
-
-  if (
-    typeof config.request.passphrase === 'string' &&
-    config.request.passphrase.length > 0
-  ) {
-    defaults.passphrase = config.request.passphrase;
-  }
-
-  if (typeof config.request.ca === 'string' && config.request.ca.length > 0) {
-    defaults.ca = fs.readFileSync(config.request.ca);
-  }
-
-  if (typeof config.request.proxy === 'string' && config.request.proxy.length > 0) {
-    defaults.proxy = config.request.proxy;
-  }
-
-  defaults.json = true;
-
-  requestWithDefaults = request.defaults(defaults);
-}
-
-function _logLookupStats() {
-  debugLookupStats.ipCount = lookupIpSet.size;
-  debugLookupStats.domainCount = lookupDomainSet.size;
-  debugLookupStats.urlCount = lookupUrlSet.size;
-  debugLookupStats.cveCount = lookupCveSet.size;
-  debugLookupStats.hashCount = lookupHashSet.size;
-
-  Logger.info(debugLookupStats, 'Unique Entity Stats');
-
-  if (debugLookupStats.hourCount == 23) {
-    lookupHashSet.clear();
-    lookupIpSet.clear();
-    lookupDomainSet.clear();
-    lookupUrlSet.clear();
-    lookupCveSet.clear();
-    debugLookupStats.hourCount = 0;
-    debugLookupStats.hashCount = 0;
-    debugLookupStats.ipCount = 0;
-    debugLookupStats.ipLookups = 0;
-    debugLookupStats.domainCount = 0;
-    debugLookupStats.domainLookups = 0;
-    debugLookupStats.urlCount = 0;
-    debugLookupStats.cveCount = 0;
-    debugLookupStats.urlLookups = 0;
-    debugLookupStats.hashLookups = 0;
-    debugLookupStats.dayCount++;
-  } else {
-    debugLookupStats.hourCount++;
-  }
-}
-
-function errorToPojo(err) {
-  if (err instanceof Error) {
-    return {
-      // Pull all enumerable properties, supporting properties on custom Errors
-      ...err,
-      // Explicitly pull Error's non-enumerable properties
-      name: err.name,
-      message: err.message,
-      stack: err.stack,
-      detail: err.detail ? err.detail : 'Google compute engine had an error'
-    };
-  }
-  return err;
+  requestWithDefaults = request.defaults(defaultRequestOptions);
 }
 
 async function onMessage(payload, options, cb) {
@@ -2294,16 +2087,6 @@ async function validateOptions(userOptions, cb) {
     errors.push({
       key: 'maxHashesPerGroup',
       message: 'Maximum number of hashes per lookup request must be greater than 0'
-    });
-  }
-
-  try {
-    parseBaselineInvestigationThreshold(userOptions.baselineInvestigationThreshold.value);
-  } catch (e) {
-    Logger.error(e);
-    errors.push({
-      key: 'baselineInvestigationThreshold',
-      message: e.toString()
     });
   }
 
