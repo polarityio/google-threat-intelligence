@@ -1,0 +1,204 @@
+{
+  "type": "ip_address",
+  "detectionsLink": "https://www.virustotal.com/gui/ip-address/8.8.8.8/detection",
+  "relationsLink": "https://www.virustotal.com/gui/ip-address/8.8.8.8/relations",
+  "detailsLink": "https://www.virustotal.com/gui/ip-address/8.8.8.8/details",
+  "communityLink": "https://www.virustotal.com/gui/ip-address/8.8.8.8/community",
+  "behaviorLink": "https://www.virustotal.com/gui/ip-address/8.8.8.8/behavior",
+  "total": 89,
+  "reputation": 1445,
+  "scan_date": "2024-01-15T10:30:00.000Z",
+  "positives": 2,
+  "verdict": "Suspicious",
+  "gtiAssessment": {
+    "verdict": {
+      "value": "VERDICT_SUSPICIOUS",
+      "confidence": 75
+    },
+    "threat_score": {
+      "value": 35,
+      "method": "THREAT_SEVERITY_LEVEL_2"
+    },
+    "threat_label": {
+      "value": "THREAT_LABEL_MALWARE"
+    },
+    "severity": "medium",
+    "description": "This IP address has been associated with suspicious network activity and malware distribution in the past 30 days."
+  },
+  "positiveScans": [
+    {
+      "name": "Fortinet",
+      "detected": true,
+      "result": "Malicious"
+    },
+    {
+      "name": "CRDF",
+      "detected": true,
+      "result": "Malicious"
+    }
+  ],
+  "negativeScans": [
+    {
+      "name": "Avira",
+      "detected": false,
+      "result": "Clean"
+    },
+    {
+      "name": "Sophos",
+      "detected": false,
+      "result": "Clean"
+    }
+  ],
+  "names": [
+    "dns.google",
+    "google-public-dns-a.google.com"
+  ],
+  "tags": [
+    "dns-server",
+    "google",
+    "public-resolver"
+  ],
+  "detailsTab": [
+    {
+      "key": "AS Owner",
+      "value": "GOOGLE"
+    },
+    {
+      "key": "ASN",
+      "value": "15169"
+    },
+    {
+      "key": "Country",
+      "value": "US"
+    }
+  ],
+  "whois": {
+    "NetRange": "8.8.8.0 - 8.8.8.255",
+    "CIDR": "8.8.8.0/24",
+    "NetName": "LVLT-GOGL-8-8-8",
+    "NetHandle": "NET-8-8-8-0-1",
+    "Parent": "NET8 (NET-8-0-0-0-0)",
+    "NetType": "Direct Allocation",
+    "OriginAS": "AS15169",
+    "Organization": "Google LLC (GOGL)",
+    "RegDate": "2014-03-14",
+    "Updated": "2014-03-14",
+    "Comment": "This IP address range is used for Google Public DNS",
+    "Ref": "https://rdap.arin.net/registry/ip/8.8.8.0"
+  },
+  "resolutions": [
+    {
+      "hostname": "dns.google",
+      "last_resolved": 1705315800
+    }
+  ],
+  "vulnerabilities": [
+    {
+      "id": "CVE-2024-1234",
+      "cve_id": "CVE-2024-1234",
+      "mve_id": null,
+      "description": "A critical remote code execution vulnerability in the network stack allows attackers to execute arbitrary code.",
+      "htmlDescription": "<p>A critical remote code execution vulnerability in the network stack allows attackers to execute arbitrary code.</p>",
+      "risk_rating": "critical",
+      "predicted_risk_rating": "high",
+      "priority": "P1",
+      "cvssScore": 9.8,
+      "cvssVector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+      "severity": "Critical",
+      "date_of_disclosure": 1704067200000,
+      "exploitation": {
+        "state": "EXPLOITATION_STATE_ACTIVE",
+        "first_exploitation": 1704153600000
+      },
+      "cisa_known_exploited": {
+        "added_date": 1704240000000,
+        "due_date": 1704844800000,
+        "required_action": "Apply updates per vendor instructions"
+      },
+      "affected_systems": [
+        "Linux Kernel 5.15.0",
+        "Linux Kernel 5.16.0"
+      ],
+      "tags": [
+        "remote-code-execution",
+        "network-stack",
+        "kernel"
+      ],
+      "impactSummary": {
+        "systems": [
+          "Linux Kernel 5.15.0",
+          "Linux Kernel 5.16.0"
+        ],
+        "consequence": "Remote Code Execution",
+        "priority": "P1",
+        "riskRating": "critical",
+        "cvssScore": 9.8,
+        "hasPublicExploit": true,
+        "epssScore": 0.89,
+        "summary": "Critical Risk • P1 • CVSS 9.8 • Public Exploit • EPSS 89.0% • Remote Code Execution • Affects Linux Kernel 5.15.0, Linux Kernel 5.16.0"
+      }
+    },
+    {
+      "id": "CVE-2024-5678",
+      "cve_id": "CVE-2024-5678",
+      "risk_rating": "high",
+      "predicted_risk_rating": "high",
+      "priority": "P2",
+      "cvssScore": 7.5,
+      "severity": "High",
+      "description": "Information disclosure vulnerability in DNS resolution service",
+      "htmlDescription": "<p>Information disclosure vulnerability in DNS resolution service</p>"
+    }
+  ],
+  "threats": [
+    {
+      "id": "threat-123",
+      "type": "malware-family",
+      "name": "Emotet",
+      "last_seen": 1704153600,
+      "description": "Banking trojan and malware loader"
+    }
+  ],
+  "threatsCount": 1,
+  "reports": [
+    {
+      "id": "report-456",
+      "title": "Emotet Returns: New Campaign Analysis",
+      "published_date": 1704067200
+    }
+  ],
+  "reportsCount": 1,
+  "last_analysis_results": {
+    "Fortinet": {
+      "category": "malicious",
+      "result": "Malicious",
+      "method": "blacklist",
+      "engine_name": "Fortinet"
+    },
+    "CRDF": {
+      "category": "malicious", 
+      "result": "Malicious",
+      "method": "blacklist",
+      "engine_name": "CRDF"
+    }
+  },
+  "last_analysis_stats": {
+    "harmless": 75,
+    "malicious": 2,
+    "suspicious": 8,
+    "undetected": 4,
+    "timeout": 0
+  },
+  "last_modification_date": 1705315800,
+  "network": "8.8.8.0/24",
+  "regional_internet_registry": "ARIN",
+  "continent": "NA",
+  "country": "US",
+  "as_owner": "GOOGLE",
+  "asn": 15169,
+  "jarm": "27d40d40d29d40d1dc42d43d00041d4689ee210389f4f6b4b5b1b93f92252d",
+  "total_votes": {
+    "harmless": 145,
+    "malicious": 5
+  }
+}

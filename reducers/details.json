@@ -1,0 +1,31 @@
+{
+  "root": {
+    "path": "",
+    "on_null": "return_empty"
+  },
+  "pipeline": [
+    {
+      "op": "copy",
+      "from": "vulnerabilities[].risk_rating",
+      "to": "reduced_results.vulnerabilities_risk_rating"
+    },
+    {
+      "op": "copy",
+      "from": "gtiAssessment.verdict",
+      "to": "reduced_results.verdict_info"
+    },
+    {
+      "op": "copy",
+      "from": "gtiAssessment.threat_score.value",
+      "to": "reduced_results.threat_score"
+    },
+    {
+      "op": "prune",
+      "strategy": "empty_values",
+      "target": "reduced_results"
+    }
+  ],
+  "output": {
+    "result": "$working.reduced_results"
+  }
+}
