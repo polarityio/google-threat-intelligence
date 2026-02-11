@@ -1,13 +1,13 @@
 {
   "name": "google-threat-intelligence",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "main": "./integration.js",
   "private": true,
   "dependencies": {
     "async": "^3.2.6",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "node-schedule": "^2.1.1",
-    "postman-request": "^2.88.1-postman.46",
+    "postman-request": "^2.88.1-postman.48",
     "showdown": "^2.1.0"
   }
 }
