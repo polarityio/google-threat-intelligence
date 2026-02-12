@@ -2715,11 +2715,11 @@
                   {{block._state.errorReports}}
                 </pre>
               </div>
-            {{else if (and block._state.loadedThreats (eq threats.length 0))}}
+            {{else if (and block._state.loadedThreats (eq threats.length 0) (eq associationTab "threats"))}}
               <div class="no-results-found">
                 No Threats Found
               </div>
-            {{else if (and block._state.loadedReports (eq reports.length 0))}}
+            {{else if (and block._state.loadedReports (eq reports.length 0) (eq associationTab "reporting"))}}
               <div class="no-results-found">
                 No Reports Found
               </div>
@@ -3221,8 +3221,7 @@
                     </div>
                   {{/each}}
                 </div>
-              {{/if}}
-              {{#if (or (eq associationTab "reporting") (not threats.length))}}
+              {{else if (eq associationTab "reporting")}}
                 <div class="associations-tab reports">
                   {{#each reports as |report reportIndex|}}
                     <div class="association report">
